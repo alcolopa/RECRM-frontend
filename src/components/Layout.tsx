@@ -4,6 +4,7 @@ import TopBar from './TopBar';
 import PropertiesView from './PropertiesView';
 import Dashboard from './Dashboard';
 import ProfileView from './ProfileView';
+import ContactsView from './ContactsView';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -36,6 +37,8 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'contacts':
+        return <ContactsView organizationId={user?.organizationId} />;
       case 'properties':
         return <PropertiesView organizationId={user?.organizationId} />;
       case 'profile':

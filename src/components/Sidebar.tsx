@@ -8,8 +8,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   Home,
-  X,
-  Settings
+  X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 

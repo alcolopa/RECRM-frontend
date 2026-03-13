@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { 
-  X, 
-  Save, 
-  Plus, 
-  Building2, 
-  MapPin, 
-  DollarSign, 
+import {
+  X,
+  Save,
+  Plus,
+  Building2,
+  MapPin,
+  DollarSign,
   Info,
   ChevronLeft
 } from 'lucide-react';
@@ -59,18 +59,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
   const addFeature = () => {
     if (newFeature && !formData.features?.includes(newFeature)) {
-      setFormData(prev => ({ 
-        ...prev, 
-        features: [...(prev.features || []), newFeature] 
+      setFormData(prev => ({
+        ...prev,
+        features: [...(prev.features || []), newFeature]
       }));
       setNewFeature('');
     }
   };
 
   const removeFeature = (feature: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      features: prev.features?.filter(f => f !== feature) 
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features?.filter(f => f !== feature)
     }));
   };
 
@@ -97,27 +97,27 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <div className="grid grid-2" style={{ gap: '1rem' }}>
             <div style={inputGroupStyle}>
               <label htmlFor="title" style={labelStyle}>Property Title*</label>
-              <input 
-                id="title" type="text" required placeholder="Modern Villa" 
-                value={formData.title} onChange={handleChange} style={inputStyle} 
+              <input
+                id="title" name="title" type="text" required placeholder="Modern Villa"
+                value={formData.title} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="price" style={labelStyle}>Price ($)*</label>
               <div style={{ position: 'relative' }}>
                 <DollarSign size={16} color="var(--secondary)" style={inputIconStyle} />
-                <input 
-                  id="price" type="number" required placeholder="450000" 
-                  value={formData.price} onChange={handleChange} style={{ ...inputStyle, paddingLeft: '2.25rem' }} 
+                <input
+                  id="price" name="price" type="number" required placeholder="450000"
+                  value={formData.price} onChange={handleChange} style={{ ...inputStyle, paddingLeft: '2.25rem' }}
                 />
               </div>
             </div>
           </div>
           <div style={inputGroupStyle}>
             <label htmlFor="description" style={labelStyle}>Description</label>
-            <textarea 
-              id="description" rows={3} placeholder="Describe the property..." 
-              value={formData.description} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical' }} 
+            <textarea
+              id="description" name="description" rows={3} placeholder="Describe the property..."
+              value={formData.description} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical' }}
             />
           </div>
         </div>
@@ -128,7 +128,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
             <div style={inputGroupStyle}>
               <label htmlFor="type" style={labelStyle}>Type</label>
-              <select id="type" value={formData.type} onChange={handleChange} style={inputStyle}>
+              <select id="type" name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
                 <option value="HOUSE">House</option>
                 <option value="APARTMENT">Apartment</option>
                 <option value="CONDO">Condo</option>
@@ -139,7 +139,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="status" style={labelStyle}>Status</label>
-              <select id="status" value={formData.status} onChange={handleChange} style={inputStyle}>
+              <select id="status" name="status" value={formData.status} onChange={handleChange} style={inputStyle}>
                 <option value="AVAILABLE">Available</option>
                 <option value="UNDER_CONTRACT">Under Contract</option>
                 <option value="SOLD">Sold</option>
@@ -149,30 +149,30 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="area" style={labelStyle}>Area (sqft)</label>
-              <input 
-                id="area" type="number" placeholder="2500" 
-                value={formData.area} onChange={handleChange} style={inputStyle} 
+              <input
+                id="area" name="area" type="number" placeholder="2500"
+                value={formData.area} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="bedrooms" style={labelStyle}>Bedrooms</label>
-              <input 
-                id="bedrooms" type="number" placeholder="3" 
-                value={formData.bedrooms} onChange={handleChange} style={inputStyle} 
+              <input
+                id="bedrooms" name="bedrooms" type="number" placeholder="3"
+                value={formData.bedrooms} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="bathrooms" style={labelStyle}>Bathrooms</label>
-              <input 
-                id="bathrooms" type="number" step="0.5" placeholder="2.5" 
-                value={formData.bathrooms} onChange={handleChange} style={inputStyle} 
+              <input
+                id="bathrooms" name="bathrooms" type="number" step="0.5" placeholder="2.5"
+                value={formData.bathrooms} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="yearBuilt" style={labelStyle}>Year Built</label>
-              <input 
-                id="yearBuilt" type="number" placeholder="2020" 
-                value={formData.yearBuilt} onChange={handleChange} style={inputStyle} 
+              <input
+                id="yearBuilt" name="yearBuilt" type="number" placeholder="2020"
+                value={formData.yearBuilt} onChange={handleChange} style={inputStyle}
               />
             </div>
           </div>
@@ -183,31 +183,31 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <h3 style={sectionTitleStyle}><MapPin size={18} /> Location</h3>
           <div style={inputGroupStyle}>
             <label htmlFor="address" style={labelStyle}>Street Address*</label>
-            <input 
-              id="address" type="text" required placeholder="123 Main St" 
-              value={formData.address} onChange={handleChange} style={inputStyle} 
+            <input
+              id="address" name="address" type="text" required placeholder="123 Main St"
+              value={formData.address} onChange={handleChange} style={inputStyle}
             />
           </div>
           <div className="grid grid-3" style={{ gap: '1rem' }}>
             <div style={inputGroupStyle}>
               <label htmlFor="city" style={labelStyle}>City</label>
-              <input 
-                id="city" type="text" placeholder="Los Angeles" 
-                value={formData.city} onChange={handleChange} style={inputStyle} 
+              <input
+                id="city" name="city" type="text" placeholder="Los Angeles"
+                value={formData.city} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="state" style={labelStyle}>State</label>
-              <input 
-                id="state" type="text" placeholder="CA" 
-                value={formData.state} onChange={handleChange} style={inputStyle} 
+              <input
+                id="state" name="state" type="text" placeholder="CA"
+                value={formData.state} onChange={handleChange} style={inputStyle}
               />
             </div>
             <div style={inputGroupStyle}>
               <label htmlFor="zipCode" style={labelStyle}>Zip Code</label>
-              <input 
-                id="zipCode" type="text" placeholder="90001" 
-                value={formData.zipCode} onChange={handleChange} style={inputStyle} 
+              <input
+                id="zipCode" name="zipCode" type="text" placeholder="90001"
+                value={formData.zipCode} onChange={handleChange} style={inputStyle}
               />
             </div>
           </div>
@@ -217,10 +217,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}><Plus size={18} /> Features</h3>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <input 
-              type="text" 
-              placeholder="e.g. Swimming Pool" 
-              value={newFeature} 
+            <input
+              id="newFeature"
+              name="newFeature"
+              type="text"
+              placeholder="e.g. Swimming Pool"
+              value={newFeature}
               onChange={(e) => setNewFeature(e.target.value)}
               style={inputStyle}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
@@ -244,7 +246,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" style={{ flex: isMobile ? 1 : 'initial', gap: '0.5rem' }}>
-            <Save size={18} /> {property ? 'Update Property' : 'Save Property'}
+            <Save size={18} /> {property ? 'Update' : 'Save'}
           </button>
         </div>
       </form>

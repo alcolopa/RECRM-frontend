@@ -57,17 +57,18 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     }
   };
 
-  const filteredProperties = properties.filter(p => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.city?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProperties = properties.filter(p => {
+    if (!searchQuery) return true;
+    return p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  });
 
   if (view === 'form') {
     return (
-      <PropertyForm 
-        property={editingProperty} 
-        onSave={handleSave} 
+      <PropertyForm
+        property={editingProperty}
+        onSave={handleSave}
         onCancel={() => {
           setView('list');
           setEditingProperty(undefined);
@@ -84,9 +85,9 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Properties</h1>
           <p style={{ color: 'var(--secondary)' }}>Manage your listings and property details.</p>
         </div>
-        <button 
+        <button
           onClick={() => setView('form')}
-          className="btn btn-primary" 
+          className="btn btn-primary"
           style={{ gap: '0.5rem' }}
         >
           <Plus size={20} /> Add Property
@@ -97,19 +98,21 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
       <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
           <Search size={18} color="var(--secondary)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" 
-            placeholder="Search by title, address, or city..." 
+          <input
+            id="searchQuery"
+            name="searchQuery"
+            type="text"
+            placeholder="Search by title, address, or city..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ 
-              width: '100%', 
-              padding: '0.625rem 1rem 0.625rem 2.5rem', 
-              borderRadius: 'var(--radius)', 
+            style={{
+              width: '100%',
+              padding: '0.625rem 1rem 0.625rem 2.5rem',
+              borderRadius: 'var(--radius)',
               border: '1px solid var(--border)',
               fontSize: '0.875rem',
               outline: 'none'
-            }} 
+            }}
           />
         </div>
         <button className="btn btn-outline" style={{ gap: '0.5rem', padding: '0.625rem 1rem' }}>
@@ -124,9 +127,9 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
       ) : filteredProperties.length > 0 ? (
         <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
           {filteredProperties.map((property) => (
-            <PropertyCard 
-              key={property.id} 
-              property={property} 
+            <PropertyCard
+              key={property.id}
+              property={property}
               onEdit={(p) => {
                 setEditingProperty(p);
                 setView('form');

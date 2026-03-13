@@ -83,6 +83,8 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} 
             />
             <input 
+              id="globalSearch"
+              name="globalSearch"
               type="text" 
               placeholder="Search..." 
               style={{

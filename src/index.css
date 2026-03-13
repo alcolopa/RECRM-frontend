@@ -106,6 +106,7 @@ section {
   .hidden-mobile { display: none !important; }
   .container { padding: 0 1rem; }
   section { padding: 3rem 0; }
+  .card { padding: 1.25rem !important; }
 }
 
 @media (min-width: 769px) {

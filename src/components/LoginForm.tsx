@@ -116,6 +116,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                         />
                         <input
                             id="email"
+                            name="email"
                             type="email"
                             placeholder="name@company.com"
                             required
@@ -154,6 +155,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                         />
                         <input
                             id="password"
+                            name="password"
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
                             required

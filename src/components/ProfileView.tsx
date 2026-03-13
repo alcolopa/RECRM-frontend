@@ -192,6 +192,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 <Camera size={18} />
                 <input 
                   id="avatar-upload" 
+                  name="avatar-upload"
                   type="file" 
                   accept="image/*" 
                   onChange={handleAvatarChange} 
@@ -255,14 +256,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 <label htmlFor="firstName" style={labelStyle}>First Name</label>
                 <div style={{ position: 'relative' }}>
                   <UserIcon size={16} color="var(--secondary)" style={inputIconStyle} />
-                  <input id="firstName" type="text" value={formData.firstName} onChange={handleChange} style={inputStyle} placeholder="First name" />
+                  <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleChange} style={inputStyle} placeholder="First name" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label htmlFor="lastName" style={labelStyle}>Last Name</label>
                 <div style={{ position: 'relative' }}>
                   <UserIcon size={16} color="var(--secondary)" style={inputIconStyle} />
-                  <input id="lastName" type="text" value={formData.lastName} onChange={handleChange} style={inputStyle} placeholder="Last name" />
+                  <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleChange} style={inputStyle} placeholder="Last name" />
                 </div>
               </div>
             </div>
@@ -271,7 +272,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               <label htmlFor="email" style={labelStyle}>Email Address</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} color="var(--secondary)" style={inputIconStyle} />
-                <input id="email" type="email" value={formData.email} onChange={handleChange} style={inputStyle} placeholder="email@example.com" />
+                <input id="email" name="email" type="email" value={formData.email} onChange={handleChange} style={inputStyle} placeholder="email@example.com" />
               </div>
             </div>
 
@@ -286,7 +287,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               <label htmlFor="oldPassword" style={labelStyle}>Current Password</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
-                <input id="oldPassword" type="password" value={formData.oldPassword} onChange={handleChange} style={inputStyle} placeholder="Enter current password" />
+                <input id="oldPassword" name="oldPassword" type="password" value={formData.oldPassword} onChange={handleChange} style={inputStyle} placeholder="Enter current password" />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
                 Required only if you are changing your password.
@@ -298,14 +299,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 <label htmlFor="password" style={labelStyle}>New Password</label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
-                  <input id="password" type="password" value={formData.password} onChange={handleChange} style={inputStyle} placeholder="New password" />
+                  <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} style={inputStyle} placeholder="New password" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label htmlFor="confirmPassword" style={labelStyle}>Confirm New Password</label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
-                  <input id="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} style={inputStyle} placeholder="Confirm new password" />
+                  <input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} style={inputStyle} placeholder="Confirm new password" />
                 </div>
               </div>
             </div>
