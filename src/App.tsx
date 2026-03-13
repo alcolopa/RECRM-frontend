@@ -5,10 +5,12 @@ import Pricing from './components/Pricing';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import Layout from './components/Layout';
-import { Home, LogIn } from 'lucide-react';
+import { Home, LogIn, Moon, Sun } from 'lucide-react';
 import api from './api/client';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
-const App = () => {
+const AppContent = () => {
+  const { theme, toggleTheme } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
   const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard'>('landing');
@@ -88,12 +90,21 @@ const App = () => {
                 Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
               </span>
             </div>
-            <button 
-              onClick={() => setView('landing')}
-              style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 500, cursor: 'pointer' }}
-            >
-              Back to Home
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button 
+                onClick={toggleTheme}
+                style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button 
+                onClick={() => setView('landing')}
+                style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 500, cursor: 'pointer' }}
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         </nav>
 
@@ -124,7 +135,10 @@ const App = () => {
         borderBottom: '1px solid var(--border)'
       }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+          <div 
+            onClick={() => setView('landing')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', cursor: 'pointer' }}
+          >
             <Home color="var(--primary)" size={24} />
             <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
               Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
@@ -135,6 +149,13 @@ const App = () => {
               <a href="#features" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Features</a>
               <a href="#pricing" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Pricing</a>
             </div>
+            <button 
+              onClick={toggleTheme}
+              style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button 
               onClick={() => setView('login')}
               style={{ background: 'none', border: 'none', color: 'var(--foreground)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -160,15 +181,15 @@ const App = () => {
       </main>
 
       {/* Footer */}
-      <footer style={{ padding: '4rem 0', backgroundColor: 'var(--foreground)', color: 'white' }}>
+      <footer style={{ padding: '4rem 0', backgroundColor: 'var(--footer-bg)', color: 'var(--footer-text)' }}>
         <div className="container">
           <div className="grid grid-3">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                <Home color="white" size={24} />
-                <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em' }}>EstateHub</span>
+                <Home color="var(--primary)" size={24} />
+                <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--footer-text)' }}>EstateHub</span>
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '0.875rem', maxWidth: '300px' }}>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', maxWidth: '300px' }}>
                 The ultimate solution for modern real estate professionals. Elevate your business today.
               </p>
             </div>
@@ -206,5 +227,11 @@ const App = () => {
     </div>
   );
 }
+
+const App = () => (
+  <ThemeProvider>
+    <AppContent />
+  </ThemeProvider>
+);
 
 export default App;

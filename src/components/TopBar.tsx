@@ -7,9 +7,12 @@ import {
   User as UserIcon, 
   ChevronDown,
   Menu,
-  Building
+  Building,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface TopBarProps {
   onLogout: () => void;
@@ -22,6 +25,7 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onProfileClick }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { theme, toggleTheme } = useTheme();
   
   const displayName = user?.firstName && user?.lastName 
     ? `${user.firstName} ${user.lastName}` 
@@ -48,7 +52,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
   return (
     <header style={{
       height: '4.5rem',
-      backgroundColor: 'white',
+      backgroundColor: 'var(--card-bg)',
       borderBottom: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
@@ -102,6 +106,14 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem' }}>
+        <button 
+          onClick={toggleTheme}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        
         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)' }}>
           <Bell size={20} />
         </button>
@@ -161,7 +173,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   right: 0,
                   top: '110%',
                   width: '200px',
-                  backgroundColor: 'white',
+                  backgroundColor: 'var(--card-bg)',
                   borderRadius: 'var(--radius)',
                   boxShadow: 'var(--shadow-xl)',
                   border: '1px solid var(--border)',

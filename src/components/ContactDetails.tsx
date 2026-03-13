@@ -102,7 +102,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           color: contact.type === ContactType.BUYER ? 'var(--primary)' : '#d97706',
           fontWeight: 700,
           fontSize: '2rem',
-          border: '4px solid white',
+          border: '4px solid var(--card-bg)',
           boxShadow: 'var(--shadow-md)'
         }}>
           {initials}

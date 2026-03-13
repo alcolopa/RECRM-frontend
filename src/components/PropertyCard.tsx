@@ -58,7 +58,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
           right: '1rem',
           padding: '0.25rem 0.75rem',
           borderRadius: '1rem',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--card-bg)',
           color: getStatusColor(property.status),
           fontSize: '0.75rem',
           fontWeight: 700,

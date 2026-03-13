@@ -128,7 +128,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                   position: 'absolute',
                   right: 0,
                   top: '100%',
-                  backgroundColor: 'white',
+                  backgroundColor: 'var(--card-bg)',
                   borderRadius: '0.5rem',
                   boxShadow: 'var(--shadow-lg)',
                   border: '1px solid var(--border)',

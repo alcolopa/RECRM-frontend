@@ -189,7 +189,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                             <div style={{ position: 'relative' }}>
                                 <Building size={16} color="var(--primary)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
                                 <input id="organizationName" name="organizationName" type="text" placeholder="Acme Realty" required value={formData.organizationName} onChange={handleChange}
-                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', fontSize: '0.9rem', outline: 'none', background: 'white' }}
+                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', fontSize: '0.9rem', outline: 'none', background: 'var(--input-bg)' }}
                                 />
                             </div>
                         </div>
@@ -198,7 +198,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                             <div style={{ position: 'relative' }}>
                                 <Globe size={16} color="var(--primary)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
                                 <input id="organizationSlug" name="organizationSlug" type="text" placeholder="acme-realty" required value={formData.organizationSlug} onChange={handleChange}
-                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', fontSize: '0.9rem', outline: 'none', background: 'white' }}
+                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', fontSize: '0.9rem', outline: 'none', background: 'var(--input-bg)' }}
                                 />
                                 <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.7 }}>.estatehub.com</span>
                             </div>

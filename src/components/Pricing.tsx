@@ -60,7 +60,7 @@ const Pricing = () => {
                                     left: '50%',
                                     transform: 'translateX(-50%)',
                                     backgroundColor: 'var(--primary)',
-                                    color: 'white',
+                                    color: 'var(--background)',
                                     padding: '2px 12px',
                                     borderRadius: '12px',
                                     fontSize: '0.75rem',

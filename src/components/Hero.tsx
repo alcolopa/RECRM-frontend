@@ -11,7 +11,7 @@ const Hero = () => {
         <section style={{
             position: 'relative',
             overflow: 'hidden',
-            background: 'radial-gradient(circle at top right, var(--primary-light), transparent 40%), radial-gradient(circle at bottom left, #fef3c7, transparent 40%)',
+            background: 'radial-gradient(circle at top right, var(--primary-light), transparent 40%), radial-gradient(circle at bottom left, var(--hero-blob), transparent 40%)',
             minHeight: 'calc(100vh - 4rem)',
             display: 'flex',
             alignItems: 'center',

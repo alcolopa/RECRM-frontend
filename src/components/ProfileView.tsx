@@ -167,7 +167,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 color: 'var(--primary)',
                 fontSize: '2.5rem',
                 fontWeight: 700,
-                border: '4px solid white',
+                border: '4px solid var(--card-bg)',
                 boxShadow: 'var(--shadow-lg)',
                 overflow: 'hidden'
               }}>
@@ -179,7 +179,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 bottom: '0',
                 right: '0',
                 backgroundColor: 'var(--primary)',
-                color: 'white',
+                color: 'var(--foreground)',
                 padding: '0.5rem',
                 borderRadius: '50%',
                 boxShadow: 'var(--shadow)',
@@ -365,7 +365,8 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid var(--border)',
   fontSize: '0.9375rem',
   outline: 'none',
-  background: 'white',
+  background: 'var(--input-bg)',
+  color: 'var(--foreground)'
 };
 
 const inputIconStyle: React.CSSProperties = {

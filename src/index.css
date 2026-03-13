@@ -18,6 +18,33 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --footer-bg: #0f172a;
+  --footer-text: #ffffff;
+  --hero-blob: #fef3c7;
+}
+
+[data-theme='dark'] {
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-light: #1e3a8a;
+  --secondary: #94a3b8;
+  --accent: #f59e0b;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #334155;
+  --card-bg: #1e293b;
+  --input-bg: #0f172a;
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --footer-bg: #020617;
+  --footer-text: #f8fafc;
+  --hero-blob: rgba(245, 158, 11, 0.1);
 }
 
 * {
@@ -41,10 +68,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
 }
 
 .btn {
@@ -117,7 +144,7 @@ section {
 }
 
 .card {
-  background: white;
+  background: var(--card-bg);
   padding: 2rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
