@@ -1,0 +1,210 @@
+import { useState, useEffect } from 'react';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Pricing from './components/Pricing';
+import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignupForm';
+import Layout from './components/Layout';
+import { Home, LogIn } from 'lucide-react';
+import api from './api/client';
+
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard'>('landing');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const path = window.location.pathname;
+
+    if (token) {
+      fetchProfile();
+    } else if (path === '/login') {
+      setView('login');
+    } else if (path === '/signup') {
+      setView('signup');
+    }
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get('/auth/profile');
+      setUser(response.data);
+      setIsAuthenticated(true);
+      setView('dashboard');
+    } catch (err) {
+      console.error('Failed to fetch profile', err);
+      localStorage.removeItem('token');
+      setView('landing');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setUser(null);
+    setView('landing');
+  };
+
+  const handleUserUpdate = (updatedUser: any) => {
+    setUser(updatedUser);
+  };
+
+  // If authenticated, show the dashboard layout
+  if (isAuthenticated && view === 'dashboard') {
+    return (
+      <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
+    );
+  }
+
+  // Auth pages (Login/Signup)
+  if (view === 'login' || view === 'signup') {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        backgroundColor: 'var(--muted)',
+        background: 'radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 100%)'
+      }}>
+        <nav className="glass" style={{
+          height: '4rem',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid var(--border)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100
+        }}>
+          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div 
+              onClick={() => setView('landing')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', cursor: 'pointer' }}
+            >
+              <Home color="var(--primary)" size={24} />
+              <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
+                Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
+              </span>
+            </div>
+            <button 
+              onClick={() => setView('landing')}
+              style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 500, cursor: 'pointer' }}
+            >
+              Back to Home
+            </button>
+          </div>
+        </nav>
+
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6rem 1.5rem 2rem' }}>
+          {view === 'login' ? (
+            <LoginForm onSwitchToSignup={() => setView('signup')} />
+          ) : (
+            <SignupForm onSwitchToLogin={() => setView('login')} />
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Landing Page
+  return (
+    <div className="app">
+      {/* Navigation */}
+      <nav className="glass" style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        height: '4rem',
+        display: 'flex',
+        alignItems: 'center',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+            <Home color="var(--primary)" size={24} />
+            <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
+              Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="hidden-mobile" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginRight: '1rem' }}>
+              <a href="#features" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Features</a>
+              <a href="#pricing" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Pricing</a>
+            </div>
+            <button 
+              onClick={() => setView('login')}
+              style={{ background: 'none', border: 'none', color: 'var(--foreground)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <LogIn size={18} /> <span className="hidden-mobile">Sign In</span>
+            </button>
+            <button 
+              onClick={() => setView('signup')}
+              className="btn btn-primary" 
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              Join Now
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main style={{ paddingTop: '4rem' }}>
+        <Hero />
+        <Features />
+        <Pricing />
+      </main>
+
+      {/* Footer */}
+      <footer style={{ padding: '4rem 0', backgroundColor: 'var(--foreground)', color: 'white' }}>
+        <div className="container">
+          <div className="grid grid-3">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <Home color="white" size={24} />
+                <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em' }}>EstateHub</span>
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', maxWidth: '300px' }}>
+                The ultimate solution for modern real estate professionals. Elevate your business today.
+              </p>
+            </div>
+            <div>
+              <h4 style={{ marginBottom: '1.5rem' }}>Product</h4>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: '#94a3b8', fontSize: '0.875rem' }}>
+                <li>Features</li>
+                <li>Pricing</li>
+                <li>Integrations</li>
+                <li>Case Studies</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style={{ marginBottom: '1.5rem' }}>Support</h4>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: '#94a3b8', fontSize: '0.875rem' }}>
+                <li>Documentation</li>
+                <li>Contact Us</li>
+                <li>Privacy Policy</li>
+                <li>Terms of Service</li>
+              </ul>
+            </div>
+          </div>
+          <div style={{
+            marginTop: '4rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #334155',
+            textAlign: 'center',
+            color: '#64748b',
+            fontSize: '0.75rem'
+          }}>
+            © {new Date().getFullYear()} EstateHub CRM. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
