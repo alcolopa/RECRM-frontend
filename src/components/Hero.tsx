@@ -11,7 +11,7 @@ const Hero = () => {
         <section style={{
             position: 'relative',
             overflow: 'hidden',
-            background: 'radial-gradient(circle at top right, var(--primary-light), transparent 40%), radial-gradient(circle at bottom left, var(--hero-blob), transparent 40%)',
+            background: 'radial-gradient(circle at top right, rgba(5, 150, 105, 0.1), transparent 40%), radial-gradient(circle at bottom left, var(--hero-blob), transparent 40%)',
             minHeight: 'calc(100vh - 4rem)',
             display: 'flex',
             alignItems: 'center',
@@ -30,8 +30,8 @@ const Hero = () => {
                             alignItems: 'center',
                             gap: '0.5rem',
                             padding: '0.5rem 1rem',
-                            background: 'var(--primary-light)',
-                            color: 'var(--primary)',
+                            background: 'rgba(5, 150, 105, 0.1)',
+                            color: 'var(--color-primary)',
                             borderRadius: '2rem',
                             fontSize: '0.875rem',
                             fontWeight: 600,
@@ -41,11 +41,11 @@ const Hero = () => {
                             <span>The Next-Gen Real Estate CRM</span>
                         </div>
 
-                        <h1 style={{ fontSize: 'clamp(2.25rem, 6vw, 3.5rem)', lineHeight: 1.1, marginBottom: '1.5rem', color: 'var(--foreground)' }}>
-                            Close More Deals with <span style={{ color: 'var(--primary)' }}>Intelligence.</span>
+                        <h1 style={{ fontSize: 'clamp(2.25rem, 6vw, 3.5rem)', lineHeight: 1.1, marginBottom: '1.5rem', color: 'var(--color-text)' }}>
+                            Close More Deals with <span style={{ color: 'var(--color-primary)' }}>Intelligence.</span>
                         </h1>
 
-                        <p style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'var(--secondary)', marginBottom: '2.5rem', maxWidth: '540px' }}>
+                        <p style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'var(--color-text-muted)', marginBottom: '2.5rem', maxWidth: '540px' }}>
                             Streamline your workflow, manage leads effortlessly, and scale your real estate business with our premium all-in-one platform.
                         </p>
 
@@ -56,7 +56,7 @@ const Hero = () => {
                                 "Real-time analytics dashboard"
                             ].map((item, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <CheckCircle size={20} color="var(--primary)" />
+                                    <CheckCircle size={20} color="var(--color-primary)" />
                                     <span style={{ fontWeight: 500, fontSize: '0.9375rem' }}>{item}</span>
                                 </div>
                             ))}
@@ -70,7 +70,7 @@ const Hero = () => {
                             width: '250px',
                             height: '250px',
                             borderRadius: '50%',
-                            background: 'var(--primary)',
+                            background: 'var(--color-primary)',
                             filter: 'blur(80px)',
                             opacity: 0.1,
                             zIndex: 0

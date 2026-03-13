@@ -52,8 +52,8 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
   return (
     <header style={{
       height: '4.5rem',
-      backgroundColor: 'var(--card-bg)',
-      borderBottom: '1px solid var(--border)',
+      backgroundColor: 'var(--color-surface)',
+      borderBottom: '1px solid var(--color-border)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -72,7 +72,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               cursor: 'pointer', 
               display: 'flex', 
               alignItems: 'center',
-              color: 'var(--foreground)'
+              color: 'var(--color-text)'
             }}
           >
             <Menu size={24} />
@@ -83,7 +83,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
           <div style={{ position: 'relative', width: '300px' }}>
             <Search 
               size={18} 
-              color="var(--secondary)" 
+              color="var(--color-text-muted)" 
               style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} 
             />
             <input 
@@ -95,8 +95,8 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                 width: '100%',
                 padding: '0.625rem 1rem 0.625rem 2.5rem',
                 borderRadius: 'var(--radius)',
-                border: '1px solid var(--border)',
-                background: 'var(--muted)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-bg)',
                 fontSize: '0.875rem',
                 outline: 'none',
               }}
@@ -108,17 +108,17 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem' }}>
         <button 
           onClick={toggleTheme}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)' }}>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
           <Bell size={20} />
         </button>
 
-        {!isMobile && <div style={{ width: '1px', height: '1.5rem', backgroundColor: 'var(--border)' }}></div>}
+        {!isMobile && <div style={{ width: '1px', height: '1.5rem', backgroundColor: 'var(--color-border)' }}></div>}
 
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button 
@@ -138,14 +138,14 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               width: '2.25rem',
               height: '2.25rem',
               borderRadius: '50%',
-              backgroundColor: 'var(--primary-light)',
+              backgroundColor: 'rgba(5, 150, 105, 0.1)',
               backgroundImage: user?.avatar ? `url(${user.avatar})` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--primary)',
+              color: 'var(--color-primary)',
               fontWeight: 600,
               fontSize: '0.75rem'
             }}>
@@ -154,10 +154,10 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
             {!isMobile && (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{displayName}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{user?.role || 'Agent'}</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{displayName}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{user?.role || 'Agent'}</span>
                 </div>
-                <ChevronDown size={16} color="var(--secondary)" />
+                <ChevronDown size={16} color="var(--color-text-muted)" />
               </>
             )}
           </button>
@@ -173,21 +173,21 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   right: 0,
                   top: '110%',
                   width: '200px',
-                  backgroundColor: 'var(--card-bg)',
+                  backgroundColor: 'var(--color-surface)',
                   borderRadius: 'var(--radius)',
                   boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--color-border)',
                   overflow: 'hidden',
                   padding: '0.5rem'
                 }}
               >
-                <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', marginBottom: '0.5rem' }}>
+                <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', marginBottom: '0.5rem' }}>
                   <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{displayName}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayEmail}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayEmail}</p>
                   {user?.organization?.name && (
                     <p style={{ 
                       fontSize: '0.7rem', 
-                      color: 'var(--primary)', 
+                      color: 'var(--color-primary)', 
                       marginTop: '0.25rem',
                       fontWeight: 600,
                       textTransform: 'uppercase'
@@ -210,11 +210,11 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   <span>System Settings</span>
                 </button>
                 
-                <div style={{ height: '1px', backgroundColor: 'var(--border)', margin: '0.5rem 0' }}></div>
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.5rem 0' }}></div>
                 
                 <button 
                   onClick={onLogout}
-                  style={{ ...dropdownItemStyle, color: '#ef4444' }}
+                  style={{ ...dropdownItemStyle, color: 'var(--color-error)' }}
                 >
                   <LogOut size={16} />
                   <span>Logout</span>
@@ -238,7 +238,7 @@ const dropdownItemStyle: React.CSSProperties = {
   background: 'none',
   borderRadius: '0.375rem',
   fontSize: '0.875rem',
-  color: 'var(--foreground)',
+  color: 'var(--color-text)',
   cursor: 'pointer',
   textAlign: 'left'
 };

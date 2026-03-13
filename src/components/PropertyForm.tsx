@@ -105,7 +105,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             <div style={inputGroupStyle}>
               <label htmlFor="price" style={labelStyle}>Price ($)*</label>
               <div style={{ position: 'relative' }}>
-                <DollarSign size={16} color="var(--secondary)" style={inputIconStyle} />
+                <DollarSign size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input
                   id="price" name="price" type="number" required placeholder="450000"
                   value={formData.price} onChange={handleChange} style={{ ...inputStyle, paddingLeft: '2.25rem' }}
@@ -261,9 +261,9 @@ const sectionStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: '1rem',
   padding: '1rem',
-  background: 'var(--muted)',
+  background: 'var(--color-bg)',
   borderRadius: 'var(--radius)',
-  border: '1px solid var(--border)'
+  border: '1px solid var(--color-border)'
 };
 
 const sectionTitleStyle: React.CSSProperties = {
@@ -273,7 +273,7 @@ const sectionTitleStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   marginBottom: '0.5rem',
-  color: 'var(--primary)'
+  color: 'var(--color-primary)'
 };
 
 const inputGroupStyle: React.CSSProperties = {
@@ -285,7 +285,7 @@ const inputGroupStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: 'var(--secondary)',
+  color: 'var(--color-text-muted)',
   textTransform: 'uppercase'
 };
 
@@ -293,10 +293,10 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.625rem 0.875rem',
   borderRadius: '0.5rem',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--color-border)',
   fontSize: '0.9375rem',
   outline: 'none',
-  background: 'white',
+  background: 'var(--color-surface)',
 };
 
 const inputIconStyle: React.CSSProperties = {
@@ -307,7 +307,7 @@ const inputIconStyle: React.CSSProperties = {
 };
 
 const iconButtonStyle: React.CSSProperties = {
-  background: 'var(--muted)',
+  background: 'var(--color-bg)',
   border: 'none',
   borderRadius: '0.5rem',
   padding: '0.5rem',
@@ -322,11 +322,11 @@ const tagStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   padding: '0.375rem 0.75rem',
-  background: 'white',
-  border: '1px solid var(--primary-light)',
+  background: 'var(--color-surface)',
+  border: '1px solid rgba(5, 150, 105, 0.2)',
   borderRadius: '2rem',
   fontSize: '0.8125rem',
-  color: 'var(--primary)',
+  color: 'var(--color-primary)',
   fontWeight: 600
 };
 

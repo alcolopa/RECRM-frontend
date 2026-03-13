@@ -140,7 +140,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
       <header>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Account Settings</h1>
-        <p style={{ color: 'var(--secondary)' }}>Manage your personal information, avatar, and security settings.</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Manage your personal information, avatar, and security settings.</p>
       </header>
 
       <div style={{ 
@@ -157,17 +157,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 width: '100%',
                 height: '100%',
                 borderRadius: '50%',
-                backgroundColor: 'var(--primary-light)',
+                backgroundColor: 'rgba(5, 150, 105, 0.1)',
                 backgroundImage: formData.avatar ? `url(${formData.avatar})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--primary)',
+                color: 'var(--color-primary)',
                 fontSize: '2.5rem',
                 fontWeight: 700,
-                border: '4px solid var(--card-bg)',
+                border: '4px solid var(--color-surface)',
                 boxShadow: 'var(--shadow-lg)',
                 overflow: 'hidden'
               }}>
@@ -178,8 +178,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 position: 'absolute',
                 bottom: '0',
                 right: '0',
-                backgroundColor: 'var(--primary)',
-                color: 'var(--foreground)',
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--color-text)',
                 padding: '0.5rem',
                 borderRadius: '50%',
                 boxShadow: 'var(--shadow)',
@@ -205,7 +205,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem' }}>
               {formData.firstName} {formData.lastName}
             </h2>
-            <p style={{ color: 'var(--secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>{formData.email}</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>{formData.email}</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={badgeStyle}>
@@ -221,10 +221,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
 
           <div className="card" style={{ padding: '1.5rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ShieldCheck size={18} color="var(--primary)" />
+              <ShieldCheck size={18} color="var(--color-primary)" />
               Security Tips
             </h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--secondary)', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
               Keep your account secure by using a strong password. You'll need your current password to make changes to your security settings.
             </p>
           </div>
@@ -235,7 +235,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
           <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobile ? '1.5rem' : '2rem' }}>
             <div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Personal Information</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--secondary)', marginBottom: '1.5rem' }}>Update your name and contact details.</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Update your name and contact details.</p>
             </div>
 
             <AnimatePresence>
@@ -255,14 +255,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               <div style={inputGroupStyle}>
                 <label htmlFor="firstName" style={labelStyle}>First Name</label>
                 <div style={{ position: 'relative' }}>
-                  <UserIcon size={16} color="var(--secondary)" style={inputIconStyle} />
+                  <UserIcon size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleChange} style={inputStyle} placeholder="First name" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label htmlFor="lastName" style={labelStyle}>Last Name</label>
                 <div style={{ position: 'relative' }}>
-                  <UserIcon size={16} color="var(--secondary)" style={inputIconStyle} />
+                  <UserIcon size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleChange} style={inputStyle} placeholder="Last name" />
                 </div>
               </div>
@@ -271,22 +271,22 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
             <div style={inputGroupStyle}>
               <label htmlFor="email" style={labelStyle}>Email Address</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} color="var(--secondary)" style={inputIconStyle} />
+                <Mail size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input id="email" name="email" type="email" value={formData.email} onChange={handleChange} style={inputStyle} placeholder="email@example.com" />
               </div>
             </div>
 
-            <div style={{ borderBottom: '1px solid var(--border)', margin: '1rem 0' }}></div>
+            <div style={{ borderBottom: '1px solid var(--color-border)', margin: '1rem 0' }}></div>
 
             <div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Security & Password</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--secondary)', marginBottom: '1.5rem' }}>Update your password to stay secure.</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Update your password to stay secure.</p>
             </div>
 
             <div style={inputGroupStyle}>
               <label htmlFor="oldPassword" style={labelStyle}>Current Password</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
+                <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input id="oldPassword" name="oldPassword" type="password" value={formData.oldPassword} onChange={handleChange} style={inputStyle} placeholder="Enter current password" />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
@@ -298,14 +298,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               <div style={inputGroupStyle}>
                 <label htmlFor="password" style={labelStyle}>New Password</label>
                 <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
+                  <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} style={inputStyle} placeholder="New password" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label htmlFor="confirmPassword" style={labelStyle}>Confirm New Password</label>
                 <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="var(--secondary)" style={inputIconStyle} />
+                  <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} style={inputStyle} placeholder="Confirm new password" />
                 </div>
               </div>
@@ -338,10 +338,10 @@ const badgeStyle: React.CSSProperties = {
   justifyContent: 'center',
   gap: '0.5rem',
   padding: '0.5rem',
-  backgroundColor: 'var(--muted)',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '0.5rem',
   fontSize: '0.875rem',
-  color: 'var(--secondary)',
+  color: 'var(--color-text-muted)',
   fontWeight: 500
 };
 
@@ -354,7 +354,7 @@ const inputGroupStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: 'var(--secondary)',
+  color: 'var(--color-text-muted)',
   textTransform: 'uppercase'
 };
 
@@ -362,11 +362,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.625rem 0.875rem 0.625rem 2.25rem',
   borderRadius: '0.5rem',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--color-border)',
   fontSize: '0.9375rem',
   outline: 'none',
-  background: 'var(--input-bg)',
-  color: 'var(--foreground)'
+  background: 'var(--color-surface)',
+  color: 'var(--color-text)'
 };
 
 const inputIconStyle: React.CSSProperties = {
@@ -381,12 +381,12 @@ const successAlertStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   padding: '0.75rem 1rem',
-  backgroundColor: '#dcfce7',
-  color: '#166534',
+  backgroundColor: 'rgba(22, 163, 74, 0.1)',
+  color: 'var(--color-success)',
   borderRadius: 'var(--radius)',
   fontSize: '0.875rem',
   fontWeight: 600,
-  border: '1px solid #bbf7d0'
+  border: '1px solid rgba(22, 163, 74, 0.2)'
 };
 
 const errorAlertStyle: React.CSSProperties = {
@@ -394,12 +394,12 @@ const errorAlertStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   padding: '0.75rem 1rem',
-  backgroundColor: '#fee2e2',
-  color: '#991b1b',
+  backgroundColor: 'rgba(220, 38, 38, 0.1)',
+  color: 'var(--color-error)',
   borderRadius: 'var(--radius)',
   fontSize: '0.875rem',
   fontWeight: 600,
-  border: '1px solid #fecaca'
+  border: '1px solid rgba(220, 38, 38, 0.2)'
 };
 
 export default ProfileView;

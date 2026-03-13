@@ -40,11 +40,11 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
 
   const getStatusColor = (status: ContactStatus) => {
     switch (status) {
-      case ContactStatus.NEW: return '#3b82f6';
-      case ContactStatus.QUALIFIED: return '#10b981';
-      case ContactStatus.ACTIVE: return '#8b5cf6';
-      case ContactStatus.LOST: return '#ef4444';
-      default: return 'var(--secondary)';
+      case ContactStatus.NEW: return 'var(--color-primary)';
+      case ContactStatus.QUALIFIED: return 'var(--color-success)';
+      case ContactStatus.ACTIVE: return 'var(--color-primary-hover)';
+      case ContactStatus.LOST: return 'var(--color-error)';
+      default: return 'var(--color-text-muted)';
     }
   };
 
@@ -68,11 +68,11 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
             width: '3.5rem', 
             height: '3.5rem', 
             borderRadius: '50%', 
-            backgroundColor: contact.type === ContactType.BUYER ? 'var(--primary-light)' : '#fef3c7', 
+            backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            color: contact.type === ContactType.BUYER ? 'var(--primary)' : '#d97706',
+            color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
             fontWeight: 700,
             fontSize: '1.25rem',
             border: '2px solid white',
@@ -87,8 +87,8 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                 fontSize: '0.7rem', 
                 padding: '0.15rem 0.5rem', 
                 borderRadius: '1rem', 
-                backgroundColor: contact.type === ContactType.BUYER ? 'var(--primary-light)' : '#fef3c7',
-                color: contact.type === ContactType.BUYER ? 'var(--primary)' : '#d97706',
+                backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
+                color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
                 fontWeight: 700,
                 textTransform: 'uppercase'
               }}>
@@ -98,11 +98,11 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                 fontSize: '0.7rem', 
                 padding: '0.15rem 0.5rem', 
                 borderRadius: '1rem', 
-                backgroundColor: '#f3f4f6',
+                backgroundColor: 'var(--color-bg)',
                 color: getStatusColor(contact.status),
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                border: `1px solid ${getStatusColor(contact.status)}20`
+                border: `1px solid var(--color-border)`
               }}>
                 {contact.status}
               </span>
@@ -113,7 +113,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         <div style={{ position: 'relative' }} ref={optionsRef}>
           <button 
             onClick={() => setShowOptions(!showOptions)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)', padding: '0.25rem' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '0.25rem' }}
           >
             <MoreVertical size={20} />
           </button>
@@ -128,10 +128,10 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                   position: 'absolute',
                   right: 0,
                   top: '100%',
-                  backgroundColor: 'var(--card-bg)',
+                  backgroundColor: 'var(--color-surface)',
                   borderRadius: '0.5rem',
                   boxShadow: 'var(--shadow-lg)',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--color-border)',
                   zIndex: 10,
                   padding: '0.25rem',
                   minWidth: '140px'
@@ -145,7 +145,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                 </button>
                 <button 
                   onClick={() => { setShowOptions(false); onDelete(contact.id); }}
-                  style={{ ...optionButtonStyle, color: '#ef4444' }}
+                  style={{ ...optionButtonStyle, color: 'var(--color-error)' }}
                 >
                   <Trash2 size={16} /> Delete
                 </button>
@@ -156,16 +156,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
       </div>
 
       {/* Profile Summary */}
-      <div style={{ backgroundColor: 'var(--muted)', borderRadius: 'var(--radius)', padding: '0.75rem', marginBottom: '1rem' }}>
+      <div style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius)', padding: '0.75rem', marginBottom: '1rem' }}>
         {contact.type === ContactType.BUYER ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-              <DollarSign size={14} color="var(--secondary)" />
+              <DollarSign size={14} color="var(--color-text-muted)" />
               <span style={{ fontWeight: 600 }}>Budget:</span>
               <span>{contact.buyerProfile?.maxBudget ? `$${Number(contact.buyerProfile.maxBudget).toLocaleString()}` : 'Not set'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-              <MapPin size={14} color="var(--secondary)" />
+              <MapPin size={14} color="var(--color-text-muted)" />
               <span style={{ fontWeight: 600 }}>Locations:</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {contact.buyerProfile?.preferredCities?.join(', ') || 'Anywhere'}
@@ -175,12 +175,12 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-              <Target size={14} color="var(--secondary)" />
+              <Target size={14} color="var(--color-text-muted)" />
               <span style={{ fontWeight: 600 }}>Ready to List:</span>
               <span>{contact.sellerProfile?.readyToList ? 'Yes' : 'No'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-              <Briefcase size={14} color="var(--secondary)" />
+              <Briefcase size={14} color="var(--color-text-muted)" />
               <span style={{ fontWeight: 600 }}>Timeline:</span>
               <span style={{ textTransform: 'capitalize' }}>
                 {contact.sellerProfile?.sellingTimeline ? contact.sellerProfile.sellingTimeline.replace(/_/g, ' ').toLowerCase() : 'Not set'}
@@ -190,16 +190,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
         <div style={infoRowStyle}>
-          <Mail size={16} color="var(--secondary)" />
-          <span style={{ fontSize: '0.875rem', color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Mail size={16} color="var(--color-text-muted)" />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.email || 'No email provided'}
           </span>
         </div>
         <div style={infoRowStyle}>
-          <Phone size={16} color="var(--secondary)" />
-          <span style={{ fontSize: '0.875rem', color: 'var(--foreground)' }}>
+          <Phone size={16} color="var(--color-text-muted)" />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>
             {contact.phone}
           </span>
         </div>
@@ -229,7 +229,7 @@ const optionButtonStyle: React.CSSProperties = {
   background: 'none',
   borderRadius: '0.375rem',
   fontSize: '0.875rem',
-  color: 'var(--foreground)',
+  color: 'var(--color-text)',
   cursor: 'pointer',
   textAlign: 'left'
 };

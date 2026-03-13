@@ -29,11 +29,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
 
   const getStatusColor = (status: ContactStatus) => {
     switch (status) {
-      case ContactStatus.NEW: return '#3b82f6';
-      case ContactStatus.QUALIFIED: return '#10b981';
-      case ContactStatus.ACTIVE: return '#8b5cf6';
-      case ContactStatus.LOST: return '#ef4444';
-      default: return 'var(--secondary)';
+      case ContactStatus.NEW: return 'var(--color-primary)';
+      case ContactStatus.QUALIFIED: return 'var(--color-success)';
+      case ContactStatus.ACTIVE: return 'var(--color-primary-hover)';
+      case ContactStatus.LOST: return 'var(--color-error)';
+      default: return 'var(--color-text-muted)';
     }
   };
 
@@ -82,7 +82,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           <button 
             onClick={() => onDelete(contact.id)}
             className="btn btn-outline"
-            style={{ gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#ef4444', borderColor: '#fee2e2' }}
+            style={{ gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
           >
             <Trash2 size={16} /> Delete
           </button>
@@ -95,14 +95,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           width: '6rem', 
           height: '6rem', 
           borderRadius: '50%', 
-          backgroundColor: contact.type === ContactType.BUYER ? 'var(--primary-light)' : '#fef3c7', 
+          backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          color: contact.type === ContactType.BUYER ? 'var(--primary)' : '#d97706',
+          color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
           fontWeight: 700,
           fontSize: '2rem',
-          border: '4px solid var(--card-bg)',
+          border: '4px solid var(--color-surface)',
           boxShadow: 'var(--shadow-md)'
         }}>
           {initials}
@@ -115,8 +115,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               fontSize: '0.75rem', 
               padding: '0.25rem 0.75rem', 
               borderRadius: '1rem', 
-              backgroundColor: contact.type === ContactType.BUYER ? 'var(--primary-light)' : '#fef3c7',
-              color: contact.type === ContactType.BUYER ? 'var(--primary)' : '#d97706',
+              backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
+              color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
               fontWeight: 700,
               textTransform: 'uppercase'
             }}>
@@ -126,11 +126,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               fontSize: '0.75rem', 
               padding: '0.25rem 0.75rem', 
               borderRadius: '1rem', 
-              backgroundColor: '#f3f4f6',
+              backgroundColor: 'var(--color-bg)',
               color: getStatusColor(contact.status),
               fontWeight: 700,
               textTransform: 'uppercase',
-              border: `1px solid ${getStatusColor(contact.status)}20`
+              border: `1px solid var(--color-border)`
             }}>
               {contact.status}
             </span>
@@ -143,12 +143,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
         
         {/* Contact Information */}
         <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
             Contact Information
           </h3>
           
           <div style={infoRowStyle}>
-            <div style={iconBoxStyle}><Mail size={18} color="var(--primary)" /></div>
+            <div style={iconBoxStyle}><Mail size={18} color="var(--color-primary)" /></div>
             <div>
               <div style={labelStyle}>Email</div>
               <div style={valueStyle}>{contact.email || 'Not provided'}</div>
@@ -156,7 +156,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           </div>
           
           <div style={infoRowStyle}>
-            <div style={iconBoxStyle}><Phone size={18} color="var(--primary)" /></div>
+            <div style={iconBoxStyle}><Phone size={18} color="var(--color-primary)" /></div>
             <div>
               <div style={labelStyle}>Phone Number</div>
               <div style={valueStyle}>{contact.phone}</div>
@@ -165,7 +165,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           
           {contact.secondaryPhone && (
             <div style={infoRowStyle}>
-              <div style={iconBoxStyle}><Phone size={18} color="var(--primary)" /></div>
+              <div style={iconBoxStyle}><Phone size={18} color="var(--color-primary)" /></div>
               <div>
                 <div style={labelStyle}>Secondary Phone</div>
                 <div style={valueStyle}>{contact.secondaryPhone}</div>
@@ -175,7 +175,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
 
           {contact.leadSource && (
             <div style={infoRowStyle}>
-              <div style={iconBoxStyle}><Target size={18} color="var(--primary)" /></div>
+              <div style={iconBoxStyle}><Target size={18} color="var(--color-primary)" /></div>
               <div>
                 <div style={labelStyle}>Lead Source</div>
                 <div style={valueStyle}>{contact.leadSource}</div>
@@ -186,14 +186,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
 
         {/* Dynamic Profile Information (Buyer/Seller) */}
         <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
             {contact.type === ContactType.BUYER ? 'Buyer Profile' : 'Seller Profile'}
           </h3>
           
           {contact.type === ContactType.BUYER && contact.buyerProfile ? (
             <>
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><DollarSign size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Budget Range</div>
                   <div style={valueStyle}>
@@ -205,7 +205,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
               
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Briefcase size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><Briefcase size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Financing Details</div>
                   <div style={valueStyle}>
@@ -216,7 +216,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
 
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Home size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><Home size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Property Preferences</div>
                   <div style={valueStyle}>
@@ -228,7 +228,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
 
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><MapPin size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><MapPin size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Preferred Locations</div>
                   <div style={valueStyle}>
@@ -241,7 +241,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           ) : contact.type === ContactType.SELLER && contact.sellerProfile ? (
             <>
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><DollarSign size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Minimum Price Expected</div>
                   <div style={valueStyle}>{formatCurrency(contact.sellerProfile.minimumPrice)}</div>
@@ -249,7 +249,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
               
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Target size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><Target size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Ready to List?</div>
                   <div style={valueStyle}>{contact.sellerProfile.readyToList ? 'Yes' : 'No'}</div>
@@ -257,7 +257,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
               
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Calendar size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><Calendar size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Selling Timeline</div>
                   <div style={valueStyle}>{formatEnum(contact.sellerProfile.sellingTimeline)}</div>
@@ -265,7 +265,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
               
               <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><FileText size={18} color="var(--primary)" /></div>
+                <div style={iconBoxStyle}><FileText size={18} color="var(--color-primary)" /></div>
                 <div>
                   <div style={labelStyle}>Reason For Selling</div>
                   <div style={valueStyle}>{formatEnum(contact.sellerProfile.reasonForSelling)}</div>
@@ -273,7 +273,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               </div>
             </>
           ) : (
-            <div style={{ color: 'var(--secondary)', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+            <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
               No detailed profile information recorded yet.
             </div>
           )}
@@ -282,13 +282,13 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
 
       {/* Bottom Section: Notes & Meta */}
       <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
           Additional Details
         </h3>
         
         {contact.tags && contact.tags.length > 0 && (
           <div style={infoRowStyle}>
-            <div style={iconBoxStyle}><Tag size={18} color="var(--primary)" /></div>
+            <div style={iconBoxStyle}><Tag size={18} color="var(--color-primary)" /></div>
             <div>
               <div style={labelStyle}>Tags</div>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
@@ -297,9 +297,9 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
                     fontSize: '0.75rem', 
                     padding: '0.15rem 0.5rem', 
                     borderRadius: 'var(--radius)', 
-                    backgroundColor: 'var(--muted)',
-                    color: 'var(--secondary)',
-                    border: '1px solid var(--border)'
+                    backgroundColor: 'var(--color-bg)',
+                    color: 'var(--color-text-muted)',
+                    border: '1px solid var(--color-border)'
                   }}>
                     {tag}
                   </span>
@@ -310,12 +310,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
         )}
 
         <div style={infoRowStyle}>
-          <div style={iconBoxStyle}><FileText size={18} color="var(--primary)" /></div>
+          <div style={iconBoxStyle}><FileText size={18} color="var(--color-primary)" /></div>
           <div style={{ width: '100%' }}>
             <div style={labelStyle}>Notes</div>
             <div style={{ 
               ...valueStyle, 
-              backgroundColor: 'var(--muted)', 
+              backgroundColor: 'var(--color-bg)', 
               padding: '1rem', 
               borderRadius: 'var(--radius)',
               marginTop: '0.5rem',
@@ -327,7 +327,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--border)', fontSize: '0.8125rem', color: 'var(--secondary)' }}>
+        <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--color-border)', fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
           <div><span style={{ fontWeight: 600 }}>Created:</span> {formatDate(contact.createdAt)}</div>
           <div><span style={{ fontWeight: 600 }}>Last Updated:</span> {formatDate(contact.updatedAt)}</div>
           {contact.lastContactedAt && (
@@ -351,7 +351,7 @@ const iconBoxStyle: React.CSSProperties = {
   width: '2.5rem',
   height: '2.5rem',
   borderRadius: '0.5rem',
-  backgroundColor: 'var(--primary-light)',
+  backgroundColor: 'rgba(5, 150, 105, 0.1)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -361,7 +361,7 @@ const iconBoxStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: 'var(--secondary)',
+  color: 'var(--color-text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.025em',
   marginBottom: '0.125rem'
@@ -369,7 +369,7 @@ const labelStyle: React.CSSProperties = {
 
 const valueStyle: React.CSSProperties = {
   fontSize: '0.9375rem',
-  color: 'var(--foreground)',
+  color: 'var(--color-text)',
   fontWeight: 500,
   wordBreak: 'break-word'
 };

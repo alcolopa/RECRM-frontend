@@ -64,8 +64,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         style={{ 
-                            background: '#fee2e2', 
-                            color: '#b91c1c', 
+                            background: 'rgba(220, 38, 38, 0.1)', 
+                            color: 'var(--color-error)', 
                             padding: '0.75rem', 
                             borderRadius: 'var(--radius)',
                             marginBottom: '1.25rem',
@@ -73,7 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            border: '1px solid #fecaca'
+                            border: '1px solid rgba(220, 38, 38, 0.2)'
                         }}
                     >
                         <AlertCircle size={16} />
@@ -85,14 +85,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         style={{ 
-                            background: '#dcfce7', 
-                            color: '#15803d', 
+                            background: 'rgba(22, 163, 74, 0.1)', 
+                            color: 'var(--color-success)', 
                             padding: '0.75rem', 
                             borderRadius: 'var(--radius)',
                             marginBottom: '1.25rem',
                             fontSize: '0.875rem',
                             textAlign: 'center',
-                            border: '1px solid #bbf7d0'
+                            border: '1px solid rgba(22, 163, 74, 0.2)'
                         }}
                     >
                         Login successful! Redirecting...
@@ -106,7 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                     <div style={{ position: 'relative' }}>
                         <Mail
                             size={18}
-                            color="var(--secondary)"
+                            color="var(--color-text-muted)"
                             style={{
                                 position: 'absolute',
                                 left: '0.875rem',
@@ -126,13 +126,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                                 width: '100%',
                                 padding: '0.75rem 1rem 0.75rem 2.5rem',
                                 borderRadius: 'var(--radius)',
-                                border: '1px solid var(--border)',
+                                border: '1px solid var(--color-border)',
                                 fontSize: '1rem',
                                 outline: 'none',
                                 transition: 'border-color 0.2s',
                             }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
                         />
                     </div>
                 </div>
@@ -140,12 +140,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <label htmlFor="password" style={{ fontSize: '0.875rem', fontWeight: 500 }}>Password</label>
-                        <a href="#" style={{ fontSize: '0.875rem', color: 'var(--primary)', textDecoration: 'none' }}>Forgot?</a>
+                        <a href="#" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>Forgot?</a>
                     </div>
                     <div style={{ position: 'relative' }}>
                         <Lock
                             size={18}
-                            color="var(--secondary)"
+                            color="var(--color-text-muted)"
                             style={{
                                 position: 'absolute',
                                 left: '0.875rem',
@@ -165,13 +165,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                                 width: '100%',
                                 padding: '0.75rem 1rem 0.75rem 2.5rem',
                                 borderRadius: 'var(--radius)',
-                                border: '1px solid var(--border)',
+                                border: '1px solid var(--color-border)',
                                 fontSize: '1rem',
                                 outline: 'none',
                                 transition: 'border-color 0.2s',
                             }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
                         />
                         <button
                             type="button"
@@ -184,7 +184,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: 'var(--secondary)',
+                                color: 'var(--color-text-muted)',
                                 display: 'flex',
                                 alignItems: 'center'
                             }}
@@ -208,7 +208,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Don't have an account? <button type="button" onClick={onSwitchToSignup} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', font: 'inherit' }}>Get Started</button>
+                    Don't have an account? <button type="button" onClick={onSwitchToSignup} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', font: 'inherit' }}>Get Started</button>
                 </p>
             </form>
         </motion.div>

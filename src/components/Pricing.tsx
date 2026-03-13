@@ -29,7 +29,7 @@ const Pricing = () => {
             <div className="container">
                 <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Simple, transparent pricing</h2>
-                    <p style={{ color: 'var(--secondary)', fontSize: '1.125rem', maxWidth: '700px', margin: '0 auto' }}>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '1.125rem', maxWidth: '700px', margin: '0 auto' }}>
                         Choose the plan that fits your business stage. No hidden fees, cancel anytime.
                     </p>
                 </div>
@@ -48,7 +48,7 @@ const Pricing = () => {
                                 flexDirection: 'column',
                                 gap: '1.5rem',
                                 position: 'relative',
-                                border: plan.popular ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                border: plan.popular ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                                 transform: plan.popular ? 'scale(1.05)' : 'none',
                                 zIndex: plan.popular ? 1 : 0
                             }}
@@ -59,7 +59,7 @@ const Pricing = () => {
                                     top: '-12px',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
-                                    backgroundColor: 'var(--primary)',
+                                    backgroundColor: 'var(--color-primary)',
                                     color: 'var(--background)',
                                     padding: '2px 12px',
                                     borderRadius: '12px',
@@ -73,12 +73,12 @@ const Pricing = () => {
 
                             <div>
                                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{plan.name}</h3>
-                                <p style={{ color: 'var(--secondary)', fontSize: '0.875rem' }}>{plan.description}</p>
+                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{plan.description}</p>
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                                 <span style={{ fontSize: '2.5rem', fontWeight: 800 }}>${plan.price}</span>
-                                <span style={{ color: 'var(--secondary)' }}>/month</span>
+                                <span style={{ color: 'var(--color-text-muted)' }}>/month</span>
                             </div>
 
                             <button className={`btn ${plan.popular ? 'btn-primary' : 'btn-outline'}`} style={{ width: '100%' }}>
@@ -88,7 +88,7 @@ const Pricing = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
                                 {plan.features.map((feature, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                                        <Check size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+                                        <Check size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
                                         <span>{feature}</span>
                                     </div>
                                 ))}

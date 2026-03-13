@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       display: 'flex', 
       height: '100vh', 
       width: '100vw', 
-      backgroundColor: 'var(--muted)', 
+      backgroundColor: 'var(--color-bg)', 
       position: 'relative', 
       overflow: 'hidden' 
     }}>

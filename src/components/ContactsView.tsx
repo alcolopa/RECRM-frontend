@@ -112,7 +112,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Contacts</h1>
-          <p style={{ color: 'var(--secondary)' }}>Manage your buyers and sellers in one place.</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>Manage your buyers and sellers in one place.</p>
         </div>
         <button
           onClick={() => setView('form')}
@@ -126,7 +126,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
       {/* Filters & Search */}
       <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
-          <Search size={18} color="var(--secondary)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             id="searchQuery"
             name="searchQuery"
@@ -138,7 +138,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
               width: '100%',
               padding: '0.625rem 1rem 0.625rem 2.5rem',
               borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--color-border)',
               fontSize: '0.875rem',
               outline: 'none'
             }}
@@ -172,7 +172,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-          <Loader2 size={40} className="animate-spin" color="var(--primary)" />
+          <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredContacts.length > 0 ? (
         <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
@@ -194,11 +194,11 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
         </div>
       ) : (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)' }}>
+          <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
             <Users size={32} />
           </div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>No contacts found</h3>
-          <p style={{ color: 'var(--secondary)', maxWidth: '400px' }}>
+          <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px' }}>
             {searchQuery || filterType !== 'ALL'
               ? 'No contacts match your current filters.'
               : 'You haven\'t added any contacts yet. Start by adding your first buyer or seller.'}

@@ -12,10 +12,10 @@ import { motion } from 'framer-motion';
 
 const Dashboard: React.FC = () => {
   const stats = [
-    { label: 'Total Leads', value: '1,284', change: '+12.5%', icon: Users, color: '#3b82f6', trend: 'up' },
-    { label: 'Properties', value: '452', change: '+3.2%', icon: Building2, color: '#10b981', trend: 'up' },
-    { label: 'Active Deals', value: '84', change: '-2.4%', icon: Briefcase, color: '#f59e0b', trend: 'down' },
-    { label: 'Revenue', value: '$2.4M', change: '+18.7%', icon: TrendingUp, color: '#8b5cf6', trend: 'up' },
+    { label: 'Total Leads', value: '1,284', change: '+12.5%', icon: Users, color: 'var(--color-primary)', trend: 'up' }, // Using primary for leads
+    { label: 'Properties', value: '452', change: '+3.2%', icon: Building2, color: 'var(--color-success)', trend: 'up' }, // Using success for properties
+    { label: 'Active Deals', value: '84', change: '-2.4%', icon: Briefcase, color: 'var(--color-warning)', trend: 'down' },
+    { label: 'Revenue', value: '$2.4M', change: '+18.7%', icon: TrendingUp, color: 'var(--color-primary)', trend: 'up' },
   ];
 
   const recentLeads = [
@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Dashboard Overview</h1>
-        <p style={{ color: 'var(--secondary)' }}>Welcome back, here is what's happening with your properties today.</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Welcome back, here is what's happening with your properties today.</p>
       </header>
 
       {/* Stats Grid */}
@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.25rem',
-                color: stat.trend === 'up' ? '#10b981' : '#ef4444',
+                color: stat.trend === 'up' ? 'var(--color-success)' : 'var(--color-error)',
                 fontSize: '0.875rem',
                 fontWeight: 600
               }}>
@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--secondary)', fontWeight: 500 }}>{stat.label}</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{stat.label}</p>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stat.value}</h3>
             </div>
           </motion.div>
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.125rem' }}>Recent Leads</h3>
-            <button style={{ color: 'var(--primary)', background: 'none', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>View All</button>
+            <button style={{ color: 'var(--color-primary)', background: 'none', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>View All</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {recentLeads.map((lead, i) => (
@@ -106,19 +106,19 @@ const Dashboard: React.FC = () => {
                   width: '2.5rem', 
                   height: '2.5rem', 
                   borderRadius: '50%', 
-                  backgroundColor: 'var(--muted)', 
+                  backgroundColor: 'var(--color-bg)', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
                   fontWeight: 600,
-                  color: 'var(--secondary)',
+                  color: 'var(--color-text-muted)',
                   flexShrink: 0
                 }}>
                   {lead.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div style={{ flex: '1 1 150px', minWidth: 0 }}>
                   <p style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.email}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.email}</p>
                 </div>
                 <div style={{ 
                   textAlign: 'right',
@@ -131,8 +131,8 @@ const Dashboard: React.FC = () => {
                     fontSize: '0.7rem', 
                     padding: '0.2rem 0.5rem', 
                     borderRadius: '1rem', 
-                    backgroundColor: lead.status === 'New' ? 'var(--primary-light)' : '#f3f4f6',
-                    color: lead.status === 'New' ? 'var(--primary)' : 'var(--secondary)',
+                    backgroundColor: lead.status === 'New' ? 'var(--color-bg)' : 'var(--color-bg)', // Simplified
+                    color: lead.status === 'New' ? 'var(--color-primary)' : 'var(--color-text-muted)',
                     fontWeight: 600,
                     whiteSpace: 'nowrap'
                   }}>
@@ -155,40 +155,40 @@ const Dashboard: React.FC = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.125rem' }}>Upcoming Tasks</h3>
-            <button style={{ color: 'var(--primary)', background: 'none', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>Add Task</button>
+            <button style={{ color: 'var(--color-primary)', background: 'none', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>Add Task</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '32px' }}>
-                <Calendar size={18} color="var(--primary)" />
-                <div style={{ width: '2px', flex: 1, background: 'var(--border)', margin: '0.5rem 0' }}></div>
+                <Calendar size={18} color="var(--color-primary)" />
+                <div style={{ width: '2px', flex: 1, background: 'var(--color-border)', margin: '0.5rem 0' }}></div>
               </div>
               <div style={{ paddingBottom: '0.5rem' }}>
                 <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>Property showing with Alice</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
                   <Clock size={12} /> Today, 2:30 PM
                 </p>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '32px' }}>
-                <Calendar size={18} color="var(--secondary)" />
-                <div style={{ width: '2px', flex: 1, background: 'var(--border)', margin: '0.5rem 0' }}></div>
+                <Calendar size={18} color="var(--color-text-muted)" />
+                <div style={{ width: '2px', flex: 1, background: 'var(--color-border)', margin: '0.5rem 0' }}></div>
               </div>
               <div style={{ paddingBottom: '0.5rem' }}>
                 <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>Contract signing - Sunset Apt</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
                   <Clock size={12} /> Tomorrow, 10:00 AM
                 </p>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '32px' }}>
-                <Calendar size={18} color="var(--secondary)" />
+                <Calendar size={18} color="var(--color-text-muted)" />
               </div>
               <div>
                 <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>Follow up call with Robert</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
                   <Clock size={12} /> Thursday, 4:00 PM
                 </p>
               </div>

@@ -58,8 +58,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
       variants={sidebarVariants}
       style={{
         height: '100vh',
-        backgroundColor: 'var(--card-bg)',
-        borderRight: '1px solid var(--border)',
+        backgroundColor: 'var(--color-surface)',
+        borderRight: '1px solid var(--color-border)',
         display: 'flex',
         flexDirection: 'column',
         position: isMobile ? 'fixed' : 'sticky',
@@ -76,16 +76,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
         alignItems: 'center', 
         justifyContent: (isCollapsed && !isMobile) ? 'center' : 'space-between',
         height: '4.5rem',
-        borderBottom: '1px solid var(--border)'
+        borderBottom: '1px solid var(--color-border)'
       }}>
         {(!isCollapsed || isMobile) && (
           <div 
             onClick={() => onTabChange('dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', cursor: 'pointer' }}
           >
-            <Home color="var(--primary)" size={24} />
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
-              Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
+            <Home color="var(--color-primary)" size={24} />
+            <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.025em', color: 'var(--color-text)' }}>
+              Estate<span style={{ color: 'var(--color-primary)' }}>Hub</span>
             </span>
           </div>
         )}
@@ -94,13 +94,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
             onClick={() => onTabChange('dashboard')}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Home color="var(--primary)" size={24} />
+            <Home color="var(--color-primary)" size={24} />
           </div>
         )}
         
         {isMobile ? (
           <button onClick={onClose} style={iconButtonStyle}>
-            <X size={20} color="var(--secondary)" />
+            <X size={20} color="var(--color-text-muted)" />
           </button>
         ) : (
           <button 
@@ -110,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
               display: isCollapsed ? 'none' : 'flex',
             }}
           >
-            <ChevronLeft size={16} color="var(--secondary)" />
+            <ChevronLeft size={16} color="var(--color-text-muted)" />
           </button>
         )}
       </div>
@@ -134,8 +134,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                 padding: '0.75rem',
                 borderRadius: '0.5rem',
                 border: 'none',
-                background: isActive ? 'var(--primary-light)' : 'transparent',
-                color: isActive ? 'var(--primary)' : 'var(--secondary)',
+                background: isActive ? 'rgba(5, 150, 105, 0.1)' : 'transparent',
+                color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 width: '100%',
@@ -154,14 +154,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
       {isCollapsed && !isMobile && (
         <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
           <button onClick={() => setIsCollapsed(false)} style={iconButtonStyle}>
-            <ChevronRight size={16} color="var(--secondary)" />
+            <ChevronRight size={16} color="var(--color-text-muted)" />
           </button>
         </div>
       )}
 
       {/* Version Info */}
       {(!isCollapsed || isMobile) && (
-        <div style={{ padding: '1.5rem', fontSize: '0.75rem', color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: '1.5rem', fontSize: '0.75rem', color: 'var(--muted-foreground)', borderTop: '1px solid var(--color-border)' }}>
           v1.0.0 Stable
         </div>
       )}
@@ -170,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
 };
 
 const iconButtonStyle: React.CSSProperties = {
-  background: 'var(--muted)',
+  background: 'var(--color-bg)',
   border: 'none',
   borderRadius: '0.5rem',
   padding: '0.25rem',

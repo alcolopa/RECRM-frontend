@@ -1,71 +1,109 @@
 import api from './client';
 
-export enum ContactType {
-  BUYER = 'BUYER',
-  SELLER = 'SELLER',
-}
+// Replace enums with union types + const objects for erasableSyntaxOnly compatibility
+export type ContactType = 'BUYER' | 'SELLER';
+export const ContactType = {
+  BUYER: 'BUYER' as ContactType,
+  SELLER: 'SELLER' as ContactType,
+} as const;
 
-export enum ContactStatus {
-  NEW = 'NEW',
-  CONTACTED = 'CONTACTED',
-  QUALIFIED = 'QUALIFIED',
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  LOST = 'LOST',
-}
+export type ContactStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'ACTIVE' | 'INACTIVE' | 'LOST';
+export const ContactStatus = {
+  NEW: 'NEW' as ContactStatus,
+  CONTACTED: 'CONTACTED' as ContactStatus,
+  QUALIFIED: 'QUALIFIED' as ContactStatus,
+  ACTIVE: 'ACTIVE' as ContactStatus,
+  INACTIVE: 'INACTIVE' as ContactStatus,
+  LOST: 'LOST' as ContactStatus,
+} as const;
 
-export enum FinancingType {
-  CASH = 'CASH',
-  MORTGAGE = 'MORTGAGE',
-}
+export type FinancingType = 'CASH' | 'MORTGAGE';
+export const FinancingType = {
+  CASH: 'CASH' as FinancingType,
+  MORTGAGE: 'MORTGAGE' as FinancingType,
+} as const;
 
-export enum BuyingTimeline {
-  ASAP = 'ASAP',
-  ONE_TO_THREE_MONTHS = 'ONE_TO_THREE_MONTHS',
-  THREE_TO_SIX_MONTHS = 'THREE_TO_SIX_MONTHS',
-  SIX_PLUS_MONTHS = 'SIX_PLUS_MONTHS',
-  JUST_LOOKING = 'JUST_LOOKING',
-}
+export type BuyingTimeline = 
+  | 'ASAP' 
+  | 'ONE_TO_THREE_MONTHS' 
+  | 'THREE_TO_SIX_MONTHS' 
+  | 'SIX_PLUS_MONTHS' 
+  | 'JUST_LOOKING';
+export const BuyingTimeline = {
+  ASAP: 'ASAP' as BuyingTimeline,
+  ONE_TO_THREE_MONTHS: 'ONE_TO_THREE_MONTHS' as BuyingTimeline,
+  THREE_TO_SIX_MONTHS: 'THREE_TO_SIX_MONTHS' as BuyingTimeline,
+  SIX_PLUS_MONTHS: 'SIX_PLUS_MONTHS' as BuyingTimeline,
+  JUST_LOOKING: 'JUST_LOOKING' as BuyingTimeline,
+} as const;
 
-export enum PurchasePurpose {
-  PRIMARY_RESIDENCE = 'PRIMARY_RESIDENCE',
-  INVESTMENT = 'INVESTMENT',
-  VACATION_HOME = 'VACATION_HOME',
-  RELOCATION = 'RELOCATION',
-}
+export type PurchasePurpose = 
+  | 'PRIMARY_RESIDENCE' 
+  | 'INVESTMENT' 
+  | 'VACATION_HOME' 
+  | 'RELOCATION';
+export const PurchasePurpose = {
+  PRIMARY_RESIDENCE: 'PRIMARY_RESIDENCE' as PurchasePurpose,
+  INVESTMENT: 'INVESTMENT' as PurchasePurpose,
+  VACATION_HOME: 'VACATION_HOME' as PurchasePurpose,
+  RELOCATION: 'RELOCATION' as PurchasePurpose,
+} as const;
 
-export enum ListingType {
-  EXCLUSIVE = 'EXCLUSIVE',
-  NON_EXCLUSIVE = 'NON_EXCLUSIVE',
-}
+export type ListingType = 'EXCLUSIVE' | 'NON_EXCLUSIVE';
+export const ListingType = {
+  EXCLUSIVE: 'EXCLUSIVE' as ListingType,
+  NON_EXCLUSIVE: 'NON_EXCLUSIVE' as ListingType,
+} as const;
 
-export enum SellingTimeline {
-  ASAP = 'ASAP',
-  ONE_TO_THREE_MONTHS = 'ONE_TO_THREE_MONTHS',
-  THREE_TO_SIX_MONTHS = 'THREE_TO_SIX_MONTHS',
-  SIX_PLUS_MONTHS = 'SIX_PLUS_MONTHS',
-  JUST_EXPLORING = 'JUST_EXPLORING',
-}
+export type SellingTimeline = 
+  | 'ASAP' 
+  | 'ONE_TO_THREE_MONTHS' 
+  | 'THREE_TO_SIX_MONTHS' 
+  | 'SIX_PLUS_MONTHS' 
+  | 'JUST_EXPLORING';
+export const SellingTimeline = {
+  ASAP: 'ASAP' as SellingTimeline,
+  ONE_TO_THREE_MONTHS: 'ONE_TO_THREE_MONTHS' as SellingTimeline,
+  THREE_TO_SIX_MONTHS: 'THREE_TO_SIX_MONTHS' as SellingTimeline,
+  SIX_PLUS_MONTHS: 'SIX_PLUS_MONTHS' as SellingTimeline,
+  JUST_EXPLORING: 'JUST_EXPLORING' as SellingTimeline,
+} as const;
 
-export enum ReasonForSelling {
-  UPGRADE = 'UPGRADE',
-  RELOCATION = 'RELOCATION',
-  INVESTMENT_EXIT = 'INVESTMENT_EXIT',
-  FINANCIAL_NEED = 'FINANCIAL_NEED',
-  DIVORCE = 'DIVORCE',
-  INHERITANCE = 'INHERITANCE',
-  OTHER = 'OTHER',
-}
+export type ReasonForSelling = 
+  | 'UPGRADE' 
+  | 'RELOCATION' 
+  | 'INVESTMENT_EXIT' 
+  | 'FINANCIAL_NEED' 
+  | 'DIVORCE' 
+  | 'INHERITANCE' 
+  | 'OTHER';
+export const ReasonForSelling = {
+  UPGRADE: 'UPGRADE' as ReasonForSelling,
+  RELOCATION: 'RELOCATION' as ReasonForSelling,
+  INVESTMENT_EXIT: 'INVESTMENT_EXIT' as ReasonForSelling,
+  FINANCIAL_NEED: 'FINANCIAL_NEED' as ReasonForSelling,
+  DIVORCE: 'DIVORCE' as ReasonForSelling,
+  INHERITANCE: 'INHERITANCE' as ReasonForSelling,
+  OTHER: 'OTHER' as ReasonForSelling,
+} as const;
 
-export enum PropertyType {
-  APARTMENT = 'APARTMENT',
-  HOUSE = 'HOUSE',
-  VILLA = 'VILLA',
-  LAND = 'LAND',
-  COMMERCIAL = 'COMMERCIAL',
-  OFFICE = 'OFFICE',
-  RETAIL = 'RETAIL',
-}
+export type PropertyType = 
+  | 'APARTMENT' 
+  | 'HOUSE' 
+  | 'VILLA' 
+  | 'LAND' 
+  | 'COMMERCIAL' 
+  | 'OFFICE' 
+  | 'RETAIL';
+export const PropertyType = {
+  APARTMENT: 'APARTMENT' as PropertyType,
+  HOUSE: 'HOUSE' as PropertyType,
+  VILLA: 'VILLA' as PropertyType,
+  LAND: 'LAND' as PropertyType,
+  COMMERCIAL: 'COMMERCIAL' as PropertyType,
+  OFFICE: 'OFFICE' as PropertyType,
+  RETAIL: 'RETAIL' as PropertyType,
+} as const;
 
 export interface BuyerProfile {
   id: string;

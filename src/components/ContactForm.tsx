@@ -142,17 +142,17 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>
             {contact ? 'Edit Contact' : 'Add New Contact'}
           </h1>
-          <p style={{ color: 'var(--secondary)' }}>
+          <p style={{ color: 'var(--color-text-muted)' }}>
             {step === 1 ? 'Step 1: Identity & Communication' : `Step 2: ${type === ContactType.BUYER ? 'Buyer Search Criteria' : 'Seller Property Info'}`}
           </p>
         </div>
       </header>
 
       {/* Progress Bar */}
-      <div style={{ width: '100%', maxWidth: '800px', height: '4px', backgroundColor: 'var(--border)', borderRadius: '2px', position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: '800px', height: '4px', backgroundColor: 'var(--color-border)', borderRadius: '2px', position: 'relative' }}>
         <motion.div
           animate={{ width: step === 1 ? '50%' : '100%' }}
-          style={{ height: '100%', backgroundColor: 'var(--primary)', borderRadius: '2px' }}
+          style={{ height: '100%', backgroundColor: 'var(--color-primary)', borderRadius: '2px' }}
         />
       </div>
 
@@ -189,7 +189,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               <div style={inputGroupStyle}>
                 <label htmlFor="status" style={labelStyle}>Contact Status</label>
                 <div style={{ position: 'relative' }}>
-                  <Briefcase size={18} color="var(--secondary)" style={inputIconStyle} />
+                  <Briefcase size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                   <select id="status" name="status" value={baseData.status} onChange={handleBaseChange} style={{ ...inputStyle, appearance: 'none' }}>
                     {Object.values(ContactStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -201,14 +201,14 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               <div style={inputGroupStyle}>
                 <label htmlFor="firstName" style={labelStyle}>First Name</label>
                 <div style={{ position: 'relative' }}>
-                  <User size={18} color="var(--secondary)" style={inputIconStyle} />
+                  <User size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="firstName" name="firstName" type="text" required value={baseData.firstName} onChange={handleBaseChange} style={inputStyle} placeholder="John" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label htmlFor="lastName" style={labelStyle}>Last Name</label>
                 <div style={{ position: 'relative' }}>
-                  <User size={18} color="var(--secondary)" style={inputIconStyle} />
+                  <User size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="lastName" name="lastName" type="text" required value={baseData.lastName} onChange={handleBaseChange} style={inputStyle} placeholder="Doe" />
                 </div>
               </div>
@@ -217,7 +217,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             <div style={inputGroupStyle}>
               <label htmlFor="email" style={labelStyle}>Email Address</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={18} color="var(--secondary)" style={inputIconStyle} />
+                <Mail size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input id="email" name="email" type="email" value={baseData.email} onChange={handleBaseChange} style={inputStyle} placeholder="john@example.com" />
               </div>
             </div>
@@ -230,7 +230,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             <div style={inputGroupStyle}>
               <label htmlFor="leadSource" style={labelStyle}>Lead Source</label>
               <div style={{ position: 'relative' }}>
-                <Layers size={18} color="var(--secondary)" style={inputIconStyle} />
+                <Layers size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input id="leadSource" name="leadSource" type="text" value={baseData.leadSource} onChange={handleBaseChange} style={inputStyle} placeholder="e.g. Website, Referral, Zillow" />
               </div>
             </div>
@@ -258,14 +258,14 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Min Budget</label>
                 <div style={{ position: 'relative' }}>
-                  <DollarSign size={18} color="var(--secondary)" style={inputIconStyle} />
+                  <DollarSign size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="minBudget" name="minBudget" type="number" value={buyerProfile.minBudget || ''} onChange={(e) => handleBuyerChange('minBudget', Number(e.target.value))} style={inputStyle} placeholder="Min" />
                 </div>
               </div>
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Max Budget</label>
                 <div style={{ position: 'relative' }}>
-                  <DollarSign size={18} color="var(--secondary)" style={inputIconStyle} />
+                  <DollarSign size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                   <input id="maxBudget" name="maxBudget" type="number" value={buyerProfile.maxBudget || ''} onChange={(e) => handleBuyerChange('maxBudget', Number(e.target.value))} style={inputStyle} placeholder="Max" />
                 </div>
               </div>
@@ -316,7 +316,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Location Preferences</label>
               <div style={{ position: 'relative' }}>
-                <MapPin size={18} color="var(--secondary)" style={inputIconStyle} />
+                <MapPin size={18} color="var(--color-text-muted)" style={inputIconStyle} />
                 <input
                   id="preferredCities"
                   name="preferredCities"
@@ -340,7 +340,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               </label>
             </div>
 
-            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
               <button type="button" onClick={prevStep} className="btn btn-outline back-btn" style={{ gap: '0.5rem', flex: 1, minWidth: '100px' }}>
                 <ArrowLeft size={18} /> Back
               </button>
@@ -402,7 +402,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               </label>
             </div>
 
-            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
               <button type="button" onClick={prevStep} className="btn btn-outline back-btn" style={{ gap: '0.5rem', flex: 1, minWidth: '100px' }}>
                 <ArrowLeft size={18} /> Back
               </button>
@@ -429,14 +429,14 @@ const inputGroupStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: '0.875rem',
   fontWeight: 600,
-  color: 'var(--foreground)'
+  color: 'var(--color-text)'
 };
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.75rem 1rem 0.75rem 2.5rem',
   borderRadius: 'var(--radius)',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--color-border)',
   fontSize: '1rem',
   outline: 'none',
   background: 'white',

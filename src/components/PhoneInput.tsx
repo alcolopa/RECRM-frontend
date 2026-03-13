@@ -92,10 +92,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
     alignItems: 'center',
     width: '100%',
     borderRadius: 'var(--radius)',
-    border: `1px solid ${externalError ? '#ef4444' : (isOpen ? 'var(--primary)' : 'var(--border)')}`,
-    background: 'var(--input-bg)',
+    border: `1px solid ${externalError ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
+    background: 'var(--color-surface)',
     transition: 'all 0.2s ease',
-    boxShadow: isOpen ? '0 0 0 2px rgba(37, 99, 235, 0.1)' : 'none',
+    boxShadow: isOpen ? '0 0 0 2px rgba(5, 150, 105, 0.1)' : 'none',
     overflow: 'hidden',
     height: '2.75rem'
   };
@@ -113,17 +113,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             gap: '0.4rem',
             padding: '0 0.75rem',
             border: 'none',
-            background: 'var(--muted)',
+            background: 'var(--color-bg)',
             cursor: 'pointer',
             height: '100%',
             fontSize: '0.9rem',
-            borderRight: '1px solid var(--border)',
+            borderRight: '1px solid var(--color-border)',
             minWidth: '95px'
           }}
         >
           <span style={{ fontSize: '1.1rem' }}>{selectedCountry.flag}</span>
-          <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{selectedCountry.code}</span>
-          <ChevronDown size={14} color="var(--secondary)" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{selectedCountry.code}</span>
+          <ChevronDown size={14} color="var(--color-text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
 
         {/* Input Field */}
@@ -147,8 +147,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             }}
           />
           <div style={{ position: 'absolute', right: '0.75rem', display: 'flex', alignItems: 'center' }}>
-            {isValid === true && <CheckCircle2 size={16} color="#10b981" />}
-            {isValid === false && <AlertCircle size={16} color="#ef4444" />}
+            {isValid === true && <CheckCircle2 size={16} color="var(--color-success)" />}
+            {isValid === false && <AlertCircle size={16} color="var(--color-error)" />}
           </div>
         </div>
       </div>
@@ -160,7 +160,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem', fontWeight: 500 }}
+            style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.25rem', fontWeight: 500 }}
           >
             {externalError || `Format should be: ${selectedCountry.format}`}
           </motion.p>
@@ -179,17 +179,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
               top: '110%',
               left: 0,
               width: '280px',
-              backgroundColor: 'var(--card-bg)',
+              backgroundColor: 'var(--color-surface)',
               borderRadius: 'var(--radius)',
               boxShadow: 'var(--shadow-xl)',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--color-border)',
               zIndex: 100,
               overflow: 'hidden',
               padding: '0.5rem'
             }}
           >
             <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-              <Search size={14} color="var(--secondary)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={14} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 id="countrySearch"
                 name="countrySearch"
@@ -201,7 +201,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
                   width: '100%',
                   padding: '0.5rem 0.75rem 0.5rem 2.25rem',
                   borderRadius: '0.375rem',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--color-border)',
                   fontSize: '0.875rem',
                   outline: 'none'
                 }}
@@ -220,17 +220,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
                     width: '100%',
                     padding: '0.625rem 0.75rem',
                     border: 'none',
-                    background: selectedCountry.iso === country.iso && selectedCountry.code === country.code ? 'var(--primary-light)' : 'none',
+                    background: selectedCountry.iso === country.iso && selectedCountry.code === country.code ? 'rgba(5, 150, 105, 0.1)' : 'none',
                     borderRadius: '0.375rem',
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                     textAlign: 'left',
-                    color: selectedCountry.iso === country.iso && selectedCountry.code === country.code ? 'var(--primary)' : 'var(--foreground)'
+                    color: selectedCountry.iso === country.iso && selectedCountry.code === country.code ? 'var(--color-primary)' : 'var(--color-text)'
                   }}
                 >
                   <span style={{ fontSize: '1.25rem' }}>{country.flag}</span>
                   <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{country.name}</span>
-                  <span style={{ color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 600 }}>{country.code}</span>
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>{country.code}</span>
                 </button>
               ))}
             </div>

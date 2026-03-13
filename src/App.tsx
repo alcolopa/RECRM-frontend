@@ -52,6 +52,11 @@ const AppContent = () => {
     setUser(updatedUser);
   };
 
+  const handleSignupSuccess = (token: string) => {
+    localStorage.setItem('token', token);
+    fetchProfile();
+  };
+
   // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {
     return (
@@ -66,8 +71,8 @@ const AppContent = () => {
         minHeight: '100vh', 
         display: 'flex', 
         flexDirection: 'column',
-        backgroundColor: 'var(--muted)',
-        background: 'radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 100%)'
+        backgroundColor: 'var(--color-bg)',
+        background: 'radial-gradient(circle at 50% 50%, rgba(5, 150, 105, 0.05) 0%, transparent 100%)'
       }}>
         <nav className="glass" style={{
           height: '4rem',
@@ -112,7 +117,10 @@ const AppContent = () => {
           {view === 'login' ? (
             <LoginForm onSwitchToSignup={() => setView('signup')} />
           ) : (
-            <SignupForm onSwitchToLogin={() => setView('login')} />
+            <SignupForm 
+              onSwitchToLogin={() => setView('login')} 
+              onSignupSuccess={handleSignupSuccess}
+            />
           )}
         </main>
       </div>
@@ -195,7 +203,7 @@ const AppContent = () => {
             </div>
             <div>
               <h4 style={{ marginBottom: '1.5rem' }}>Product</h4>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: '#94a3b8', fontSize: '0.875rem' }}>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                 <li>Features</li>
                 <li>Pricing</li>
                 <li>Integrations</li>
@@ -204,7 +212,7 @@ const AppContent = () => {
             </div>
             <div>
               <h4 style={{ marginBottom: '1.5rem' }}>Support</h4>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: '#94a3b8', fontSize: '0.875rem' }}>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                 <li>Documentation</li>
                 <li>Contact Us</li>
                 <li>Privacy Policy</li>
@@ -215,9 +223,9 @@ const AppContent = () => {
           <div style={{
             marginTop: '4rem',
             paddingTop: '2rem',
-            borderTop: '1px solid #334155',
+            borderTop: '1px solid var(--color-border)',
             textAlign: 'center',
-            color: '#64748b',
+            color: 'var(--color-text-muted)',
             fontSize: '0.75rem'
           }}>
             © {new Date().getFullYear()} EstateHub CRM. All rights reserved.

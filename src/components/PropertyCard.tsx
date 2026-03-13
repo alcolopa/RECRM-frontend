@@ -27,11 +27,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'AVAILABLE': return '#10b981';
-      case 'UNDER_CONTRACT': return '#f59e0b';
-      case 'SOLD': return '#ef4444';
-      case 'RENTED': return '#3b82f6';
-      default: return 'var(--secondary)';
+      case 'AVAILABLE': return 'var(--color-success)';
+      case 'UNDER_CONTRACT': return 'var(--color-warning)';
+      case 'SOLD': return 'var(--color-error)';
+      case 'RENTED': return 'var(--color-primary)';
+      default: return 'var(--color-text-muted)';
     }
   };
 
@@ -41,7 +41,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
       <div style={{ 
         position: 'relative', 
         height: '200px', 
-        backgroundColor: 'var(--muted)',
+        backgroundColor: 'var(--color-bg)',
         backgroundImage: property.images?.[0] ? `url(${property.images[0]})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -49,7 +49,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        {!property.images?.[0] && <Building2 size={48} color="var(--border)" />}
+        {!property.images?.[0] && <Building2 size={48} color="var(--color-border)" />}
         
         {/* Status Badge */}
         <div style={{
@@ -58,7 +58,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
           right: '1rem',
           padding: '0.25rem 0.75rem',
           borderRadius: '1rem',
-          backgroundColor: 'var(--card-bg)',
+          backgroundColor: 'var(--color-surface)',
           color: getStatusColor(property.status),
           fontSize: '0.75rem',
           fontWeight: 700,
@@ -72,11 +72,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>{property.title}</h3>
-            <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.125rem' }}>
+            <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '1.125rem' }}>
               {formatPrice(property.price)}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--secondary)', fontSize: '0.875rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             <MapPin size={14} />
             <span>{property.city}, {property.state}</span>
           </div>
@@ -87,8 +87,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
           gridTemplateColumns: 'repeat(3, 1fr)', 
           gap: '0.5rem', 
           padding: '0.75rem 0',
-          borderTop: '1px solid var(--border)',
-          borderBottom: '1px solid var(--border)',
+          borderTop: '1px solid var(--color-border)',
+          borderBottom: '1px solid var(--color-border)',
           marginTop: 'auto'
         }}>
           <div style={featureStyle}>
@@ -109,18 +109,18 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
           <button 
             onClick={() => onEdit(property)}
             style={actionButtonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
-            <Edit2 size={16} color="var(--secondary)" />
+            <Edit2 size={16} color="var(--color-text-muted)" />
           </button>
           <button 
             onClick={() => onDelete(property.id)}
             style={actionButtonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#fee2e2'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
-            <Trash2 size={16} color="#ef4444" />
+            <Trash2 size={16} color="var(--color-error)" />
           </button>
         </div>
       </div>
@@ -134,7 +134,7 @@ const featureStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.25rem',
   fontSize: '0.75rem',
-  color: 'var(--secondary)',
+  color: 'var(--color-text-muted)',
   fontWeight: 500
 };
 
