@@ -20,18 +20,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
-        
+
         try {
             const response = await api.post('/auth/login', { email, password });
             const { access_token } = response.data;
-            
+
             localStorage.setItem('token', access_token);
             setSuccess(true);
-            
-            // Redirect after brief success message
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 1000);
+
+            window.location.href = '/';
         } catch (err: unknown) {
             console.error('Login failed', err);
             let message = 'Login failed. Please check your credentials.';
@@ -59,14 +56,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
             <AnimatePresence>
                 {error && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        style={{ 
-                            background: 'rgba(220, 38, 38, 0.1)', 
-                            color: 'var(--color-error)', 
-                            padding: '0.75rem', 
+                        style={{
+                            background: 'rgba(220, 38, 38, 0.1)',
+                            color: 'var(--color-error)',
+                            padding: '0.75rem',
                             borderRadius: 'var(--radius)',
                             marginBottom: '1.25rem',
                             fontSize: '0.875rem',
@@ -81,13 +78,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                     </motion.div>
                 )}
                 {success && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        style={{ 
-                            background: 'rgba(22, 163, 74, 0.1)', 
-                            color: 'var(--color-success)', 
-                            padding: '0.75rem', 
+                        style={{
+                            background: 'rgba(22, 163, 74, 0.1)',
+                            color: 'var(--color-success)',
+                            padding: '0.75rem',
                             borderRadius: 'var(--radius)',
                             marginBottom: '1.25rem',
                             fontSize: '0.875rem',

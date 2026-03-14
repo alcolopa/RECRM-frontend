@@ -65,7 +65,6 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
   };
 
   const filteredContacts = contacts.filter(c => {
-    if (!searchQuery) return true;
     const matchesSearch =
       c.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
