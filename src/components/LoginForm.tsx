@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import api from '../api/client';
 import { Input } from './Input';
+import Button from './Button';
 
 interface LoginFormProps {
     onSwitchToSignup?: () => void;
@@ -128,43 +129,37 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             icon={Lock}
                             style={{ paddingRight: '2.5rem' }}
                         />
-                        <button
-                            type="button"
+                        <Button
+                            variant="ghost"
                             onClick={() => setShowPassword(!showPassword)}
                             style={{
                                 position: 'absolute',
-                                right: '0.75rem',
+                                right: '0.25rem',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: 'var(--muted-foreground)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                zIndex: 1
+                                zIndex: 1,
+                                padding: '0.5rem',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px'
                             }}
-                        >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
+                            leftIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        />
                     </div>
                 </div>
 
-                <button
+                <Button
                     type="submit"
-                    className="btn btn-primary"
-                    disabled={isLoading}
-                    style={{ width: '100%', marginTop: '0.5rem' }}
+                    fullWidth
+                    style={{ marginTop: '0.5rem' }}
+                    isLoading={isLoading}
+                    rightIcon={!isLoading && <ArrowRight size={18} />}
                 >
-                    {isLoading ? (
-                        <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                        <>Sign In <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} /></>
-                    )}
-                </button>
+                    Sign In
+                </Button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Don't have an account? <button type="button" onClick={onSwitchToSignup} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', font: 'inherit' }}>Get Started</button>
+                    Don't have an account? <Button variant="ghost" onClick={onSwitchToSignup} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Get Started</Button>
                 </p>
             </form>
         </motion.div>

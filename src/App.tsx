@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import { Home, LogIn, Moon, Sun } from 'lucide-react';
 import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { NavigationProvider } from './contexts/NavigationContext';
 
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
@@ -238,7 +239,9 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider>
-    <AppContent />
+    <NavigationProvider>
+      <AppContent />
+    </NavigationProvider>
   </ThemeProvider>
 );
 

@@ -13,6 +13,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Contact, ContactType, ContactStatus } from '../api/contacts';
+import Button from './Button';
 
 interface ContactCardProps {
   contact: Contact;
@@ -111,12 +112,12 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         </div>
 
         <div style={{ position: 'relative' }} ref={optionsRef}>
-          <button 
+          <Button 
+            variant="ghost"
             onClick={() => setShowOptions(!showOptions)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '0.25rem' }}
-          >
-            <MoreVertical size={20} />
-          </button>
+            style={{ padding: '0.25rem' }}
+            leftIcon={<MoreVertical size={20} />}
+          />
 
           <AnimatePresence>
             {showOptions && (
@@ -137,18 +138,22 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                   minWidth: '140px'
                 }}
               >
-                <button 
+                <Button 
+                  variant="ghost"
                   onClick={() => { setShowOptions(false); onEdit(contact); }}
-                  style={optionButtonStyle}
+                  style={{ ...optionButtonStyle, textAlign: 'left', justifyContent: 'flex-start' }}
+                  leftIcon={<Edit2 size={16} />}
                 >
-                  <Edit2 size={16} /> Edit Contact
-                </button>
-                <button 
+                  Edit Contact
+                </Button>
+                <Button 
+                  variant="ghost"
                   onClick={() => { setShowOptions(false); onDelete(contact.id); }}
-                  style={{ ...optionButtonStyle, color: 'var(--color-error)' }}
+                  style={{ ...optionButtonStyle, color: 'var(--color-error)', textAlign: 'left', justifyContent: 'flex-start' }}
+                  leftIcon={<Trash2 size={16} />}
                 >
-                  <Trash2 size={16} /> Delete
-                </button>
+                  Delete
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -205,16 +210,18 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         </div>
       </div>
 
-      <button 
-        className="btn btn-outline" 
+      <Button 
+        variant="outline" 
+        fullWidth
         onClick={(e) => {
           e.stopPropagation();
           onView(contact);
         }}
-        style={{ width: '100%', marginTop: '1.25rem', padding: '0.5rem', fontSize: '0.875rem', gap: '0.5rem' }}
+        style={{ marginTop: '1.25rem', padding: '0.5rem', fontSize: '0.875rem' }}
+        leftIcon={<ExternalLink size={16} />}
       >
-        <ExternalLink size={16} /> View Full Profile
-      </button>
+        View Full Profile
+      </Button>
     </motion.div>
   );
 };

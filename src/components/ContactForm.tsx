@@ -3,7 +3,6 @@ import {
   User,
   Mail,
   Save,
-  Loader2,
   Target,
   Home,
   DollarSign,
@@ -11,7 +10,8 @@ import {
   Briefcase,
   Layers,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  ChevronLeft
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -25,17 +25,25 @@ import {
 } from '../api/contacts';
 import PhoneInput from './PhoneInput';
 import { Input, Select, Textarea, Checkbox } from './Input';
+import Button from './Button';
 
 interface ContactFormProps {
   contact?: Contact;
   onSave: (data: Partial<Contact>) => Promise<void>;
   onCancel: () => void;
   organizationId: string;
+  fixedType?: ContactType;
 }
 
-const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, organizationId }) => {
+const ContactForm: React.FC<ContactFormProps> = ({ 
+  contact, 
+  onSave, 
+  onCancel, 
+  organizationId,
+  fixedType
+}) => {
   const [step, setStep] = useState(1);
-  const [type, setType] = useState<ContactType>(contact?.type || ContactType.BUYER);
+  const [type, setType] = useState<ContactType>(fixedType || contact?.type || ContactType.BUYER);
 
   // Base Contact Data
   const [baseData, setBaseData] = useState({
@@ -138,7 +146,27 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button 
+          type="button" 
+          onClick={onCancel}
+          style={{ 
+            padding: '0.5rem', 
+            borderRadius: '50%', 
+            width: '40px', 
+            height: '40px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            cursor: 'pointer',
+            color: 'var(--color-text)'
+          }}
+          title="Go back"
+        >
+          <ChevronLeft size={24} />
+        </button>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>
             {contact ? 'Edit Contact' : 'Add New Contact'}
@@ -174,6 +202,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
                     onClick={() => setType(ContactType.BUYER)}
                     className={`btn ${type === ContactType.BUYER ? 'btn-primary' : 'btn-outline'}`}
                     style={{ flex: 1, gap: '0.5rem' }}
+                    disabled={!!fixedType}
                   >
                     <Target size={18} /> Buyer
                   </button>
@@ -182,6 +211,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
                     onClick={() => setType(ContactType.SELLER)}
                     className={`btn ${type === ContactType.SELLER ? 'btn-primary' : 'btn-outline'}`}
                     style={{ flex: 1, gap: '0.5rem' }}
+                    disabled={!!fixedType}
                   >
                     <Home size={18} /> Seller
                   </button>
@@ -256,10 +286,23 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
               placeholder="Any additional details..."
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem' }}>
-              <button type="button" onClick={nextStep} className="btn btn-primary" style={{ gap: '0.5rem', width: '100%', justifyContent: 'center' }}>
-                Continue to Profile <ArrowRight size={18} />
-              </button>
+            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel} 
+                style={{ flex: 1, minWidth: '120px' }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                onClick={nextStep} 
+                style={{ flex: 2, minWidth: '200px' }}
+                rightIcon={<ArrowRight size={18} />}
+              >
+                Continue to Profile
+              </Button>
             </div>
           </motion.div>
         )}
@@ -365,15 +408,31 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             </div>
 
             <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <button type="button" onClick={prevStep} className="btn btn-outline back-btn" style={{ gap: '0.5rem', flex: 1, minWidth: '100px' }}>
-                <ArrowLeft size={18} /> Back
-              </button>
-              <div style={{ display: 'flex', gap: '1rem', flex: 2, minWidth: '200px' }}>
-                <button type="button" onClick={onCancel} className="btn btn-outline" style={{ flex: 1 }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ flex: 2, gap: '0.5rem' }}>
-                  {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><Save size={20} /> Save</>}
-                </button>
-              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={prevStep} 
+                style={{ flex: 1, minWidth: '100px' }}
+                leftIcon={<ArrowLeft size={18} />}
+              >
+                Back
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={onCancel} 
+                style={{ flex: 1, minWidth: '100px' }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                isLoading={isLoading} 
+                style={{ flex: 2, minWidth: '200px' }}
+                leftIcon={<Save size={20} />}
+              >
+                Save Contact
+              </Button>
             </div>
           </motion.div>
         )}
@@ -425,15 +484,31 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             </div>
 
             <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <button type="button" onClick={prevStep} className="btn btn-outline back-btn" style={{ gap: '0.5rem', flex: 1, minWidth: '100px' }}>
-                <ArrowLeft size={18} /> Back
-              </button>
-              <div style={{ display: 'flex', gap: '1rem', flex: 2, minWidth: '200px' }}>
-                <button type="button" onClick={onCancel} className="btn btn-outline" style={{ flex: 1 }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ flex: 2, gap: '0.5rem' }}>
-                  {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><Save size={20} /> Save Contact</>}
-                </button>
-              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={prevStep} 
+                style={{ flex: 1, minWidth: '100px' }}
+                leftIcon={<ArrowLeft size={18} />}
+              >
+                Back
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={onCancel} 
+                style={{ flex: 1, minWidth: '100px' }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                isLoading={isLoading} 
+                style={{ flex: 2, minWidth: '200px' }}
+                leftIcon={<Save size={20} />}
+              >
+                Save Contact
+              </Button>
             </div>
           </motion.div>
         )}

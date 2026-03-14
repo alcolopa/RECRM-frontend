@@ -5,6 +5,7 @@ import PropertiesView from './PropertiesView';
 import Dashboard from './Dashboard';
 import ProfileView from './ProfileView';
 import ContactsView from './ContactsView';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -14,7 +15,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { activeTab, setActiveTab } = useNavigation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -63,11 +64,6 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       overflow: 'hidden' 
     }}>
       <Sidebar 
-        activeTab={activeTab} 
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          if (isMobile) setIsSidebarOpen(false);
-        }} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isMobile={isMobile}

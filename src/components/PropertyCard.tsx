@@ -1,21 +1,24 @@
-import { 
-  Building2, 
-  Bed, 
-  Bath, 
-  Maximize, 
+import {
+  Building2,
+  Bed,
+  Bath,
+  Maximize,
   MapPin,
   Edit2,
-  Trash2
+  Trash2,
+  User
 } from 'lucide-react';
 import { type Property } from '../api/properties';
+import Button from './Button';
 
 interface PropertyCardProps {
   property: Property;
   onEdit: (property: Property) => void;
   onDelete: (id: string) => void;
+  onClick: () => void;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete, onClick }) => {
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
     return new Intl.NumberFormat('en-US', {
@@ -36,21 +39,41 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
   };
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div
+      className="card"
+      onClick={onClick}
+      style={{
+        padding: 0,
+        overflow: 'hidden',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+      }}
+    >
       {/* Image Placeholder or Actual Image */}
-      <div style={{ 
-        position: 'relative', 
-        height: '200px', 
+      <div style={{
+        position: 'relative',
+        height: '200px',
         backgroundColor: 'var(--color-bg)',
-        backgroundImage: property.images?.[0] ? `url(${property.images[0]})` : 'none',
+        backgroundImage: property.propertyImages?.[0]?.url ? `url(${property.propertyImages[0].url})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        {!property.images?.[0] && <Building2 size={48} color="var(--color-border)" />}
-        
+        {!property.propertyImages?.[0]?.url && <Building2 size={48} color="var(--color-border)" />}
+
         {/* Status Badge */}
         <div style={{
           position: 'absolute',
@@ -80,12 +103,37 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
             <MapPin size={14} />
             <span>{property.city}, {property.state}</span>
           </div>
+          {property.sellerProfile?.contact && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              color: 'var(--color-primary)', 
+              fontSize: '0.8125rem',
+              marginTop: '0.4rem',
+              fontWeight: 600,
+              background: 'rgba(var(--color-primary-rgb), 0.05)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              width: 'fit-content'
+            }}>
+              <User size={14} />
+              <span style={{ 
+                whiteSpace: 'nowrap', 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis',
+                maxWidth: '150px'
+              }}>
+                {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
+              </span>
+            </div>
+          )}
         </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
-          gap: '0.5rem', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '0.5rem',
           padding: '0.75rem 0',
           borderTop: '1px solid var(--color-border)',
           borderBottom: '1px solid var(--color-border)',
@@ -105,23 +153,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete 
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <button 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost"
+            size="sm"
             onClick={() => onEdit(property)}
-            style={actionButtonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            <Edit2 size={16} color="var(--color-text-muted)" />
-          </button>
-          <button 
+            leftIcon={<Edit2 size={16} color="var(--color-text-muted)" />}
+          />
+          <Button 
+            variant="ghost"
+            size="sm"
             onClick={() => onDelete(property.id)}
-            style={actionButtonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            <Trash2 size={16} color="var(--color-error)" />
-          </button>
+            leftIcon={<Trash2 size={16} color="var(--color-error)" />}
+          />
         </div>
       </div>
     </div>
@@ -136,18 +180,6 @@ const featureStyle: React.CSSProperties = {
   fontSize: '0.75rem',
   color: 'var(--color-text-muted)',
   fontWeight: 500
-};
-
-const actionButtonStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  padding: '0.5rem',
-  borderRadius: '0.5rem',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: 'all 0.2s'
 };
 
 export default PropertyCard;

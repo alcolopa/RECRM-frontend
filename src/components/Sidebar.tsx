@@ -11,16 +11,16 @@ import {
   X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigation, type NavigationTab } from '../contexts/NavigationContext';
 
 interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   isOpen: boolean;
   onClose: () => void;
   isMobile: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClose, isMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile }) => {
+  const { activeTab, setActiveTab } = useNavigation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
       }}>
         {(!isCollapsed || isMobile) && (
           <div 
-            onClick={() => onTabChange('dashboard')}
+            onClick={() => setActiveTab('dashboard')}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', cursor: 'pointer' }}
           >
             <Home color="var(--color-primary)" size={24} />
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
         )}
         {(isCollapsed && !isMobile) && (
           <div 
-            onClick={() => onTabChange('dashboard')}
+            onClick={() => setActiveTab('dashboard')}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <Home color="var(--color-primary)" size={24} />
@@ -125,7 +125,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                setActiveTab(item.id as NavigationTab);
+                if (isMobile) onClose();
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

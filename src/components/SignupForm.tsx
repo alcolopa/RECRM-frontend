@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Mail, Lock, User, Building, Globe, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, Building, Globe, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import api from '../api/client';
 import { Input } from './Input';
+import Button from './Button';
 
 interface SignupFormProps {
     onSwitchToLogin?: () => void;
@@ -193,22 +194,21 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         icon={Lock}
                         style={{ paddingRight: '2.5rem' }}
                     />
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
                         onClick={() => setShowPassword(!showPassword)}
                         style={{
                             position: 'absolute',
-                            right: '0.75rem',
-                            top: '2.1rem',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--muted-foreground)',
+                            right: '0.25rem',
+                            top: '2rem',
+                            padding: '0.5rem',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
                             zIndex: 1
                         }}
-                    >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                        leftIcon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    />
                 </div>
 
                 <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-primary)' }}>
@@ -241,12 +241,18 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                     </div>
                 </div>
 
-                <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : <>Create Account <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} /></>}
-                </button>
+                <Button 
+                    type="submit" 
+                    fullWidth 
+                    style={{ marginTop: '0.5rem' }}
+                    isLoading={isLoading}
+                    rightIcon={!isLoading && <ArrowRight size={18} />}
+                >
+                    Create Account
+                </Button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Already have an account? <button type="button" onClick={onSwitchToLogin} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', font: 'inherit' }}>Sign In</button>
+                    Already have an account? <Button variant="ghost" onClick={onSwitchToLogin} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Sign In</Button>
                 </p>
             </form>
         </motion.div>

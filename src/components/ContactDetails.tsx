@@ -15,6 +15,7 @@ import {
   FileText
 } from 'lucide-react';
 import { type Contact, ContactType, ContactStatus } from '../api/contacts';
+import Button from './Button';
 
 interface ContactDetailsProps {
   contact: Contact;
@@ -64,28 +65,32 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       {/* Header Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button 
+        <Button 
+          variant="outline"
+          size="sm"
           onClick={onBack}
-          className="btn btn-outline"
-          style={{ gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+          leftIcon={<ArrowLeft size={16} />}
         >
-          <ArrowLeft size={16} /> Back to Contacts
-        </button>
+          Back to Contacts
+        </Button>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button 
+          <Button 
+            variant="primary"
+            size="sm"
             onClick={() => onEdit(contact)}
-            className="btn btn-primary"
-            style={{ gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            leftIcon={<Edit2 size={16} />}
           >
-            <Edit2 size={16} /> Edit
-          </button>
-          <button 
+            Edit
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
             onClick={() => onDelete(contact.id)}
-            className="btn btn-outline"
-            style={{ gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
+            leftIcon={<Trash2 size={16} />}
+            style={{ color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
           >
-            <Trash2 size={16} /> Delete
-          </button>
+            Delete
+          </Button>
         </div>
       </div>
 

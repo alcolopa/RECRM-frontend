@@ -5,12 +5,16 @@ import { Input } from './Input';
 import ContactCard from './ContactCard';
 import ContactForm from './ContactForm';
 import ContactDetails from './ContactDetails';
+import Button from './Button';
+import ConfirmModal from './ConfirmModal';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface ContactsViewProps {
   organizationId: string;
 }
 
 const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
+  const { navigationState, navigate } = useNavigation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
@@ -18,6 +22,8 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
   const [viewingContact, setViewingContact] = useState<Contact | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | ContactType>('ALL');
+  const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchContacts = async () => {
     setIsLoading(true);
@@ -33,35 +39,76 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
 
   useEffect(() => {
     fetchContacts();
-  }, [organizationId]);
+    
+    // Handle prefill from navigation state
+    if (navigationState.context === 'creating-seller') {
+      setView('form');
+      setFilterType(ContactType.SELLER);
+    }
+  }, [organizationId, navigationState.context]);
 
   const handleSave = async (data: Partial<Contact>) => {
     try {
+      let savedContact: Contact;
       if (editingContact) {
-        await contactService.update(editingContact.id, data);
+        const response = await contactService.update(editingContact.id, data);
+        savedContact = response.data;
       } else {
-        await contactService.create({ ...data, organizationId });
+        const response = await contactService.create({ ...data, organizationId });
+        savedContact = response.data;
       }
-      setView('list');
-      setEditingContact(undefined);
-      fetchContacts();
+
+      if (navigationState.returnTo === 'properties' && navigationState.context === 'creating-seller') {
+        // Ensure we have the sellerProfile ID. Sometimes the create/update might not return the expanded profile
+        let sellerProfileId = savedContact.sellerProfile?.id;
+        
+        if (!sellerProfileId) {
+          try {
+            const fullContact = await contactService.getById(savedContact.id);
+            sellerProfileId = fullContact.data.sellerProfile?.id;
+          } catch (err) {
+            console.error('Failed to fetch full contact for seller profile', err);
+          }
+        }
+
+        // Return to properties with the new seller profile ID
+        navigate('properties', {
+          ...navigationState,
+          prefillData: { 
+            ...navigationState.prefillData,
+            newSellerProfileId: sellerProfileId 
+          }
+        });
+      } else {
+        setView('list');
+        setEditingContact(undefined);
+        fetchContacts();
+      }
     } catch (err) {
       console.error('Failed to save contact', err);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this contact?')) {
-      try {
-        await contactService.delete(id);
-        if (viewingContact?.id === id) {
-          setView('list');
-          setViewingContact(undefined);
-        }
-        fetchContacts();
-      } catch (err) {
-        console.error('Failed to delete contact', err);
+    setDeletingContactId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingContactId) return;
+    
+    setIsDeleting(true);
+    try {
+      await contactService.delete(deletingContactId);
+      if (viewingContact?.id === deletingContactId) {
+        setView('list');
+        setViewingContact(undefined);
       }
+      fetchContacts();
+      setDeletingContactId(null);
+    } catch (err) {
+      console.error('Failed to delete contact', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -82,10 +129,15 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
         contact={editingContact}
         onSave={handleSave}
         onCancel={() => {
-          setView('list');
-          setEditingContact(undefined);
+          if (navigationState.returnTo === 'properties') {
+            navigate('properties', navigationState);
+          } else {
+            setView('list');
+            setEditingContact(undefined);
+          }
         }}
         organizationId={organizationId}
+        fixedType={navigationState.context === 'creating-seller' ? ContactType.SELLER : undefined}
       />
     );
   }
@@ -114,13 +166,12 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Contacts</h1>
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your buyers and sellers in one place.</p>
         </div>
-        <button
+        <Button
           onClick={() => setView('form')}
-          className="btn btn-primary"
-          style={{ gap: '0.5rem' }}
+          leftIcon={<UserPlus size={20} />}
         >
-          <UserPlus size={20} /> Add Contact
-        </button>
+          Add Contact
+        </Button>
       </header>
 
       {/* Filters & Search */}
@@ -139,27 +190,27 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
+          <Button
+            variant={filterType === 'ALL' ? 'primary' : 'outline'}
+            size="sm"
             onClick={() => setFilterType('ALL')}
-            className={`btn ${filterType === 'ALL' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
           >
             All
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={filterType === ContactType.BUYER ? 'primary' : 'outline'}
+            size="sm"
             onClick={() => setFilterType(ContactType.BUYER)}
-            className={`btn ${filterType === ContactType.BUYER ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
           >
             Buyers
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={filterType === ContactType.SELLER ? 'primary' : 'outline'}
+            size="sm"
             onClick={() => setFilterType(ContactType.SELLER)}
-            className={`btn ${filterType === ContactType.SELLER ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
           >
             Sellers
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -197,12 +248,24 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
               : 'You haven\'t added any contacts yet. Start by adding your first buyer or seller.'}
           </p>
           {!searchQuery && filterType === 'ALL' && (
-            <button onClick={() => setView('form')} className="btn btn-primary">
+            <Button onClick={() => setView('form')}>
               Add Your First Contact
-            </button>
+            </Button>
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deletingContactId}
+        onClose={() => setDeletingContactId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Contact"
+        message="Are you sure you want to delete this contact? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

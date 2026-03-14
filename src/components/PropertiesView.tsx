@@ -4,23 +4,36 @@ import { type Property, propertyService } from '../api/properties';
 import { Input } from './Input';
 import PropertyCard from './PropertyCard';
 import PropertyForm from './PropertyForm';
+import PropertyDetails from './PropertyDetails';
+import Button from './Button';
+import ConfirmModal from './ConfirmModal';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface PropertiesViewProps {
   organizationId: string;
 }
 
 const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
+  const { navigationState } = useNavigation();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'form'>('list');
+  const [view, setView] = useState<'list' | 'form' | 'details'>('list');
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
+  const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchProperties = async () => {
     setIsLoading(true);
     try {
       const response = await propertyService.getAll(organizationId);
       setProperties(response.data);
+      // Update selected property if we are in details view
+      if (selectedProperty) {
+        const updated = response.data.find(p => p.id === selectedProperty.id);
+        if (updated) setSelectedProperty(updated);
+      }
     } catch (err) {
       console.error('Failed to fetch properties', err);
     } finally {
@@ -32,29 +45,70 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     fetchProperties();
   }, [organizationId]);
 
+  useEffect(() => {
+    // Detect returning from seller creation
+    if (navigationState.context === 'creating-seller' && navigationState.draftData) {
+      setView('form');
+      if (navigationState.draftData.id) {
+        setEditingProperty(navigationState.draftData);
+      }
+    }
+  }, [navigationState.context, navigationState.draftData]);
+
   const handleSave = async (data: Partial<Property>) => {
+    // Strip metadata and relationship fields that backend doesn't accept in Create/Update DTOs
+    const { 
+      id, 
+      createdAt, 
+      updatedAt, 
+      propertyImages, 
+      deals, 
+      activities, 
+      sellerProfile,
+      organization,
+      tags,
+      ...cleanData 
+    } = data as any;
+    
     try {
+      let savedProperty: Property;
       if (editingProperty) {
-        await propertyService.update(editingProperty.id, data);
+        const response = await propertyService.update(editingProperty.id, cleanData);
+        savedProperty = response.data;
       } else {
-        await propertyService.create({ ...data, organizationId });
+        const response = await propertyService.create({ ...cleanData, organizationId });
+        savedProperty = response.data;
       }
       setView('list');
       setEditingProperty(undefined);
       fetchProperties();
+      return savedProperty;
     } catch (err) {
       console.error('Failed to save property', err);
+      throw err;
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this property?')) {
-      try {
-        await propertyService.delete(id);
-        fetchProperties();
-      } catch (err) {
-        console.error('Failed to delete property', err);
+    setDeletingPropertyId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPropertyId) return;
+    
+    setIsDeleting(true);
+    try {
+      await propertyService.delete(deletingPropertyId);
+      if (selectedProperty?.id === deletingPropertyId) {
+        setView('list');
+        setSelectedProperty(undefined);
       }
+      fetchProperties();
+      setDeletingPropertyId(null);
+    } catch (err) {
+      console.error('Failed to delete property', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -79,6 +133,23 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     );
   }
 
+  if (view === 'details' && selectedProperty) {
+    return (
+      <PropertyDetails
+        property={selectedProperty}
+        onBack={() => {
+          setView('list');
+          setSelectedProperty(undefined);
+        }}
+        onEdit={(p) => {
+          setEditingProperty(p);
+          setView('form');
+        }}
+        onDelete={handleDelete}
+      />
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -86,13 +157,12 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Properties</h1>
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your listings and property details.</p>
         </div>
-        <button
+        <Button
           onClick={() => setView('form')}
-          className="btn btn-primary"
-          style={{ gap: '0.5rem' }}
+          leftIcon={<Plus size={20} />}
         >
-          <Plus size={20} /> Add Property
-        </button>
+          Add Property
+        </Button>
       </header>
 
       {/* Filters & Search */}
@@ -109,9 +179,9 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
             style={{ fontSize: '0.875rem' }}
           />
         </div>
-        <button className="btn btn-outline" style={{ gap: '0.5rem', padding: '0.625rem 1rem' }}>
-          <Filter size={18} /> Filters
-        </button>
+        <Button variant="outline" leftIcon={<Filter size={18} />} style={{ padding: '0.625rem 1rem' }}>
+          Filters
+        </Button>
       </div>
 
       {isLoading ? (
@@ -124,6 +194,10 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
             <PropertyCard
               key={property.id}
               property={property}
+              onClick={() => {
+                setSelectedProperty(property);
+                setView('details');
+              }}
               onEdit={(p) => {
                 setEditingProperty(p);
                 setView('form');
@@ -142,12 +216,24 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
             {searchQuery ? 'No properties match your search criteria.' : 'You haven\'t added any properties yet. Get started by adding your first listing.'}
           </p>
           {!searchQuery && (
-            <button onClick={() => setView('form')} className="btn btn-primary">
+            <Button onClick={() => setView('form')}>
               Add Your First Property
-            </button>
+            </Button>
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deletingPropertyId}
+        onClose={() => setDeletingPropertyId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Property"
+        message="Are you sure you want to delete this property? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
