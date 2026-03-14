@@ -3,6 +3,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import api from '../api/client';
+import { Input } from './Input';
 
 interface LoginFormProps {
     onSwitchToSignup?: () => void;
@@ -98,59 +99,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
             </AnimatePresence>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label htmlFor="email" style={{ fontSize: '0.875rem', fontWeight: 500 }}>Email Address</label>
-                    <div style={{ position: 'relative' }}>
-                        <Mail
-                            size={18}
-                            color="var(--color-text-muted)"
-                            style={{
-                                position: 'absolute',
-                                left: '0.875rem',
-                                top: '50%',
-                                transform: 'translateY(-50%)'
-                            }}
-                        />
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="name@company.com"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                borderRadius: 'var(--radius)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem',
-                                outline: 'none',
-                                transition: 'border-color 0.2s',
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label="Email Address"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@company.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    icon={Mail}
+                />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label htmlFor="password" style={{ fontSize: '0.875rem', fontWeight: 500 }}>Password</label>
+                        <label htmlFor="password" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Password</label>
                         <a href="#" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>Forgot?</a>
                     </div>
                     <div style={{ position: 'relative' }}>
-                        <Lock
-                            size={18}
-                            color="var(--color-text-muted)"
-                            style={{
-                                position: 'absolute',
-                                left: '0.875rem',
-                                top: '50%',
-                                transform: 'translateY(-50%)'
-                            }}
-                        />
-                        <input
+                        <Input
                             id="password"
                             name="password"
                             type={showPassword ? "text" : "password"}
@@ -158,17 +125,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                borderRadius: 'var(--radius)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem',
-                                outline: 'none',
-                                transition: 'border-color 0.2s',
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
+                            icon={Lock}
+                            style={{ paddingRight: '2.5rem' }}
                         />
                         <button
                             type="button"
@@ -181,9 +139,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: 'var(--color-text-muted)',
+                                color: 'var(--muted-foreground)',
                                 display: 'flex',
-                                alignItems: 'center'
+                                alignItems: 'center',
+                                zIndex: 1
                             }}
                         >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

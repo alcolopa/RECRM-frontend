@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
+import { Input } from './Input';
 
 interface ProfileViewProps {
   user: UserProfile;
@@ -252,29 +253,36 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
             </AnimatePresence>
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
-              <div style={inputGroupStyle}>
-                <label htmlFor="firstName" style={labelStyle}>First Name</label>
-                <div style={{ position: 'relative' }}>
-                  <UserIcon size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleChange} style={inputStyle} placeholder="First name" />
-                </div>
-              </div>
-              <div style={inputGroupStyle}>
-                <label htmlFor="lastName" style={labelStyle}>Last Name</label>
-                <div style={{ position: 'relative' }}>
-                  <UserIcon size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleChange} style={inputStyle} placeholder="Last name" />
-                </div>
-              </div>
+              <Input
+                label="First Name"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                placeholder="First name"
+                icon={UserIcon}
+              />
+              <Input
+                label="Last Name"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="Last name"
+                icon={UserIcon}
+              />
             </div>
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="email" style={labelStyle}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input id="email" name="email" type="email" value={formData.email} onChange={handleChange} style={inputStyle} placeholder="email@example.com" />
-              </div>
-            </div>
+            <Input
+              label="Email Address"
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="email@example.com"
+              icon={Mail}
+            />
 
             <div style={{ borderBottom: '1px solid var(--color-border)', margin: '1rem 0' }}></div>
 
@@ -283,32 +291,39 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Update your password to stay secure.</p>
             </div>
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="oldPassword" style={labelStyle}>Current Password</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input id="oldPassword" name="oldPassword" type="password" value={formData.oldPassword} onChange={handleChange} style={inputStyle} placeholder="Enter current password" />
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-                Required only if you are changing your password.
-              </p>
-            </div>
+            <Input
+              label="Current Password"
+              id="oldPassword"
+              name="oldPassword"
+              type="password"
+              value={formData.oldPassword}
+              onChange={handleChange}
+              placeholder="Enter current password"
+              icon={Lock}
+              helperText="Required only if you are changing your password."
+            />
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
-              <div style={inputGroupStyle}>
-                <label htmlFor="password" style={labelStyle}>New Password</label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} style={inputStyle} placeholder="New password" />
-                </div>
-              </div>
-              <div style={inputGroupStyle}>
-                <label htmlFor="confirmPassword" style={labelStyle}>Confirm New Password</label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} style={inputStyle} placeholder="Confirm new password" />
-                </div>
-              </div>
+              <Input
+                label="New Password"
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="New password"
+                icon={Lock}
+              />
+              <Input
+                label="Confirm New Password"
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm new password"
+                icon={Lock}
+              />
             </div>
 
             <button 
@@ -343,37 +358,6 @@ const badgeStyle: React.CSSProperties = {
   fontSize: '0.875rem',
   color: 'var(--color-text-muted)',
   fontWeight: 500
-};
-
-const inputGroupStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.4rem'
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  color: 'var(--color-text-muted)',
-  textTransform: 'uppercase'
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.625rem 0.875rem 0.625rem 2.25rem',
-  borderRadius: '0.5rem',
-  border: '1px solid var(--color-border)',
-  fontSize: '0.9375rem',
-  outline: 'none',
-  background: 'var(--color-surface)',
-  color: 'var(--color-text)'
-};
-
-const inputIconStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: '0.75rem',
-  top: '50%',
-  transform: 'translateY(-50%)'
 };
 
 const successAlertStyle: React.CSSProperties = {

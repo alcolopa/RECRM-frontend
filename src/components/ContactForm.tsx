@@ -24,6 +24,7 @@ import {
   SellingTimeline
 } from '../api/contacts';
 import PhoneInput from './PhoneInput';
+import { Input, Select, Textarea, Checkbox } from './Input';
 
 interface ContactFormProps {
   contact?: Contact;
@@ -186,59 +187,74 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
                   </button>
                 </div>
               </div>
-              <div style={inputGroupStyle}>
-                <label htmlFor="status" style={labelStyle}>Contact Status</label>
-                <div style={{ position: 'relative' }}>
-                  <Briefcase size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <select id="status" name="status" value={baseData.status} onChange={handleBaseChange} style={{ ...inputStyle, appearance: 'none' }}>
-                    {Object.values(ContactStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
+              <Select
+                label="Contact Status"
+                id="status"
+                name="status"
+                value={baseData.status}
+                onChange={handleBaseChange}
+                icon={Briefcase}
+                options={Object.values(ContactStatus).map(s => ({ value: s, label: s }))}
+              />
             </div>
 
             <div className="grid grid-2">
-              <div style={inputGroupStyle}>
-                <label htmlFor="firstName" style={labelStyle}>First Name</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="firstName" name="firstName" type="text" required value={baseData.firstName} onChange={handleBaseChange} style={inputStyle} placeholder="John" />
-                </div>
-              </div>
-              <div style={inputGroupStyle}>
-                <label htmlFor="lastName" style={labelStyle}>Last Name</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="lastName" name="lastName" type="text" required value={baseData.lastName} onChange={handleBaseChange} style={inputStyle} placeholder="Doe" />
-                </div>
-              </div>
+              <Input
+                label="First Name"
+                id="firstName"
+                name="firstName"
+                required
+                value={baseData.firstName}
+                onChange={handleBaseChange}
+                placeholder="John"
+                icon={User}
+              />
+              <Input
+                label="Last Name"
+                id="lastName"
+                name="lastName"
+                required
+                value={baseData.lastName}
+                onChange={handleBaseChange}
+                placeholder="Doe"
+                icon={User}
+              />
             </div>
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="email" style={labelStyle}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input id="email" name="email" type="email" value={baseData.email} onChange={handleBaseChange} style={inputStyle} placeholder="john@example.com" />
-              </div>
-            </div>
+            <Input
+              label="Email Address"
+              id="email"
+              name="email"
+              type="email"
+              value={baseData.email}
+              onChange={handleBaseChange}
+              placeholder="john@example.com"
+              icon={Mail}
+            />
 
             <div style={inputGroupStyle}>
               <label htmlFor="phone" style={labelStyle}>Phone Number</label>
               <PhoneInput id="phone" value={baseData.phone} onChange={handlePhoneChange} />
             </div>
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="leadSource" style={labelStyle}>Lead Source</label>
-              <div style={{ position: 'relative' }}>
-                <Layers size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input id="leadSource" name="leadSource" type="text" value={baseData.leadSource} onChange={handleBaseChange} style={inputStyle} placeholder="e.g. Website, Referral, Zillow" />
-              </div>
-            </div>
+            <Input
+              label="Lead Source"
+              id="leadSource"
+              name="leadSource"
+              value={baseData.leadSource}
+              onChange={handleBaseChange}
+              placeholder="e.g. Website, Referral, Zillow"
+              icon={Layers}
+            />
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="notes" style={labelStyle}>Internal Notes</label>
-              <textarea id="notes" name="notes" value={baseData.notes} onChange={handleBaseChange} style={{ ...inputStyle, minHeight: '100px', padding: '0.75rem' }} placeholder="Any additional details..." />
-            </div>
+            <Textarea
+              label="Internal Notes"
+              id="notes"
+              name="notes"
+              value={baseData.notes}
+              onChange={handleBaseChange}
+              placeholder="Any additional details..."
+            />
 
             <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem' }}>
               <button type="button" onClick={nextStep} className="btn btn-primary" style={{ gap: '0.5rem', width: '100%', justifyContent: 'center' }}>
@@ -255,89 +271,97 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
           >
             <div className="grid grid-2">
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Min Budget</label>
-                <div style={{ position: 'relative' }}>
-                  <DollarSign size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="minBudget" name="minBudget" type="number" value={buyerProfile.minBudget || ''} onChange={(e) => handleBuyerChange('minBudget', Number(e.target.value))} style={inputStyle} placeholder="Min" />
-                </div>
-              </div>
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Max Budget</label>
-                <div style={{ position: 'relative' }}>
-                  <DollarSign size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                  <input id="maxBudget" name="maxBudget" type="number" value={buyerProfile.maxBudget || ''} onChange={(e) => handleBuyerChange('maxBudget', Number(e.target.value))} style={inputStyle} placeholder="Max" />
-                </div>
-              </div>
+              <Input
+                label="Min Budget"
+                id="minBudget"
+                name="minBudget"
+                type="number"
+                value={buyerProfile.minBudget || ''}
+                onChange={(e) => handleBuyerChange('minBudget', Number(e.target.value))}
+                placeholder="Min"
+                icon={DollarSign}
+              />
+              <Input
+                label="Max Budget"
+                id="maxBudget"
+                name="maxBudget"
+                type="number"
+                value={buyerProfile.maxBudget || ''}
+                onChange={(e) => handleBuyerChange('maxBudget', Number(e.target.value))}
+                placeholder="Max"
+                icon={DollarSign}
+              />
             </div>
 
             <div className="grid grid-2">
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Financing</label>
-                <select
-                  id="financingType"
-                  name="financingType"
-                  value={buyerProfile.financingType || ''}
-                  onChange={(e) => handleBuyerChange('financingType', e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">Select Type</option>
-                  {Object.values(FinancingType).map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Timeline</label>
-                <select
-                  id="buyingTimeline"
-                  name="buyingTimeline"
-                  value={buyerProfile.buyingTimeline || ''}
-                  onChange={(e) => handleBuyerChange('buyingTimeline', e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">Select Timeline</option>
-                  {Object.values(BuyingTimeline).map(t => (
-                    <option key={t} value={t}>{formatTimelineLabel(t)}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Financing"
+                id="financingType"
+                name="financingType"
+                value={buyerProfile.financingType || ''}
+                onChange={(e) => handleBuyerChange('financingType', e.target.value)}
+                options={[
+                  { value: '', label: 'Select Type' },
+                  ...Object.values(FinancingType).map(t => ({ value: t, label: t }))
+                ]}
+              />
+              <Select
+                label="Timeline"
+                id="buyingTimeline"
+                name="buyingTimeline"
+                value={buyerProfile.buyingTimeline || ''}
+                onChange={(e) => handleBuyerChange('buyingTimeline', e.target.value)}
+                options={[
+                  { value: '', label: 'Select Timeline' },
+                  ...Object.values(BuyingTimeline).map(t => ({ value: t, label: formatTimelineLabel(t) }))
+                ]}
+              />
             </div>
 
             <div className="grid grid-2">
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Min Bedrooms</label>
-                <input id="minBedrooms" name="minBedrooms" type="number" value={buyerProfile.minBedrooms || ''} onChange={(e) => handleBuyerChange('minBedrooms', Number(e.target.value))} style={inputStyle} placeholder="e.g. 3" />
-              </div>
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Min Bathrooms</label>
-                <input id="minBathrooms" name="minBathrooms" type="number" value={buyerProfile.minBathrooms || ''} onChange={(e) => handleBuyerChange('minBathrooms', Number(e.target.value))} style={inputStyle} placeholder="e.g. 2" />
-              </div>
+              <Input
+                label="Min Bedrooms"
+                id="minBedrooms"
+                name="minBedrooms"
+                type="number"
+                value={buyerProfile.minBedrooms || ''}
+                onChange={(e) => handleBuyerChange('minBedrooms', Number(e.target.value))}
+                placeholder="e.g. 3"
+              />
+              <Input
+                label="Min Bathrooms"
+                id="minBathrooms"
+                name="minBathrooms"
+                type="number"
+                value={buyerProfile.minBathrooms || ''}
+                onChange={(e) => handleBuyerChange('minBathrooms', Number(e.target.value))}
+                placeholder="e.g. 2"
+              />
             </div>
 
-            <div style={inputGroupStyle}>
-              <label style={labelStyle}>Location Preferences</label>
-              <div style={{ position: 'relative' }}>
-                <MapPin size={18} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input
-                  id="preferredCities"
-                  name="preferredCities"
-                  type="text"
-                  placeholder="Cities (comma separated)"
-                  value={buyerProfile.preferredCities.join(', ')}
-                  onChange={(e) => handleBuyerChange('preferredCities', e.target.value.split(',').map(s => s.trim()))}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
+            <Input
+              label="Location Preferences"
+              id="preferredCities"
+              name="preferredCities"
+              placeholder="Cities (comma separated)"
+              value={buyerProfile.preferredCities.join(', ')}
+              onChange={(e) => handleBuyerChange('preferredCities', e.target.value.split(',').map(s => s.trim()))}
+              icon={MapPin}
+            />
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                <input id="preApproved" name="preApproved" type="checkbox" checked={buyerProfile.preApproved} onChange={(e) => handleBuyerChange('preApproved', e.target.checked)} />
-                Pre-approved for Mortgage
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                <input id="parkingRequired" name="parkingRequired" type="checkbox" checked={buyerProfile.parkingRequired} onChange={(e) => handleBuyerChange('parkingRequired', e.target.checked)} />
-                Parking Required
-              </label>
+              <Checkbox
+                label="Pre-approved for Mortgage"
+                id="preApproved"
+                checked={buyerProfile.preApproved}
+                onChange={(e) => handleBuyerChange('preApproved', e.target.checked)}
+              />
+              <Checkbox
+                label="Parking Required"
+                id="parkingRequired"
+                checked={buyerProfile.parkingRequired}
+                onChange={(e) => handleBuyerChange('parkingRequired', e.target.checked)}
+              />
             </div>
 
             <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
@@ -361,45 +385,43 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSave, onCancel, or
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
           >
             <div className="grid grid-2">
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Listing Type</label>
-                <select
-                  id="listingType"
-                  name="listingType"
-                  value={sellerProfile.listingType || ''}
-                  onChange={(e) => handleSellerChange('listingType', e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">Select Listing</option>
-                  {Object.values(ListingType).map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
-                </select>
-              </div>
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Selling Timeline</label>
-                <select
-                  id="sellingTimeline"
-                  name="sellingTimeline"
-                  value={sellerProfile.sellingTimeline || ''}
-                  onChange={(e) => handleSellerChange('sellingTimeline', e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">Select Timeline</option>
-                  {Object.values(SellingTimeline).map(t => (
-                    <option key={t} value={t}>{formatTimelineLabel(t)}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Listing Type"
+                id="listingType"
+                name="listingType"
+                value={sellerProfile.listingType || ''}
+                onChange={(e) => handleSellerChange('listingType', e.target.value)}
+                options={[
+                  { value: '', label: 'Select Listing' },
+                  ...Object.values(ListingType).map(t => ({ value: t, label: t.replace(/_/g, ' ') }))
+                ]}
+              />
+              <Select
+                label="Selling Timeline"
+                id="sellingTimeline"
+                name="sellingTimeline"
+                value={sellerProfile.sellingTimeline || ''}
+                onChange={(e) => handleSellerChange('sellingTimeline', e.target.value)}
+                options={[
+                  { value: '', label: 'Select Timeline' },
+                  ...Object.values(SellingTimeline).map(t => ({ value: t, label: formatTimelineLabel(t) }))
+                ]}
+              />
             </div>
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                <input id="readyToList" name="readyToList" type="checkbox" checked={sellerProfile.readyToList} onChange={(e) => handleSellerChange('readyToList', e.target.checked)} />
-                Ready to List
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                <input id="occupied" name="occupied" type="checkbox" checked={sellerProfile.occupied} onChange={(e) => handleSellerChange('occupied', e.target.checked)} />
-                Currently Occupied
-              </label>
+              <Checkbox
+                label="Ready to List"
+                id="readyToList"
+                checked={sellerProfile.readyToList}
+                onChange={(e) => handleSellerChange('readyToList', e.target.checked)}
+              />
+              <Checkbox
+                label="Currently Occupied"
+                id="occupied"
+                checked={sellerProfile.occupied}
+                onChange={(e) => handleSellerChange('occupied', e.target.checked)}
+              />
             </div>
 
             <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
@@ -430,24 +452,6 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.875rem',
   fontWeight: 600,
   color: 'var(--color-text)'
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.75rem 1rem 0.75rem 2.5rem',
-  borderRadius: 'var(--radius)',
-  border: '1px solid var(--color-border)',
-  fontSize: '1rem',
-  outline: 'none',
-  background: 'white',
-  transition: 'border-color 0.2s',
-};
-
-const inputIconStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: '0.875rem',
-  top: '50%',
-  transform: 'translateY(-50%)'
 };
 
 export default ContactForm;

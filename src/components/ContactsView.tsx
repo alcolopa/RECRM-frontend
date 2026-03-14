@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Loader2, Users, UserPlus } from 'lucide-react';
 import { type Contact, ContactType, contactService } from '../api/contacts';
+import { Input } from './Input';
 import ContactCard from './ContactCard';
 import ContactForm from './ContactForm';
 import ContactDetails from './ContactDetails';
@@ -124,23 +125,16 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
 
       {/* Filters & Search */}
       <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
-          <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
-          <input
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <Input
             id="searchQuery"
             name="searchQuery"
             type="text"
             placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.625rem 1rem 0.625rem 2.5rem',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.875rem',
-              outline: 'none'
-            }}
+            icon={Search}
+            style={{ fontSize: '0.875rem' }}
           />
         </div>
 

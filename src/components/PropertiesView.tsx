@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Loader2, Home } from 'lucide-react';
 import { type Property, propertyService } from '../api/properties';
+import { Input } from './Input';
 import PropertyCard from './PropertyCard';
 import PropertyForm from './PropertyForm';
 
@@ -96,23 +97,16 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
 
       {/* Filters & Search */}
       <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
-          <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
-          <input
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <Input
             id="searchQuery"
             name="searchQuery"
             type="text"
             placeholder="Search by title, address, or city..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.625rem 1rem 0.625rem 2.5rem',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.875rem',
-              outline: 'none'
-            }}
+            icon={Search}
+            style={{ fontSize: '0.875rem' }}
           />
         </div>
         <button className="btn btn-outline" style={{ gap: '0.5rem', padding: '0.625rem 1rem' }}>

@@ -95,7 +95,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
     border: `1px solid ${externalError ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
     background: 'var(--color-surface)',
     transition: 'all 0.2s ease',
-    boxShadow: isOpen ? '0 0 0 2px rgba(5, 150, 105, 0.1)' : 'none',
+    boxShadow: isOpen ? '0 0 0 3px rgba(16, 185, 129, 0.1)' : 'none',
     overflow: 'hidden',
     height: '2.75rem'
   };
@@ -114,6 +114,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             padding: '0 0.75rem',
             border: 'none',
             background: 'var(--color-bg)',
+            color: 'var(--color-text)',
             cursor: 'pointer',
             height: '100%',
             fontSize: '0.9rem',
@@ -122,8 +123,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
           }}
         >
           <span style={{ fontSize: '1.1rem' }}>{selectedCountry.flag}</span>
-          <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{selectedCountry.code}</span>
-          <ChevronDown size={14} color="var(--color-text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          <span style={{ fontWeight: 600 }}>{selectedCountry.code}</span>
+          <ChevronDown size={14} color="var(--muted-foreground)" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
 
         {/* Input Field */}
@@ -142,6 +143,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
               fontSize: '0.95rem',
               outline: 'none',
               background: 'transparent',
+              color: 'var(--color-text)',
               height: '100%',
               fontFamily: 'inherit'
             }}
@@ -189,7 +191,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             }}
           >
             <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-              <Search size={14} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={14} color="var(--muted-foreground)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 id="countrySearch"
                 name="countrySearch"
@@ -202,6 +204,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
                   padding: '0.5rem 0.75rem 0.5rem 2.25rem',
                   borderRadius: '0.375rem',
                   border: '1px solid var(--color-border)',
+                  background: 'var(--color-bg)',
+                  color: 'var(--color-text)',
                   fontSize: '0.875rem',
                   outline: 'none'
                 }}

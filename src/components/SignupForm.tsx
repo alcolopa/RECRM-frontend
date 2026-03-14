@@ -3,6 +3,7 @@ import { Mail, Lock, User, Building, Globe, Eye, EyeOff, ArrowRight, Loader2, Al
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import api from '../api/client';
+import { Input } from './Input';
 
 interface SignupFormProps {
     onSwitchToLogin?: () => void;
@@ -145,69 +146,97 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label htmlFor="firstName" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>First Name</label>
-                        <div style={{ position: 'relative' }}>
-                            <User size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                            <input id="firstName" name="firstName" type="text" placeholder="John" required value={formData.firstName} onChange={handleChange}
-                                style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', fontSize: '0.9rem', outline: 'none' }}
-                            />
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label htmlFor="lastName" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Last Name</label>
-                        <div style={{ position: 'relative' }}>
-                            <User size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                            <input id="lastName" name="lastName" type="text" placeholder="Doe" required value={formData.lastName} onChange={handleChange}
-                                style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', fontSize: '0.9rem', outline: 'none' }}
-                            />
-                        </div>
-                    </div>
+                    <Input
+                        label="First Name"
+                        id="firstName"
+                        name="firstName"
+                        placeholder="John"
+                        required
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        icon={User}
+                    />
+                    <Input
+                        label="Last Name"
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Doe"
+                        required
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        icon={User}
+                    />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="email" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Email</label>
-                    <div style={{ position: 'relative' }}>
-                        <Mail size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                        <input id="email" name="email" type="email" placeholder="john@example.com" required value={formData.email} onChange={handleChange}
-                            style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', fontSize: '0.9rem', outline: 'none' }}
-                        />
-                    </div>
+                <Input
+                    label="Email"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    icon={Mail}
+                />
+
+                <div style={{ position: 'relative' }}>
+                    <Input
+                        label="Password"
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        icon={Lock}
+                        style={{ paddingRight: '2.5rem' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                            position: 'absolute',
+                            right: '0.75rem',
+                            top: '2.1rem',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--muted-foreground)',
+                            zIndex: 1
+                        }}
+                    >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="password" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Password</label>
-                    <div style={{ position: 'relative' }}>
-                        <Lock size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                        <input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" required value={formData.password} onChange={handleChange}
-                            style={{ width: '100%', padding: '0.6rem 2.5rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', fontSize: '0.9rem', outline: 'none' }}
-                        />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                    </div>
-                </div>
-
-                <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(5, 150, 105, 0.05)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-primary)' }}>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-primary)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <label htmlFor="organizationName" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-primary)' }}>Organization Name</label>
-                            <div style={{ position: 'relative' }}>
-                                <Building size={16} color="var(--color-primary)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                                <input id="organizationName" name="organizationName" type="text" placeholder="Acme Realty" required value={formData.organizationName} onChange={handleChange}
-                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-primary)', fontSize: '0.9rem', outline: 'none', background: 'var(--color-surface)' }}
-                                />
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <label htmlFor="organizationSlug" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-primary)' }}>Workspace URL</label>
-                            <div style={{ position: 'relative' }}>
-                                <Globe size={16} color="var(--color-primary)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                                <input id="organizationSlug" name="organizationSlug" type="text" placeholder="acme-realty" required value={formData.organizationSlug} onChange={handleChange}
-                                    style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-primary)', fontSize: '0.9rem', outline: 'none', background: 'var(--color-surface)' }}
-                                />
-                                <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--color-primary)', opacity: 0.7 }}>.estatehub.com</span>
-                            </div>
+                        <Input
+                            label="Organization Name"
+                            id="organizationName"
+                            name="organizationName"
+                            placeholder="Acme Realty"
+                            required
+                            value={formData.organizationName}
+                            onChange={handleChange}
+                            icon={Building}
+                            style={{ borderColor: 'var(--color-primary)' }}
+                        />
+                        <div style={{ position: 'relative' }}>
+                            <Input
+                                label="Workspace URL"
+                                id="organizationSlug"
+                                name="organizationSlug"
+                                placeholder="acme-realty"
+                                required
+                                value={formData.organizationSlug}
+                                onChange={handleChange}
+                                icon={Globe}
+                                style={{ borderColor: 'var(--color-primary)', paddingRight: '7rem' }}
+                            />
+                            <span style={{ position: 'absolute', right: '0.75rem', top: '2.25rem', fontSize: '0.75rem', color: 'var(--color-primary)', opacity: 0.7 }}>.estatehub.com</span>
                         </div>
                     </div>
                 </div>

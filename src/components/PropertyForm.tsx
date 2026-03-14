@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Property } from '../api/properties';
+import { Input, Select, Textarea } from './Input';
 
 interface PropertyFormProps {
   property?: Property;
@@ -95,121 +96,149 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}><Info size={18} /> Basic Information</h3>
           <div className="grid grid-2" style={{ gap: '1rem' }}>
-            <div style={inputGroupStyle}>
-              <label htmlFor="title" style={labelStyle}>Property Title*</label>
-              <input
-                id="title" name="title" type="text" required placeholder="Modern Villa"
-                value={formData.title} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="price" style={labelStyle}>Price ($)*</label>
-              <div style={{ position: 'relative' }}>
-                <DollarSign size={16} color="var(--color-text-muted)" style={inputIconStyle} />
-                <input
-                  id="price" name="price" type="number" required placeholder="450000"
-                  value={formData.price} onChange={handleChange} style={{ ...inputStyle, paddingLeft: '2.25rem' }}
-                />
-              </div>
-            </div>
-          </div>
-          <div style={inputGroupStyle}>
-            <label htmlFor="description" style={labelStyle}>Description</label>
-            <textarea
-              id="description" name="description" rows={3} placeholder="Describe the property..."
-              value={formData.description} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical' }}
+            <Input
+              label="Property Title*"
+              id="title"
+              name="title"
+              required
+              placeholder="Modern Villa"
+              value={formData.title}
+              onChange={handleChange}
+            />
+            <Input
+              label="Price ($)*"
+              id="price"
+              name="price"
+              type="number"
+              required
+              placeholder="450000"
+              value={formData.price}
+              onChange={handleChange}
+              icon={DollarSign}
             />
           </div>
+          <Textarea
+            label="Description"
+            id="description"
+            name="description"
+            rows={3}
+            placeholder="Describe the property..."
+            value={formData.description}
+            onChange={handleChange}
+            style={{ resize: 'vertical' }}
+          />
         </div>
 
         {/* Section: Details */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}><Building2 size={18} /> Property Details</h3>
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
-            <div style={inputGroupStyle}>
-              <label htmlFor="type" style={labelStyle}>Type</label>
-              <select id="type" name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
-                <option value="HOUSE">House</option>
-                <option value="APARTMENT">Apartment</option>
-                <option value="CONDO">Condo</option>
-                <option value="TOWNHOUSE">Townhouse</option>
-                <option value="LAND">Land</option>
-                <option value="COMMERCIAL">Commercial</option>
-              </select>
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="status" style={labelStyle}>Status</label>
-              <select id="status" name="status" value={formData.status} onChange={handleChange} style={inputStyle}>
-                <option value="AVAILABLE">Available</option>
-                <option value="UNDER_CONTRACT">Under Contract</option>
-                <option value="SOLD">Sold</option>
-                <option value="RENTED">Rented</option>
-                <option value="OFF_MARKET">Off Market</option>
-              </select>
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="area" style={labelStyle}>Area (sqft)</label>
-              <input
-                id="area" name="area" type="number" placeholder="2500"
-                value={formData.area} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="bedrooms" style={labelStyle}>Bedrooms</label>
-              <input
-                id="bedrooms" name="bedrooms" type="number" placeholder="3"
-                value={formData.bedrooms} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="bathrooms" style={labelStyle}>Bathrooms</label>
-              <input
-                id="bathrooms" name="bathrooms" type="number" step="0.5" placeholder="2.5"
-                value={formData.bathrooms} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="yearBuilt" style={labelStyle}>Year Built</label>
-              <input
-                id="yearBuilt" name="yearBuilt" type="number" placeholder="2020"
-                value={formData.yearBuilt} onChange={handleChange} style={inputStyle}
-              />
-            </div>
+            <Select
+              label="Type"
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              options={[
+                { value: 'HOUSE', label: 'House' },
+                { value: 'APARTMENT', label: 'Apartment' },
+                { value: 'CONDO', label: 'Condo' },
+                { value: 'TOWNHOUSE', label: 'Townhouse' },
+                { value: 'LAND', label: 'Land' },
+                { value: 'COMMERCIAL', label: 'Commercial' }
+              ]}
+            />
+            <Select
+              label="Status"
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              options={[
+                { value: 'AVAILABLE', label: 'Available' },
+                { value: 'UNDER_CONTRACT', label: 'Under Contract' },
+                { value: 'SOLD', label: 'Sold' },
+                { value: 'RENTED', label: 'Rented' },
+                { value: 'OFF_MARKET', label: 'Off Market' }
+              ]}
+            />
+            <Input
+              label="Area (sqft)"
+              id="area"
+              name="area"
+              type="number"
+              placeholder="2500"
+              value={formData.area}
+              onChange={handleChange}
+            />
+            <Input
+              label="Bedrooms"
+              id="bedrooms"
+              name="bedrooms"
+              type="number"
+              placeholder="3"
+              value={formData.bedrooms}
+              onChange={handleChange}
+            />
+            <Input
+              label="Bathrooms"
+              id="bathrooms"
+              name="bathrooms"
+              type="number"
+              step="0.5"
+              placeholder="2.5"
+              value={formData.bathrooms}
+              onChange={handleChange}
+            />
+            <Input
+              label="Year Built"
+              id="yearBuilt"
+              name="yearBuilt"
+              type="number"
+              placeholder="2020"
+              value={formData.yearBuilt}
+              onChange={handleChange}
+            />
           </div>
         </div>
 
         {/* Section: Location */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}><MapPin size={18} /> Location</h3>
-          <div style={inputGroupStyle}>
-            <label htmlFor="address" style={labelStyle}>Street Address*</label>
-            <input
-              id="address" name="address" type="text" required placeholder="123 Main St"
-              value={formData.address} onChange={handleChange} style={inputStyle}
-            />
-          </div>
+          <Input
+            label="Street Address*"
+            id="address"
+            name="address"
+            required
+            placeholder="123 Main St"
+            value={formData.address}
+            onChange={handleChange}
+          />
           <div className="grid grid-3" style={{ gap: '1rem' }}>
-            <div style={inputGroupStyle}>
-              <label htmlFor="city" style={labelStyle}>City</label>
-              <input
-                id="city" name="city" type="text" placeholder="Los Angeles"
-                value={formData.city} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="state" style={labelStyle}>State</label>
-              <input
-                id="state" name="state" type="text" placeholder="CA"
-                value={formData.state} onChange={handleChange} style={inputStyle}
-              />
-            </div>
-            <div style={inputGroupStyle}>
-              <label htmlFor="zipCode" style={labelStyle}>Zip Code</label>
-              <input
-                id="zipCode" name="zipCode" type="text" placeholder="90001"
-                value={formData.zipCode} onChange={handleChange} style={inputStyle}
-              />
-            </div>
+            <Input
+              label="City"
+              id="city"
+              name="city"
+              placeholder="Los Angeles"
+              value={formData.city}
+              onChange={handleChange}
+            />
+            <Input
+              label="State"
+              id="state"
+              name="state"
+              placeholder="CA"
+              value={formData.state}
+              onChange={handleChange}
+            />
+            <Input
+              label="Zip Code"
+              id="zipCode"
+              name="zipCode"
+              placeholder="90001"
+              value={formData.zipCode}
+              onChange={handleChange}
+            />
           </div>
         </div>
 
@@ -217,17 +246,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}><Plus size={18} /> Features</h3>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <input
+            <Input
               id="newFeature"
               name="newFeature"
               type="text"
               placeholder="e.g. Swimming Pool"
               value={newFeature}
               onChange={(e) => setNewFeature(e.target.value)}
-              style={inputStyle}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
             />
-            <button type="button" onClick={addFeature} className="btn btn-primary" style={{ padding: '0 1rem' }}>
+            <button type="button" onClick={addFeature} className="btn btn-primary" style={{ padding: '0 1rem', marginTop: '1.4rem' }}>
               Add
             </button>
           </div>
@@ -276,47 +304,6 @@ const sectionTitleStyle: React.CSSProperties = {
   color: 'var(--color-primary)'
 };
 
-const inputGroupStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.4rem'
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  color: 'var(--color-text-muted)',
-  textTransform: 'uppercase'
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.625rem 0.875rem',
-  borderRadius: '0.5rem',
-  border: '1px solid var(--color-border)',
-  fontSize: '0.9375rem',
-  outline: 'none',
-  background: 'var(--color-surface)',
-};
-
-const inputIconStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: '0.75rem',
-  top: '50%',
-  transform: 'translateY(-50%)'
-};
-
-const iconButtonStyle: React.CSSProperties = {
-  background: 'var(--color-bg)',
-  border: 'none',
-  borderRadius: '0.5rem',
-  padding: '0.5rem',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-};
-
 const tagStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -328,6 +315,18 @@ const tagStyle: React.CSSProperties = {
   fontSize: '0.8125rem',
   color: 'var(--color-primary)',
   fontWeight: 600
+};
+
+const iconButtonStyle: React.CSSProperties = {
+  background: 'var(--color-bg)',
+  border: 'none',
+  borderRadius: '0.5rem',
+  padding: '0.5rem',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--color-text)'
 };
 
 export default PropertyForm;
