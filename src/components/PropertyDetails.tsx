@@ -17,7 +17,6 @@ import {
   User,
   Mail,
   Phone,
-  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
