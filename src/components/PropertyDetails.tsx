@@ -93,7 +93,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
           <ChevronLeft size={24} />
         </Button>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <div style={{ position: 'relative' }}>
             <Button
               variant="ghost"
               onClick={handleShare}
@@ -102,33 +101,50 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
             >
               <Share2 size={20} />
             </Button>
-            <AnimatePresence>
-              {showShareTooltip && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, x: '-50%' }}
-                  animate={{ opacity: 1, y: 0, x: '-50%' }}
-                  exit={{ opacity: 0, y: 10, x: '-50%' }}
-                  style={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    left: '50%',
-                    marginBottom: '0.5rem',
-                    backgroundColor: 'var(--color-text)',
-                    color: 'white',
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.75rem',
-                    whiteSpace: 'nowrap',
-                    pointerEvents: 'none',
-                    zIndex: 100
-                  }}
-                >
-                  Link copied!
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
+
+      {/* Global Toast Popup */}
+      <AnimatePresence>
+        {showShareTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            style={{
+              position: 'fixed',
+              bottom: '2rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#1a1a2e',
+              color: '#fff',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.75rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              zIndex: 10000,
+              pointerEvents: 'none',
+            }}
+          >
+            <span style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: '#22c55e',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.7rem',
+              flexShrink: 0,
+            }}>✓</span>
+            Link copied to clipboard!
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
 
       {/* Hero Image Section / Carousel */}
