@@ -31,10 +31,11 @@ interface PropertyFormProps {
   property?: Property;
   onSave: (data: Partial<Property>) => Promise<Property | void>;
   onCancel: () => void;
+  onSuccess?: () => void;
   organizationId: string;
 }
 
-const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel, organizationId }) => {
+const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel, onSuccess, organizationId }) => {
   const [formData, setFormData] = useState<Partial<Property>>({
     title: '',
     description: '',
@@ -64,6 +65,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const [isSaving, setIsSaving] = useState(false);
   const [internalImages, setInternalImages] = useState<PropertyImage[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
@@ -139,13 +141,31 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     const fileList = Array.from(files);
 
     if (property?.id) {
-      // Existing property: upload immediately
+      // Existing property: upload immediately in parallel
       setIsUploading(true);
       try {
-        for (const file of fileList) {
-          const response = await propertyService.uploadImage(property.id, file);
+        const uploadPromises = fileList.map(async (file) => {
+          const fileId = `${file.name}-${Date.now()}`;
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+          
+          const response = await propertyService.uploadImage(
+            property.id, 
+            file, 
+            (progress) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
+          );
+          
           setInternalImages(prev => [...prev, response.data]);
-        }
+          // Briefly keep at 100 before removing from progress tracking
+          setTimeout(() => {
+            setUploadProgress(prev => {
+              const next = { ...prev };
+              delete next[fileId];
+              return next;
+            });
+          }, 1000);
+        });
+
+        await Promise.all(uploadPromises);
       } catch (err) {
         console.error('Failed to upload image', err);
         setError('Failed to upload some images. Please try again.');
@@ -242,19 +262,40 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       // 1. Save property (create or update)
       const savedProperty = await onSave(submissionData);
 
-      // 2. If it was a new property and we have pending files, upload them now
+      // 2. If it was a new property and we have pending files, upload them now in parallel
       if (savedProperty && pendingFiles.length > 0) {
         setIsUploading(true);
-        for (const file of pendingFiles) {
+        const uploadPromises = pendingFiles.map(async (file) => {
+          const fileId = `${file.name}-${Date.now()}`;
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+          
           try {
-            await propertyService.uploadImage(savedProperty.id, file);
+            await propertyService.uploadImage(
+              savedProperty.id, 
+              file,
+              (progress) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
+            );
           } catch (err) {
             console.error('Failed to upload a pending image', err);
+          } finally {
+            setTimeout(() => {
+              setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[fileId];
+                return next;
+              });
+            }, 1000);
           }
-        }
+        });
+
+        await Promise.all(uploadPromises);
       }
 
       // Parent handleSave already handles redirection if it finishes successfully
+      // We will now handle navigation here after images are fully uploaded
+      clearNavigationState();
+      if (onSuccess) onSuccess();
+      else onCancel();
     } catch (err: any) {
       console.error('Failed to submit form', err);
       const errorMessage = err.response?.data?.message;
@@ -266,8 +307,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     } finally {
       setIsSaving(false);
       setIsUploading(false);
-      // Clear navigation state after successful save
-      if (!error) clearNavigationState();
     }
   };
 
@@ -408,20 +447,62 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             ))}
 
             {/* Pending Previews */}
-            {pendingFiles.map((file, idx) => (
-              <div key={`pending-${idx}`} style={{ ...imageContainerStyle, opacity: 0.7 }}>
-                <img src={URL.createObjectURL(file)} alt="Pending" style={imageStyle} />
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleImageDelete(idx, true)}
-                  style={deleteImageButtonStyle}
-                  title="Remove image"
-                  leftIcon={<Trash2 size={14} />}
-                />
-                <div style={pendingBadgeStyle}>Pending</div>
-              </div>
-            ))}
+            {pendingFiles.map((file, idx) => {
+              const progress = Object.entries(uploadProgress).find(([key]) => key.startsWith(`${file.name}-`))?.[1];
+              const isUploadingThis = progress !== undefined;
+
+              return (
+                <div key={`pending-${idx}`} style={{ ...imageContainerStyle, opacity: isUploadingThis ? 1 : 0.7 }}>
+                  <img src={URL.createObjectURL(file)} alt="Pending" style={imageStyle} />
+                  {!isUploadingThis && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleImageDelete(idx, true)}
+                      style={deleteImageButtonStyle}
+                      title="Remove image"
+                      leftIcon={<Trash2 size={14} />}
+                    />
+                  )}
+                  {isUploadingThis ? (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: 'rgba(255,255,255,0.3)',
+                      zIndex: 2
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${progress}%`,
+                        background: 'var(--color-primary)',
+                        transition: 'width 0.2s ease-out'
+                      }} />
+                    </div>
+                  ) : (
+                    <div style={pendingBadgeStyle}>Pending</div>
+                  )}
+                  {isUploadingThis && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(0,0,0,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                    }}>
+                      {progress}%
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             <label style={uploadButtonStyle}>
               {isUploading ? (
@@ -674,7 +755,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             isLoading={isSaving}
             leftIcon={!isSaving && <Save size={18} />}
           >
-            {property ? 'Update' : 'Save'}
+            {isUploading ? 'Uploading...' : property ? 'Update' : 'Save'}
           </Button>
         </div>
       </form>

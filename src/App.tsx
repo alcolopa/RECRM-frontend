@@ -12,6 +12,7 @@ const Pricing = lazy(() => import('./components/Pricing'));
 const LoginForm = lazy(() => import('./components/LoginForm'));
 const SignupForm = lazy(() => import('./components/SignupForm'));
 const Layout = lazy(() => import('./components/Layout'));
+const PublicPropertyView = lazy(() => import('./components/PublicPropertyView'));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
@@ -23,11 +24,21 @@ const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'share'>('landing');
+  const [sharedPropertyId, setSharedPropertyId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
+
+    if (path.startsWith('/share/')) {
+      const id = path.split('/')[2];
+      if (id) {
+        setSharedPropertyId(id);
+        setView('share');
+        return;
+      }
+    }
 
     if (token) {
       fetchProfile();
@@ -66,6 +77,38 @@ const AppContent = () => {
     localStorage.setItem('token', token);
     fetchProfile();
   };
+
+  // Public shared property view
+  if (view === 'share' && sharedPropertyId) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
+        <nav className="glass" style={{ height: '4rem', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
+          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div 
+              onClick={() => window.location.href = '/'}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', cursor: 'pointer' }}
+            >
+              <Home color="var(--primary)" size={24} />
+              <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
+                Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
+              </span>
+            </div>
+            <button 
+              onClick={toggleTheme}
+              style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        </nav>
+        <Suspense fallback={<LoadingFallback />}>
+          <UnitProvider user={user}>
+            <PublicPropertyView propertyId={sharedPropertyId} />
+          </UnitProvider>
+        </Suspense>
+      </div>
+    );
+  }
 
   // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {

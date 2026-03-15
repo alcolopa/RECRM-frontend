@@ -79,9 +79,6 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
         const response = await propertyService.create({ ...cleanData, organizationId });
         savedProperty = response.data;
       }
-      setView('list');
-      setEditingProperty(undefined);
-      fetchProperties();
       return savedProperty;
     } catch (err) {
       console.error('Failed to save property', err);
@@ -127,6 +124,11 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
         onCancel={() => {
           setView('list');
           setEditingProperty(undefined);
+        }}
+        onSuccess={() => {
+          setView('list');
+          setEditingProperty(undefined);
+          fetchProperties();
         }}
         organizationId={organizationId}
       />

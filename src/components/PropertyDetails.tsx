@@ -16,7 +16,8 @@ import {
   X,
   User,
   Mail,
-  Phone
+  Phone,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
@@ -34,6 +35,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
   const { formatAreaDisplay } = useUnits();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
 
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
@@ -54,6 +56,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
     if (property.propertyImages?.length) {
       setCurrentImageIndex((prev) => (prev - 1 + property.propertyImages.length) % property.propertyImages.length);
     }
+  };
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/share/${property.id}`;
+    navigator.clipboard.writeText(shareUrl);
+    setShowShareTooltip(true);
+    setTimeout(() => setShowShareTooltip(false), 2000);
   };
 
   // Keyboard navigation
@@ -85,12 +94,41 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
           <ChevronLeft size={24} />
         </Button>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button
-            variant="ghost"
-            style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
-          >
-            <Share2 size={20} />
-          </Button>
+          <div style={{ position: 'relative' }}>
+            <Button
+              variant="ghost"
+              onClick={handleShare}
+              style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
+              title="Share property"
+            >
+              <Share2 size={20} />
+            </Button>
+            <AnimatePresence>
+              {showShareTooltip && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, x: '-50%' }}
+                  animate={{ opacity: 1, y: 0, x: '-50%' }}
+                  exit={{ opacity: 0, y: 10, x: '-50%' }}
+                  style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: '50%',
+                    marginBottom: '0.5rem',
+                    backgroundColor: 'var(--color-text)',
+                    color: 'white',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.75rem',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    zIndex: 100
+                  }}
+                >
+                  Link copied!
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

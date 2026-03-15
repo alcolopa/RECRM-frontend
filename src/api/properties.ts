@@ -69,12 +69,21 @@ export const propertyService = {
   getFeatures: () =>
     api.get<Feature[]>('/properties/features'),
 
-  uploadImage: (propertyId: string, file: File) => {
+  getPublic: (id: string) =>
+    api.get<Property>(`/properties/public/${id}`),
+
+  uploadImage: (propertyId: string, file: File, onProgress?: (progress: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
     return api.post<PropertyImage>(`/properties/${propertyId}/images`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(progress);
+        }
       },
     });
   },
