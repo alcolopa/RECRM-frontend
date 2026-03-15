@@ -107,6 +107,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
+          aria-label="Select country"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
           style={{
             display: 'flex',
             alignItems: 'center',

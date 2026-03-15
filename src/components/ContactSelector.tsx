@@ -154,6 +154,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
               setSelectedContact(null);
               onSelect('');
             }}
+            aria-label="Clear selection"
             style={{ padding: '0.25rem', flexShrink: 0 }}
           >
             <X size={18} />

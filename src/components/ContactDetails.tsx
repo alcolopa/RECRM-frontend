@@ -69,6 +69,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           variant="outline"
           size="sm"
           onClick={onBack}
+          aria-label="Back to contacts list"
           leftIcon={<ArrowLeft size={18} />}
           className="btn-back-responsive"
           title="Back to Contacts"
@@ -88,6 +89,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
             variant="outline"
             size="sm"
             onClick={() => onDelete(contact.id)}
+            aria-label="Delete contact"
             leftIcon={<Trash2 size={16} />}
             style={{ color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
             title="Delete contact"

@@ -345,6 +345,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             clearNavigationState();
             onCancel();
           }}
+          aria-label="Back to properties"
           style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px' }}
         >
           <ChevronLeft size={24} />
@@ -364,11 +365,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           >
             <AlertCircle size={20} />
             <div style={{ flex: 1 }}>{error}</div>
-            <X 
-              size={18} 
-              onClick={() => setError(null)} 
-              style={{ cursor: 'pointer', opacity: 0.7 }} 
-            />
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer', 
+                padding: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'inherit',
+                opacity: 0.7
+              }}
+            >
+              <X size={18} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -439,6 +453,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                   variant="danger"
                   size="sm"
                   onClick={() => handleImageDelete(idx, false)}
+                  aria-label="Delete image"
                   style={deleteImageButtonStyle}
                   title="Delete image"
                   leftIcon={<Trash2 size={14} />}
@@ -459,6 +474,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                       variant="danger"
                       size="sm"
                       onClick={() => handleImageDelete(idx, true)}
+                      aria-label="Remove pending image"
                       style={deleteImageButtonStyle}
                       title="Remove image"
                       leftIcon={<Trash2 size={14} />}

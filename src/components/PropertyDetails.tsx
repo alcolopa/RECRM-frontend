@@ -96,6 +96,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         <Button
           variant="ghost"
           onClick={onBack}
+          aria-label="Back to properties"
           style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
         >
           <ChevronLeft size={24} />
@@ -104,6 +105,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             <Button
               variant="ghost"
               onClick={handleShare}
+              aria-label="Share property"
               style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
               title="Share property"
             >
@@ -174,6 +176,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  aria-label="Previous image"
                   style={{ ...navButtonStyle, left: '1rem' }}
                   className="hidden-mobile"
                 >
@@ -182,6 +185,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  aria-label="Next image"
                   style={{ ...navButtonStyle, right: '1rem' }}
                   className="hidden-mobile"
                 >
@@ -403,6 +407,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
               <button
                 className="lightbox-close"
                 onClick={() => setIsLightboxOpen(false)}
+                aria-label="Close lightbox"
               >
                 <X size={24} />
               </button>
@@ -428,12 +433,14 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                   <Button
                     className="lightbox-nav prev"
                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    aria-label="Previous image"
                   >
                     <ChevronLeft size={32} color="#fff" />
                   </Button>
                   <Button
                     className="lightbox-nav next"
                     onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    aria-label="Next image"
                   >
                     <ChevronRight size={32} color="#fff" />
                   </Button>

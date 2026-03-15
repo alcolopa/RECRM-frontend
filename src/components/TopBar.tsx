@@ -66,6 +66,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
         {isMobile && (
           <button 
             onClick={onToggleSidebar}
+            aria-label="Toggle sidebar"
             style={{ 
               background: 'none', 
               border: 'none', 
@@ -114,7 +115,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }} aria-label="Notifications">
           <Bell size={20} />
         </button>
 
@@ -123,6 +124,9 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-label="User menu"
+            aria-expanded={isDropdownOpen}
+            aria-haspopup="true"
             style={{
               display: 'flex',
               alignItems: 'center',

@@ -104,12 +104,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
         )}
         
         {isMobile ? (
-          <button onClick={onClose} style={iconButtonStyle}>
+          <button onClick={onClose} style={iconButtonStyle} aria-label="Close sidebar">
             <X size={20} color="var(--color-text-muted)" />
           </button>
         ) : (
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             style={{
               ...iconButtonStyle,
               display: isCollapsed ? 'none' : 'flex',
@@ -134,6 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
                 setActiveTab(item.id as NavigationTab);
                 if (isMobile) onClose();
               }}
+              aria-label={showLabel ? undefined : item.label}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -161,7 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
       {/* Collapse Toggle for collapsed state */}
       {isCollapsed && !isMobile && (
         <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <button onClick={() => setIsCollapsed(false)} style={iconButtonStyle}>
+          <button onClick={() => setIsCollapsed(false)} style={iconButtonStyle} aria-label="Expand sidebar">
             <ChevronRight size={16} color="var(--color-text-muted)" />
           </button>
         </div>

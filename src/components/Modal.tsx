@@ -111,6 +111,7 @@ const Modal: React.FC<ModalProps> = ({
                   {showCloseButton && (
                     <button
                       onClick={onClose}
+                      aria-label="Close modal"
                       style={{
                         padding: '0.5rem',
                         borderRadius: '0.5rem',

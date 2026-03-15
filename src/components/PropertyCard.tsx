@@ -160,12 +160,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
             variant="ghost"
             size="sm"
             onClick={() => onEdit(property)}
+            aria-label={`Edit ${property.title}`}
             leftIcon={<Edit2 size={16} color="var(--color-text-muted)" />}
           />
           <Button 
             variant="ghost"
             size="sm"
             onClick={() => onDelete(property.id)}
+            aria-label={`Delete ${property.title}`}
             leftIcon={<Trash2 size={16} color="var(--color-error)" />}
           />
         </div>

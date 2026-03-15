@@ -150,6 +150,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
         <button 
           type="button" 
           onClick={onCancel}
+          aria-label="Back to contacts"
           style={{ 
             padding: '0.5rem', 
             borderRadius: '50%', 

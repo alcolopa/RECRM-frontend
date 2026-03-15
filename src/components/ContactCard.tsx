@@ -115,6 +115,9 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
           <Button 
             variant="ghost"
             onClick={() => setShowOptions(!showOptions)}
+            aria-label="Contact options"
+            aria-expanded={showOptions}
+            aria-haspopup="true"
             style={{ padding: '0.25rem' }}
             leftIcon={<MoreVertical size={20} />}
           />
