@@ -94,9 +94,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       }));
       setInternalImages(property.propertyImages || []);
       
-      // Set selected feature IDs from property's existing features
-      if (property.propertyFeatures && property.propertyFeatures.length > 0) {
-        setSelectedFeatureIds(new Set(property.propertyFeatures.map(pf => pf.featureId)));
+      // Set selected feature IDs from property's existing features (which are now strings)
+      if (property.features && property.features.length > 0 && availableFeatures.length > 0) {
+        const featureIds = property.features.map(fName => {
+            const match = availableFeatures.find(af => af.name === (typeof fName === 'string' ? fName : (fName as any).name));
+            return match?.id;
+        }).filter(Boolean) as string[];
+        setSelectedFeatureIds(new Set(featureIds));
       }
     }
 
@@ -117,7 +121,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         }));
       }
     }
-  }, [property, navigationState]);
+  }, [property, navigationState, availableFeatures]);
 
   const handleNewSellerRedirect = () => {
     navigate('contacts', {

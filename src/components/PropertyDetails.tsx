@@ -222,14 +222,8 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
         <div style={sectionStyle}>
           <h2 style={sectionTitleStyle}><Tag size={19} /> Features & Amenities</h2>
           <div style={featuresGridStyle}>
-            {property.propertyFeatures && property.propertyFeatures.length > 0 ? (
-              property.propertyFeatures.map((pf) => (
-                <div key={pf.id} style={featureTagStyle}>
-                  {pf.feature.name}
-                </div>
-              ))
-            ) : property.features?.length > 0 ? (
-              property.features.map((feature, idx) => (
+            {property.features && property.features.length > 0 ? (
+              property.features.map((feature: string, idx: number) => (
                 <div key={idx} style={featureTagStyle}>
                   {feature}
                 </div>
@@ -506,17 +500,6 @@ const locationStyle: React.CSSProperties = {
   color: 'var(--color-text-muted)',
   fontSize: '0.875rem',
   marginTop: '0.5rem'
-};
-
-const specsGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: '1rem',
-  padding: '1.25rem',
-  background: 'var(--color-surface)',
-  borderRadius: '1rem',
-  marginBottom: '2rem',
-  border: '1px solid var(--color-border)'
 };
 
 const specItemStyle: React.CSSProperties = {

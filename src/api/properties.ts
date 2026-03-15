@@ -42,7 +42,6 @@ export interface Property {
   yearBuilt?: number;
   features: string[];
   featureIds?: string[];
-  propertyFeatures?: PropertyFeature[];
   propertyImages: PropertyImage[];
   organizationId: string;
   sellerProfileId?: string;

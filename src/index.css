@@ -202,7 +202,7 @@ section {
   .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .hidden-mobile { display: none !important; }
   .container { padding: 0 1rem; }
   section { padding: 3rem 0; }
@@ -217,7 +217,7 @@ section {
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .grid-2 { grid-template-columns: repeat(2, 1fr); }
 }
 

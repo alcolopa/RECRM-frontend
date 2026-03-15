@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
 
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', 
         gap: '1.5rem' 
       }}>
         {/* Recent Leads */}
@@ -100,7 +100,8 @@ const Dashboard: React.FC = () => {
                 alignItems: 'center', 
                 gap: '0.75rem', 
                 padding: '0.5rem 0',
-                flexWrap: 'wrap'
+                width: '100%',
+                overflow: 'hidden'
               }}>
                 <div style={{ 
                   width: '2.5rem', 
@@ -116,7 +117,7 @@ const Dashboard: React.FC = () => {
                 }}>
                   {lead.name.split(' ').map(n => n[0]).join('')}
                 </div>
-                <div style={{ flex: '1 1 150px', minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.email}</p>
                 </div>
@@ -125,20 +126,23 @@ const Dashboard: React.FC = () => {
                   flexShrink: 0,
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'flex-end'
+                  alignItems: 'flex-end',
+                  gap: '0.125rem'
                 }}>
                   <span style={{ 
-                    fontSize: '0.7rem', 
-                    padding: '0.2rem 0.5rem', 
+                    fontSize: '0.65rem', 
+                    padding: '0.15rem 0.4rem', 
                     borderRadius: '1rem', 
-                    backgroundColor: lead.status === 'New' ? 'var(--color-bg)' : 'var(--color-bg)', // Simplified
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
                     color: lead.status === 'New' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap'
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.025em'
                   }}>
                     {lead.status}
                   </span>
-                  <p style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>{lead.time}</p>
+                  <p style={{ fontSize: '0.65rem', color: 'var(--muted-foreground)' }}>{lead.time}</p>
                 </div>
               </div>
             ))}

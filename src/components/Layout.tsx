@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
-import PropertiesView from './PropertiesView';
-import Dashboard from './Dashboard';
-import ProfileView from './ProfileView';
-import ContactsView from './ContactsView';
 import { useNavigation } from '../contexts/NavigationContext';
+import { Loader2 } from 'lucide-react';
+
+// Lazy load views for code splitting
+const Dashboard = lazy(() => import('./Dashboard'));
+const ContactsView = lazy(() => import('./ContactsView'));
+const PropertiesView = lazy(() => import('./PropertiesView'));
+const ProfileView = lazy(() => import('./ProfileView'));
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -14,17 +17,23 @@ interface LayoutProps {
   onUserUpdate: (updatedUser: any) => void;
 }
 
+const LoadingView = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4rem' }}>
+    <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+  </div>
+);
+
 const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const { activeTab, setActiveTab } = useNavigation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth > 768 && window.innerWidth <= 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      const mobile = width <= 768;
-      const tablet = width > 768 && width <= 1024;
+      const mobile = width < 768;
+      const tablet = width >= 768 && width <= 1024;
       
       setIsMobile(mobile);
       setIsTablet(tablet);
@@ -44,23 +53,29 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'contacts':
-        return <ContactsView organizationId={user?.organizationId} />;
-      case 'properties':
-        return <PropertiesView organizationId={user?.organizationId} />;
-      case 'profile':
-        return <ProfileView user={user} onUserUpdate={onUserUpdate} />;
-      default:
-        return (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Feature</h2>
-            <p>This module is coming soon.</p>
-          </div>
-        );
-    }
+    return (
+      <Suspense fallback={<LoadingView />}>
+        {(() => {
+          switch (activeTab) {
+            case 'dashboard':
+              return <Dashboard />;
+            case 'contacts':
+              return <ContactsView organizationId={user?.organizationId} />;
+            case 'properties':
+              return <PropertiesView organizationId={user?.organizationId} />;
+            case 'profile':
+              return <ProfileView user={user} onUserUpdate={onUserUpdate} />;
+            default:
+              return (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Feature</h2>
+                  <p>This module is coming soon.</p>
+                </div>
+              );
+          }
+        })()}
+      </Suspense>
+    );
   };
 
   return (

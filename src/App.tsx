@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import Pricing from './components/Pricing';
-import LoginForm from './components/LoginForm';
-import SignupForm from './components/SignupForm';
-import Layout from './components/Layout';
-import { Home, LogIn, Moon, Sun } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Home, LogIn, Moon, Sun, Loader2 } from 'lucide-react';
 import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { UnitProvider } from './contexts/UnitContext';
+
+// Lazy load components
+const Hero = lazy(() => import('./components/Hero'));
+const Features = lazy(() => import('./components/Features'));
+const Pricing = lazy(() => import('./components/Pricing'));
+const LoginForm = lazy(() => import('./components/LoginForm'));
+const SignupForm = lazy(() => import('./components/SignupForm'));
+const Layout = lazy(() => import('./components/Layout'));
+
+const LoadingFallback = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
+    <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+  </div>
+);
 
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
@@ -62,9 +70,11 @@ const AppContent = () => {
   // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {
     return (
-      <UnitProvider user={user}>
-        <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
-      </UnitProvider>
+      <Suspense fallback={<LoadingFallback />}>
+        <UnitProvider user={user}>
+          <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
+        </UnitProvider>
+      </Suspense>
     );
   }
 
@@ -118,14 +128,16 @@ const AppContent = () => {
         </nav>
 
         <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6rem 1.5rem 2rem' }}>
-          {view === 'login' ? (
-            <LoginForm onSwitchToSignup={() => setView('signup')} />
-          ) : (
-            <SignupForm 
-              onSwitchToLogin={() => setView('login')} 
-              onSignupSuccess={handleSignupSuccess}
-            />
-          )}
+          <Suspense fallback={<LoadingFallback />}>
+            {view === 'login' ? (
+              <LoginForm onSwitchToSignup={() => setView('signup')} />
+            ) : (
+              <SignupForm 
+                onSwitchToLogin={() => setView('login')} 
+                onSignupSuccess={handleSignupSuccess}
+              />
+            )}
+          </Suspense>
         </main>
       </div>
     );
@@ -187,9 +199,11 @@ const AppContent = () => {
 
       {/* Main Content */}
       <main style={{ paddingTop: '4rem' }}>
-        <Hero />
-        <Features />
-        <Pricing />
+        <Suspense fallback={<LoadingFallback />}>
+          <Hero />
+          <Features />
+          <Pricing />
+        </Suspense>
       </main>
 
       {/* Footer */}

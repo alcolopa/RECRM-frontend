@@ -130,6 +130,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             style={{ paddingRight: '2.5rem' }}
                         />
                         <Button
+                            type="button"
                             variant="ghost"
                             onClick={() => setShowPassword(!showPassword)}
                             style={{
@@ -159,7 +160,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                 </Button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Don't have an account? <Button variant="ghost" onClick={onSwitchToSignup} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Get Started</Button>
+                    Don't have an account? <Button type="button" variant="ghost" onClick={onSwitchToSignup} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Get Started</Button>
                 </p>
             </form>
         </motion.div>

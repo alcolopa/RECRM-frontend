@@ -195,6 +195,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         style={{ paddingRight: '2.5rem' }}
                     />
                     <Button
+                        type="button"
                         variant="ghost"
                         onClick={() => setShowPassword(!showPassword)}
                         style={{
@@ -252,7 +253,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                 </Button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Already have an account? <Button variant="ghost" onClick={onSwitchToLogin} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Sign In</Button>
+                    Already have an account? <Button type="button" variant="ghost" onClick={onSwitchToLogin} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Sign In</Button>
                 </p>
             </form>
         </motion.div>
