@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
-import { Input } from './Input';
+import { Input } from '../components/Input';
 
 interface ProfileViewProps {
   user: UserProfile;

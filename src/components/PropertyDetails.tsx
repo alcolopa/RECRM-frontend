@@ -17,6 +17,7 @@ import {
   User,
   Mail,
   Phone,
+  Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
@@ -26,11 +27,18 @@ import { useUnits } from '../contexts/UnitContext';
 interface PropertyDetailsProps {
   property: Property;
   onBack: () => void;
-  onEdit: (property: Property) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (property: Property) => void;
+  onDelete?: (id: string) => void;
+  isPublic?: boolean;
 }
 
-const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onEdit, onDelete }) => {
+const PropertyDetails: React.FC<PropertyDetailsProps> = ({ 
+  property, 
+  onBack, 
+  onEdit, 
+  onDelete,
+  isPublic = false 
+}) => {
   const { formatAreaDisplay } = useUnits();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -107,40 +115,30 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
       <AnimatePresence>
         {showShareTooltip && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 30, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 30, x: '-50%' }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             style={{
               position: 'fixed',
-              bottom: '2rem',
+              bottom: '2.5rem',
               left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: '#1a1a2e',
-              color: '#fff',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.75rem',
+              backgroundColor: 'var(--color-primary)',
+              color: 'white',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '1rem',
               fontSize: '0.875rem',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              gap: '0.625rem',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
               zIndex: 10000,
               pointerEvents: 'none',
+              border: '1px solid rgba(255,255,255,0.1)'
             }}
           >
-            <span style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              background: '#22c55e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.7rem',
-              flexShrink: 0,
-            }}>✓</span>
+            <Copy size={18} />
             Link copied to clipboard!
           </motion.div>
         )}
@@ -288,86 +286,101 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
         </div>
 
         {/* Seller Info */}
-        <div style={sectionStyle}>
-          <h2 style={sectionTitleStyle}><User size={20} /> Property Owner</h2>
-          {property.sellerProfile?.contact ? (
-            <div className="card" style={{
-              padding: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              marginTop: '0.5rem',
-              minWidth: 0
-            }}>
-              <div style={{
-                width: '3.5rem',
-                height: '3.5rem',
-                borderRadius: '50%',
-                background: 'rgba(var(--color-primary-rgb), 0.1)',
+        {!isPublic && (
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}><User size={20} /> Property Owner</h2>
+            {property.sellerProfile?.contact ? (
+              <div className="card" style={{
+                padding: '1.25rem',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--color-primary)',
-                flexShrink: 0
+                gap: '1rem',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                marginTop: '0.5rem',
+                minWidth: 0
               }}>
-                <User size={28} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  width: '3.5rem',
+                  height: '3.5rem',
+                  borderRadius: '50%',
+                  background: 'rgba(var(--color-primary-rgb), 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-primary)',
+                  flexShrink: 0
                 }}>
-                  {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
+                  <User size={28} />
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                    <Mail size={16} /> {property.sellerProfile.contact.email || 'No email provided'}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                    <Phone size={16} /> {property.sellerProfile.contact.phone || 'No phone provided'}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                      <Mail size={16} /> {property.sellerProfile.contact.email || 'No email provided'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                      <Phone size={16} /> {property.sellerProfile.contact.phone || 'No phone provided'}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div style={{
-              padding: '1.5rem',
-              textAlign: 'center',
-              background: 'var(--color-surface)',
-              borderRadius: 'var(--radius)',
-              border: '1px dashed var(--color-border)',
-              color: 'var(--color-text-muted)',
-              fontSize: '0.875rem'
-            }}>
-              No owner information assigned to this property.
-            </div>
-          )}
-        </div>
+            ) : (
+              <div style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius)',
+                border: '1px dashed var(--color-border)',
+                color: 'var(--color-text-muted)',
+                fontSize: '0.875rem'
+              }}>
+                No owner information assigned to this property.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action Buttons */}
-        <div style={footerActionsStyle}>
-          <Button
-            variant="secondary"
-            onClick={() => onEdit(property)}
-            style={{ flex: 1 }}
-            leftIcon={<Edit2 size={18} />}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => onDelete(property.id)}
-            style={{ flex: 1 }}
-            leftIcon={<Trash2 size={18} />}
-          >
-            Delete
-          </Button>
-        </div>
+        {!isPublic && (
+          <div style={footerActionsStyle}>
+            <Button
+              variant="secondary"
+              onClick={() => onEdit && onEdit(property)}
+              style={{ flex: 1 }}
+              leftIcon={<Edit2 size={18} />}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => onDelete && onDelete(property.id)}
+              style={{ flex: 1 }}
+              leftIcon={<Trash2 size={18} />}
+            >
+              Delete
+            </Button>
+          </div>
+        )}
+
+        {/* Public CTA */}
+        {isPublic && (
+          <div className="card" style={{ padding: '2rem', border: '2px solid var(--color-primary)', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Interested in this property?</h3>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+              Get in touch with the listing agent for more details or to schedule a viewing.
+            </p>
+            <Button fullWidth size="lg">Contact Agent</Button>
+          </div>
+        )}
       </div>
 
       {/* Lightbox Modal */}

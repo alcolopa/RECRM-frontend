@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Loader2, Home } from 'lucide-react';
 import { type Property, propertyService } from '../api/properties';
-import { Input } from './Input';
-import PropertyCard from './PropertyCard';
-import PropertyForm from './PropertyForm';
-import PropertyDetails from './PropertyDetails';
-import Button from './Button';
-import ConfirmModal from './ConfirmModal';
+import { Input } from '../components/Input';
+import PropertyCard from '../components/PropertyCard';
+import PropertyForm from '../components/PropertyForm';
+import PropertyDetails from '../components/PropertyDetails';
+import Button from '../components/Button';
+import ConfirmModal from '../components/ConfirmModal';
 import { useNavigation } from '../contexts/NavigationContext';
 
 interface PropertiesViewProps {

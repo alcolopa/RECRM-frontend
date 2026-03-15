@@ -4,6 +4,7 @@ import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { UnitProvider } from './contexts/UnitContext';
+import Button from './components/Button';
 
 // Lazy load components
 const Hero = lazy(() => import('./components/Hero'));
@@ -12,7 +13,7 @@ const Pricing = lazy(() => import('./components/Pricing'));
 const LoginForm = lazy(() => import('./components/LoginForm'));
 const SignupForm = lazy(() => import('./components/SignupForm'));
 const Layout = lazy(() => import('./components/Layout'));
-const PublicPropertyView = lazy(() => import('./components/PublicPropertyView'));
+const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
@@ -26,6 +27,8 @@ const AppContent = () => {
   const [user, setUser] = useState<any>(null);
   const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'share'>('landing');
   const [sharedPropertyId, setSharedPropertyId] = useState<string | null>(null);
+  const [sharedProperty, setSharedProperty] = useState<any>(null);
+  const [isSharedLoading, setIsSharedLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,6 +39,7 @@ const AppContent = () => {
       if (id) {
         setSharedPropertyId(id);
         setView('share');
+        fetchPublicProperty(id);
         return;
       }
     }
@@ -78,6 +82,19 @@ const AppContent = () => {
     fetchProfile();
   };
 
+  const fetchPublicProperty = async (id: string) => {
+    setIsSharedLoading(true);
+    try {
+      const { propertyService } = await import('./api/properties');
+      const response = await propertyService.getPublic(id);
+      setSharedProperty(response.data);
+    } catch (err) {
+      console.error('Failed to fetch public property', err);
+    } finally {
+      setIsSharedLoading(false);
+    }
+  };
+
   // Public shared property view
   if (view === 'share' && sharedPropertyId) {
     return (
@@ -103,7 +120,25 @@ const AppContent = () => {
         </nav>
         <Suspense fallback={<LoadingFallback />}>
           <UnitProvider user={user}>
-            <PublicPropertyView propertyId={sharedPropertyId} />
+            {isSharedLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10rem' }}>
+                <Loader2 size={48} className="animate-spin" color="var(--color-primary)" />
+              </div>
+            ) : sharedProperty ? (
+              <div style={{ padding: '2rem 0' }}>
+                <PropertyDetails 
+                  property={sharedProperty} 
+                  onBack={() => window.location.href = '/'} 
+                  isPublic={true}
+                />
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '10rem 2rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>Property Not Found</h2>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>The property you are looking for does not exist or has been removed.</p>
+                <Button onClick={() => window.location.href = '/'}>Back to Home</Button>
+              </div>
+            )}
           </UnitProvider>
         </Suspense>
       </div>

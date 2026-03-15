@@ -5,10 +5,10 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { Loader2 } from 'lucide-react';
 
 // Lazy load views for code splitting
-const Dashboard = lazy(() => import('./Dashboard'));
-const ContactsView = lazy(() => import('./ContactsView'));
-const PropertiesView = lazy(() => import('./PropertiesView'));
-const ProfileView = lazy(() => import('./ProfileView'));
+const Dashboard = lazy(() => import('../screens/Dashboard'));
+const ContactsView = lazy(() => import('../screens/ContactsView'));
+const PropertiesView = lazy(() => import('../screens/PropertiesView'));
+const ProfileView = lazy(() => import('../screens/ProfileView'));
 
 interface LayoutProps {
   children?: React.ReactNode;

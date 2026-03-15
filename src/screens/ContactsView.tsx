@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Search, Loader2, Users, UserPlus } from 'lucide-react';
 import { type Contact, ContactType, contactService } from '../api/contacts';
-import { Input } from './Input';
-import ContactCard from './ContactCard';
-import ContactForm from './ContactForm';
-import ContactDetails from './ContactDetails';
-import Button from './Button';
-import ConfirmModal from './ConfirmModal';
+import { Input } from '../components/Input';
+import ContactCard from '../components/ContactCard';
+import ContactForm from '../components/ContactForm';
+import ContactDetails from '../components/ContactDetails';
+import Button from '../components/Button';
+import ConfirmModal from '../components/ConfirmModal';
 import { useNavigation } from '../contexts/NavigationContext';
 
 interface ContactsViewProps {
