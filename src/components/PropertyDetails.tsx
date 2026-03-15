@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
 import Button from './Button';
+import { useUnits } from '../contexts/UnitContext';
 
 interface PropertyDetailsProps {
   property: Property;
@@ -30,6 +31,7 @@ interface PropertyDetailsProps {
 }
 
 const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onEdit, onDelete }) => {
+  const { formatAreaDisplay } = useUnits();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -173,7 +175,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
           </div>
           <div style={locationStyle}>
             <MapPin size={18} />
-            <span>{property.address}, {property.city}, {property.state} {property.zipCode}</span>
+            <span>{[property.address, property.city, property.governorate, property.country].filter(Boolean).join(', ')} {property.zipCode}</span>
           </div>
         </div>
 
@@ -192,7 +194,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
           <div style={specItemStyle}>
             <Maximize size={20} />
             <div style={specLabelStyle}>Size</div>
-            <div style={specValueStyle}>{property.area || 0} sqft</div>
+            <div style={specValueStyle}>{formatAreaDisplay(property.area || 0)}</div>
           </div>
           <div style={specItemStyle}>
             <Calendar size={20} />
@@ -213,14 +215,20 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
         <div style={sectionStyle}>
           <h2 style={sectionTitleStyle}><Tag size={19} /> Features & Amenities</h2>
           <div style={featuresGridStyle}>
-            {property.features?.length > 0 ? (
+            {property.propertyFeatures && property.propertyFeatures.length > 0 ? (
+              property.propertyFeatures.map((pf) => (
+                <div key={pf.id} style={featureTagStyle}>
+                  {pf.feature.name}
+                </div>
+              ))
+            ) : property.features?.length > 0 ? (
               property.features.map((feature, idx) => (
                 <div key={idx} style={featureTagStyle}>
                   {feature}
                 </div>
               ))
             ) : (
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Standard residential features.</p>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>No features listed.</p>
             )}
           </div>
         </div>

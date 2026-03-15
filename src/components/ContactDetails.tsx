@@ -64,16 +64,18 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       {/* Header Actions */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="details-header">
         <Button 
           variant="outline"
           size="sm"
           onClick={onBack}
-          leftIcon={<ArrowLeft size={16} />}
+          leftIcon={<ArrowLeft size={18} />}
+          className="btn-back-responsive"
+          title="Back to Contacts"
         >
-          Back to Contacts
+          <span className="btn-label">Back to Contacts</span>
         </Button>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="details-actions">
           <Button 
             variant="primary"
             size="sm"
@@ -88,6 +90,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
             onClick={() => onDelete(contact.id)}
             leftIcon={<Trash2 size={16} />}
             style={{ color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
+            title="Delete contact"
           >
             Delete
           </Button>

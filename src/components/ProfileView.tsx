@@ -28,7 +28,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     oldPassword: '',
     password: '',
     confirmPassword: '',
-    avatar: user.avatar || ''
+    avatar: user.avatar || '',
+    unitPreference: user.unitPreference || 'METRIC'
+  } as {
+    firstName: string;
+    lastName: string;
+    email: string;
+    oldPassword?: string;
+    password?: string;
+    confirmPassword?: string;
+    avatar: string;
+    unitPreference: 'METRIC' | 'IMPERIAL';
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +55,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       oldPassword: '',
       password: '',
       confirmPassword: '',
-      avatar: user.avatar || ''
+      avatar: user.avatar || '',
+      unitPreference: user.unitPreference || 'METRIC'
     });
     setHasChanges(false);
   }, [user]);
@@ -122,6 +133,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
 
       const response = await userService.updateMe(updatePayload);
       onUserUpdate(response.data);
+      if (updatePayload.unitPreference) {
+        // Option to trigger a local refresh if needed, 
+        // but App.tsx handleUserUpdate -> UnitProvider user={user} should handle it.
+      }
       setSuccess(true);
       setHasChanges(false);
       setFormData(prev => ({ ...prev, password: '', oldPassword: '', confirmPassword: '' }));
@@ -283,6 +298,23 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               placeholder="email@example.com"
               icon={Mail}
             />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Unit Preference</label>
+              <select
+                id="unitPreference"
+                value={formData.unitPreference}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, unitPreference: e.target.value as 'METRIC' | 'IMPERIAL' }));
+                  setHasChanges(true);
+                }}
+                className="input"
+                style={{ width: '100%', height: '2.5rem', padding: '0 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+              >
+                <option value="METRIC">Metric (sqm)</option>
+                <option value="IMPERIAL">Imperial (sqft)</option>
+              </select>
+            </div>
 
             <div style={{ borderBottom: '1px solid var(--color-border)', margin: '1rem 0' }}></div>
 

@@ -9,6 +9,19 @@ export interface PropertyImage {
   updatedAt: string;
 }
 
+export interface Feature {
+  id: string;
+  name: string;
+  category?: string;
+}
+
+export interface PropertyFeature {
+  id: string;
+  propertyId: string;
+  featureId: string;
+  feature: Feature;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -17,15 +30,19 @@ export interface Property {
   city?: string;
   state?: string;
   zipCode?: string;
+  country?: string;
+  governorate?: string;
   price?: number;
   status: 'AVAILABLE' | 'UNDER_CONTRACT' | 'SOLD' | 'RENTED' | 'OFF_MARKET';
-  type: 'HOUSE' | 'APARTMENT' | 'CONDO' | 'TOWNHOUSE' | 'LAND' | 'COMMERCIAL' | 'INDUSTRIAL';
+  type: 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CONDO' | 'TOWNHOUSE' | 'LAND' | 'COMMERCIAL' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL';
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
   lotSize?: number;
   yearBuilt?: number;
   features: string[];
+  featureIds?: string[];
+  propertyFeatures?: PropertyFeature[];
   propertyImages: PropertyImage[];
   organizationId: string;
   sellerProfileId?: string;
@@ -49,6 +66,9 @@ export const propertyService = {
   
   delete: (id: string) => 
     api.delete(`/properties/${id}`),
+
+  getFeatures: () =>
+    api.get<Feature[]>('/properties/features'),
 
   uploadImage: (propertyId: string, file: File) => {
     const formData = new FormData();

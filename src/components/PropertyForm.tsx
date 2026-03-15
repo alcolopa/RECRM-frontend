@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   X,
   Save,
-  Plus,
   Building2,
   MapPin,
   DollarSign,
@@ -13,16 +12,20 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
-  User
+  User,
+  Sparkles,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { type Property, propertyService, type PropertyImage } from '../api/properties';
+import { type Property, propertyService, type PropertyImage, type Feature } from '../api/properties';
 import { Input, Select, Textarea } from './Input';
 import Button from './Button';
 import ContactSelector from './ContactSelector';
 import ConfirmModal from './ConfirmModal';
 import { ContactType } from '../api/contacts';
 import { useNavigation } from '../contexts/NavigationContext';
+import { useUnits } from '../contexts/UnitContext';
+import { getCountries, getGovernorates, getCities } from '../data/locationData';
 
 interface PropertyFormProps {
   property?: Property;
@@ -39,6 +42,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     city: '',
     state: '',
     zipCode: '',
+    country: 'Lebanon',
+    governorate: '',
     price: 0,
     status: 'AVAILABLE',
     type: 'HOUSE',
@@ -46,12 +51,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     bathrooms: 0,
     area: 0,
     features: [],
+    featureIds: [],
     propertyImages: [],
     organizationId,
     sellerProfileId: ''
   });
 
-  const [newFeature, setNewFeature] = useState('');
+  const [availableFeatures, setAvailableFeatures] = useState<Feature[]>([]);
+  const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<string>>(new Set());
+  const [featureSearchTerm, setFeatureSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [internalImages, setInternalImages] = useState<PropertyImage[]>([]);
@@ -59,18 +67,47 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const [error, setError] = useState<string | null>(null);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
+  const { displayAreaValue, displayAreaLabel, convertToSqm } = useUnits();
   const { navigationState, navigate, clearNavigationState } = useNavigation();
+
+  // Load available features from API
+  useEffect(() => {
+    const loadFeatures = async () => {
+      try {
+        const response = await propertyService.getFeatures();
+        setAvailableFeatures(response.data);
+      } catch (err) {
+        console.error('Failed to load features', err);
+      }
+    };
+    loadFeatures();
+  }, []);
 
   useEffect(() => {
     // 1. Initial load or switch: set property data
     if (property) {
-      setFormData(prev => ({ ...prev, ...property }));
+      setFormData(prev => ({ 
+        ...prev, 
+        ...property,
+        area: displayAreaValue(property.area || 0),
+        country: property.country || 'Lebanon',
+      }));
       setInternalImages(property.propertyImages || []);
+      
+      // Set selected feature IDs from property's existing features
+      if (property.propertyFeatures && property.propertyFeatures.length > 0) {
+        setSelectedFeatureIds(new Set(property.propertyFeatures.map(pf => pf.featureId)));
+      }
     }
 
     // 2. Draft restoration (for both NEW and EDIT flows)
     if (navigationState.context === 'creating-seller' && navigationState.draftData) {
       setFormData(prev => ({ ...prev, ...navigationState.draftData }));
+      
+      // Restore selected features from draft
+      if (navigationState.draftData.featureIds) {
+        setSelectedFeatureIds(new Set(navigationState.draftData.featureIds));
+      }
       
       // 3. New seller ID application
       if (navigationState.prefillData?.newSellerProfileId) {
@@ -85,7 +122,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const handleNewSellerRedirect = () => {
     navigate('contacts', {
       returnTo: 'properties',
-      draftData: formData,
+      draftData: { ...formData, featureIds: Array.from(selectedFeatureIds) },
       prefillData: { type: ContactType.SELLER },
       context: 'creating-seller'
     });
@@ -154,6 +191,35 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     setFormData(prev => ({ ...prev, [id]: val }));
   };
 
+  // Location handlers
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const country = e.target.value;
+    setFormData(prev => ({ ...prev, country, governorate: '', city: '' }));
+  };
+
+  const handleGovernorateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const governorate = e.target.value;
+    setFormData(prev => ({ ...prev, governorate, city: '' }));
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    setFormData(prev => ({ ...prev, city }));
+  };
+
+  // Feature handlers
+  const toggleFeature = (featureId: string) => {
+    setSelectedFeatureIds(prev => {
+      const next = new Set(prev);
+      if (next.has(featureId)) {
+        next.delete(featureId);
+      } else {
+        next.add(featureId);
+      }
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -163,8 +229,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       price: Number(formData.price) || 0,
       bedrooms: Number(formData.bedrooms) || 0,
       bathrooms: Number(formData.bathrooms) || 0,
-      area: Number(formData.area) || 0,
+      area: convertToSqm(Number(formData.area)) || 0,
       yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
+      featureIds: Array.from(selectedFeatureIds),
     };
 
     try {
@@ -200,22 +267,25 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     }
   };
 
-  const addFeature = () => {
-    if (newFeature && !formData.features?.includes(newFeature)) {
-      setFormData(prev => ({
-        ...prev,
-        features: [...(prev.features || []), newFeature]
-      }));
-      setNewFeature('');
-    }
-  };
+  // Group features by category for display
+  const groupedFeatures = availableFeatures.reduce<Record<string, Feature[]>>((groups, feature) => {
+    const category = feature.category || 'Other';
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(feature);
+    return groups;
+  }, {});
 
-  const removeFeature = (feature: string) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features?.filter(f => f !== feature)
-    }));
-  };
+  // Filter features by search
+  const filteredGroupedFeatures = Object.entries(groupedFeatures).reduce<Record<string, Feature[]>>((acc, [category, features]) => {
+    const filtered = features.filter(f => f.name.toLowerCase().includes(featureSearchTerm.toLowerCase()));
+    if (filtered.length > 0) acc[category] = filtered;
+    return acc;
+  }, {});
+
+  // Location data
+  const countries = getCountries();
+  const governorates = formData.country ? getGovernorates(formData.country) : [];
+  const cities = formData.country && formData.governorate ? getCities(formData.country, formData.governorate) : [];
 
   return (
     <>
@@ -381,12 +451,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               value={formData.type}
               onChange={handleChange}
               options={[
-                { value: 'HOUSE', label: 'House' },
                 { value: 'APARTMENT', label: 'Apartment' },
+                { value: 'HOUSE', label: 'House' },
+                { value: 'VILLA', label: 'Villa' },
                 { value: 'CONDO', label: 'Condo' },
                 { value: 'TOWNHOUSE', label: 'Townhouse' },
                 { value: 'LAND', label: 'Land' },
-                { value: 'COMMERCIAL', label: 'Commercial' }
+                { value: 'COMMERCIAL', label: 'Commercial' },
+                { value: 'OFFICE', label: 'Office' },
+                { value: 'RETAIL', label: 'Retail' },
+                { value: 'INDUSTRIAL', label: 'Industrial' },
               ]}
             />
             <Select
@@ -404,7 +478,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               ]}
             />
             <Input
-              label="Area (sqm)"
+              label={`Area (${displayAreaLabel})`}
               id="area"
               name="area"
               type="number"
@@ -456,62 +530,126 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             onChange={handleChange}
           />
           <div className="grid grid-3" style={{ gap: '1rem' }}>
-            <Input
-              label="City"
+            <Select
+              label="Country"
+              id="country"
+              name="country"
+              value={formData.country || ''}
+              onChange={handleCountryChange}
+              options={[
+                { value: '', label: 'Select Country' },
+                ...countries.map(c => ({ value: c, label: c }))
+              ]}
+            />
+            <Select
+              label="Governorate"
+              id="governorate"
+              name="governorate"
+              value={formData.governorate || ''}
+              onChange={handleGovernorateChange}
+              options={[
+                { value: '', label: 'Select Governorate' },
+                ...governorates.map(g => ({ value: g, label: g }))
+              ]}
+            />
+            <Select
+              label="City / Area"
               id="city"
               name="city"
-              placeholder="Los Angeles"
-              value={formData.city}
-              onChange={handleChange}
-            />
-            <Input
-              label="State"
-              id="state"
-              name="state"
-              placeholder="CA"
-              value={formData.state}
-              onChange={handleChange}
-            />
-            <Input
-              label="Zip Code"
-              id="zipCode"
-              name="zipCode"
-              placeholder="90001"
-              value={formData.zipCode}
-              onChange={handleChange}
+              value={formData.city || ''}
+              onChange={handleCityChange}
+              options={[
+                { value: '', label: 'Select City' },
+                ...cities.map(c => ({ value: c, label: c }))
+              ]}
             />
           </div>
+          <Input
+            label="Zip Code"
+            id="zipCode"
+            name="zipCode"
+            placeholder="1234"
+            value={formData.zipCode}
+            onChange={handleChange}
+          />
         </div>
 
-        {/* Section: Features Tags */}
+        {/* Section: Features */}
         <div style={sectionStyle}>
-          <h3 style={sectionTitleStyle}><Plus size={18} /> Features</h3>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Input
-              id="newFeature"
-              name="newFeature"
-              type="text"
-              placeholder="e.g. Swimming Pool"
-              value={newFeature}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewFeature(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-            />
-            <Button 
-              type="button" 
-              onClick={addFeature} 
-              variant="primary"
-            >
-              Add
-            </Button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {formData.features?.map(feature => (
-              <span key={feature} style={tagStyle}>
-                {feature}
-                <X size={14} onClick={() => removeFeature(feature)} style={{ cursor: 'pointer' }} />
-              </span>
+          <h3 style={sectionTitleStyle}><Sparkles size={18} /> Features & Amenities</h3>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+            Select the features that apply to this property.
+          </p>
+
+          {/* Search bar */}
+          <Input
+            id="featureSearch"
+            name="featureSearch"
+            type="text"
+            placeholder="Search features..."
+            value={featureSearchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFeatureSearchTerm(e.target.value)}
+          />
+
+          {/* Selected features summary */}
+          {selectedFeatureIds.size > 0 && (
+            <div style={{ marginTop: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={selectedCountStyle}>
+                {selectedFeatureIds.size} feature{selectedFeatureIds.size !== 1 ? 's' : ''} selected
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.5rem' }}>
+                {Array.from(selectedFeatureIds).map(fId => {
+                  const feat = availableFeatures.find(f => f.id === fId);
+                  if (!feat) return null;
+                  return (
+                    <span
+                      key={fId}
+                      style={selectedFeatureTagStyle}
+                      onClick={() => toggleFeature(fId)}
+                    >
+                      {feat.name}
+                      <X size={12} style={{ marginLeft: '0.25rem', cursor: 'pointer' }} />
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Feature categories */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
+            {Object.entries(filteredGroupedFeatures).map(([category, features]) => (
+              <div key={category}>
+                <div style={categoryLabelStyle}>{category}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {features.map(feature => {
+                    const isSelected = selectedFeatureIds.has(feature.id);
+                    return (
+                      <button
+                        key={feature.id}
+                        type="button"
+                        onClick={() => toggleFeature(feature.id)}
+                        style={{
+                          ...featureChipStyle,
+                          ...(isSelected ? featureChipSelectedStyle : {}),
+                        }}
+                      >
+                        {isSelected && <Check size={14} style={{ marginRight: '0.25rem' }} />}
+                        {feature.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
+
+          {availableFeatures.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+              <Loader2 size={20} className="animate-spin" style={{ marginBottom: '0.5rem' }} />
+              <div>Loading features...</div>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
@@ -637,21 +775,6 @@ const uploadButtonStyle: React.CSSProperties = {
   background: 'transparent',
 };
 
-const tagStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.375rem 0.75rem',
-  background: 'var(--color-surface)',
-  border: '1px solid rgba(5, 150, 105, 0.2)',
-  borderRadius: '2rem',
-  fontSize: '0.8125rem',
-  color: 'var(--color-primary)',
-  fontWeight: 600
-};
-
-export default PropertyForm;
-
 const errorContainerStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -665,3 +788,57 @@ const errorContainerStyle: React.CSSProperties = {
   marginBottom: '1.5rem',
   fontWeight: 500
 };
+
+// Feature chip styles
+const featureChipStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '0.375rem 0.75rem',
+  borderRadius: '2rem',
+  fontSize: '0.8125rem',
+  fontWeight: 500,
+  border: '1px solid var(--color-border)',
+  background: 'var(--color-surface)',
+  color: 'var(--color-text)',
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
+  outline: 'none',
+};
+
+const featureChipSelectedStyle: React.CSSProperties = {
+  background: 'rgba(5, 150, 105, 0.1)',
+  borderColor: 'var(--color-primary)',
+  color: 'var(--color-primary)',
+  fontWeight: 600,
+};
+
+const selectedFeatureTagStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '0.25rem 0.5rem',
+  borderRadius: '1rem',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  background: 'rgba(5, 150, 105, 0.1)',
+  color: 'var(--color-primary)',
+  border: '1px solid rgba(5, 150, 105, 0.2)',
+  cursor: 'pointer',
+};
+
+const selectedCountStyle: React.CSSProperties = {
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  color: 'var(--color-primary)',
+};
+
+const categoryLabelStyle: React.CSSProperties = {
+  fontSize: '0.6875rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: 'var(--color-text-muted)',
+  marginBottom: '0.5rem',
+  paddingLeft: '0.25rem',
+};
+
+export default PropertyForm;

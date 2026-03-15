@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { type Property } from '../api/properties';
 import Button from './Button';
+import { useUnits } from '../contexts/UnitContext';
 
 interface PropertyCardProps {
   property: Property;
@@ -19,6 +20,7 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete, onClick }) => {
+  const { formatAreaDisplay } = useUnits();
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
     return new Intl.NumberFormat('en-US', {
@@ -101,7 +103,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             <MapPin size={14} />
-            <span>{property.city}, {property.state}</span>
+            <span>{[property.city, property.governorate].filter(Boolean).join(', ') || 'No location'}</span>
           </div>
           {property.sellerProfile?.contact && (
             <div style={{ 
@@ -149,7 +151,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
           </div>
           <div style={featureStyle}>
             <Maximize size={16} />
-            <span>{property.area || 0} sqft</span>
+            <span>{formatAreaDisplay(property.area || 0)}</span>
           </div>
         </div>
 

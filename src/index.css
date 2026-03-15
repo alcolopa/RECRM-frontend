@@ -24,9 +24,21 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
-  
-
 }
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 
 [data-theme="dark"] {
   --color-primary: #10B981;
@@ -389,3 +401,51 @@ input:focus, textarea:focus, select:focus {
     height: 45px;
   }
 }
+
+/* Details Header & Responsive Buttons */
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.details-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-back-responsive {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .btn-back-responsive {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    min-width: unset !important;
+    justify-content: center !important;
+  }
+  
+  .btn-back-responsive .btn-label {
+    display: none;
+  }
+  
+  /* Lucide icon margin reset for circle button */
+  .btn-back-responsive span {
+    margin: 0 !important;
+  }
+  
+  .details-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
+}
+
+

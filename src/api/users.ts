@@ -7,6 +7,7 @@ export interface UserProfile {
   lastName?: string;
   avatar?: string;
   role: string;
+  unitPreference: 'METRIC' | 'IMPERIAL';
   organizationId: string;
   organization?: {
     id: string;

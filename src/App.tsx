@@ -9,6 +9,7 @@ import { Home, LogIn, Moon, Sun } from 'lucide-react';
 import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { NavigationProvider } from './contexts/NavigationContext';
+import { UnitProvider } from './contexts/UnitContext';
 
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
@@ -61,7 +62,9 @@ const AppContent = () => {
   // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {
     return (
-      <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
+      <UnitProvider user={user}>
+        <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
+      </UnitProvider>
     );
   }
 
