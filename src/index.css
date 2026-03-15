@@ -177,9 +177,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.5rem;
+  width: 100%;
 }
 
 section {
@@ -189,23 +190,35 @@ section {
 .grid {
   display: grid;
   gap: 1.5rem;
+  width: 100%;
 }
 
 /* Responsive Utilities */
 .hidden { display: none !important; }
+
+@media (max-width: 1024px) {
+  .hidden-tablet { display: none !important; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+}
 
 @media (max-width: 768px) {
   .hidden-mobile { display: none !important; }
   .container { padding: 0 1rem; }
   section { padding: 3rem 0; }
   .card { padding: 1.25rem !important; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
   .only-mobile { display: none !important; }
   .grid-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
 }
 
 .card {

@@ -150,7 +150,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     }
   };
 
-  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const isMobileOrTablet = typeof window !== 'undefined' ? window.innerWidth <= 1024 : false;
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
@@ -161,7 +161,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
 
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: isMobile ? '1fr' : '320px 1fr', 
+        gridTemplateColumns: isMobileOrTablet ? '1fr' : '320px 1fr', 
         gap: '2rem', 
         alignItems: 'flex-start' 
       }}>
@@ -248,7 +248,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
 
         {/* Right Side: Update Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobile ? '1.5rem' : '2rem' }}>
+          <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
             <div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Personal Information</h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Update your name and contact details.</p>
@@ -363,9 +363,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               className="btn btn-primary" 
               disabled={isLoading || (!hasChanges && !formData.password)}
               style={{ 
-                width: isMobile ? '100%' : 'fit-content', 
+                width: isMobileOrTablet ? '100%' : 'fit-content', 
                 minWidth: '180px', 
-                alignSelf: isMobile ? 'stretch' : 'flex-end',
+                alignSelf: isMobileOrTablet ? 'stretch' : 'flex-end',
                 gap: '0.5rem', 
                 marginTop: '1rem' 
               }}

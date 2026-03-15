@@ -18,13 +18,22 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const { activeTab, setActiveTab } = useNavigation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth > 768 && window.innerWidth <= 1024);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
+      const width = window.innerWidth;
+      const mobile = width <= 768;
+      const tablet = width > 768 && width <= 1024;
+      
       setIsMobile(mobile);
-      if (!mobile) setIsSidebarOpen(true);
-      else setIsSidebarOpen(false);
+      setIsTablet(tablet);
+      
+      if (mobile) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -58,7 +67,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     <div style={{ 
       display: 'flex', 
       height: '100vh', 
-      width: '100vw', 
+      width: '100%', 
       backgroundColor: 'var(--color-bg)', 
       position: 'relative', 
       overflow: 'hidden' 
@@ -67,6 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isMobile={isMobile}
+        isTablet={isTablet}
       />
       
       {isMobile && isSidebarOpen && (

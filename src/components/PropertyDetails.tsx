@@ -180,7 +180,14 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onBack, onE
         </div>
 
         {/* Quick Specs */}
-        <div style={specsGridStyle}>
+        <div className="grid grid-2 grid-4" style={{
+          padding: '1.25rem',
+          background: 'var(--color-surface)',
+          borderRadius: '1rem',
+          marginBottom: '2rem',
+          border: '1px solid var(--color-border)',
+          gap: '1rem'
+        }}>
           <div style={specItemStyle}>
             <Bed size={20} />
             <div style={specLabelStyle}>Bedrooms</div>

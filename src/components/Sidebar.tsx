@@ -17,17 +17,22 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   isMobile: boolean;
+  isTablet?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }) => {
   const { activeTab, setActiveTab } = useNavigation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(isTablet || false);
 
   useEffect(() => {
     if (isMobile) {
       setIsCollapsed(false);
+    } else if (isTablet) {
+      setIsCollapsed(true);
+    } else {
+      setIsCollapsed(false);
     }
-  }, [isMobile]);
+  }, [isMobile, isTablet]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },

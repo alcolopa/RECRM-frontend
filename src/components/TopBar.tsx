@@ -80,7 +80,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
         )}
 
         {!isMobile && (
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div className="hidden-tablet" style={{ position: 'relative', width: 'min(300px, 30vw)' }}>
             <Search 
               size={18} 
               color="var(--color-text-muted)" 
