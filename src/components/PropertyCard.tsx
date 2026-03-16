@@ -105,31 +105,69 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
             <MapPin size={14} />
             <span>{[property.city, property.governorate].filter(Boolean).join(', ') || 'No location'}</span>
           </div>
-          {property.sellerProfile?.contact && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              color: 'var(--color-primary)', 
-              fontSize: '0.8125rem',
-              marginTop: '0.4rem',
-              fontWeight: 600,
-              background: 'rgba(var(--color-primary-rgb), 0.05)',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.25rem',
-              width: 'fit-content'
-            }}>
-              <User size={14} />
-              <span style={{ 
-                whiteSpace: 'nowrap', 
-                overflow: 'hidden', 
-                textOverflow: 'ellipsis',
-                maxWidth: '150px'
-              }}>
-                {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
-              </span>
-            </div>
-          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.4rem' }}>
+            {property.sellerProfile?.contact && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.4rem', 
+                color: 'var(--color-primary)', 
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                background: 'rgba(5, 150, 105, 0.05)',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '0.25rem',
+                width: 'fit-content'
+              }} title="Property Owner">
+                <User size={12} />
+                <span style={{ 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100px'
+                }}>
+                  {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
+                </span>
+              </div>
+            )}
+            {property.assignedUser && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.4rem', 
+                color: 'var(--color-text-muted)', 
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                background: 'var(--color-bg)',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '0.25rem',
+                width: 'fit-content',
+                border: '1px solid var(--color-border)'
+              }} title="Assigned Agent">
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-primary)',
+                  fontSize: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white'
+                }}>
+                  {property.assignedUser.firstName?.[0]}
+                </div>
+                <span style={{ 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100px'
+                }}>
+                  {property.assignedUser.firstName} {property.assignedUser.lastName}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{

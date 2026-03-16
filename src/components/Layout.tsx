@@ -9,6 +9,7 @@ const Dashboard = lazy(() => import('../screens/Dashboard'));
 const ContactsView = lazy(() => import('../screens/ContactsView'));
 const PropertiesView = lazy(() => import('../screens/PropertiesView'));
 const ProfileView = lazy(() => import('../screens/ProfileView'));
+const OrganizationSettings = lazy(() => import('../screens/OrganizationSettings'));
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -65,6 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
               return <PropertiesView organizationId={user?.organizationId} />;
             case 'profile':
               return <ProfileView user={user} onUserUpdate={onUserUpdate} />;
+            case 'organization':
+              return <OrganizationSettings user={user} />;
             default:
               return (
                 <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -122,6 +125,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
           isMobile={isMobile} 
           user={user} 
           onProfileClick={() => setActiveTab('profile')}
+          onOrganizationClick={() => setActiveTab('organization')}
         />
         
         <main style={{ 

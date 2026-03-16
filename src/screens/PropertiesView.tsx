@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Loader2, Home } from 'lucide-react';
+import { Plus, Search, Filter, Loader2, Home, User } from 'lucide-react';
 import { type Property, propertyService } from '../api/properties';
-import { Input } from '../components/Input';
+import { type UserProfile, userService } from '../api/users';
+import { Input, Select } from '../components/Input';
 import PropertyCard from '../components/PropertyCard';
 import PropertyForm from '../components/PropertyForm';
 import PropertyDetails from '../components/PropertyDetails';
@@ -21,6 +22,8 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
+  const [agents, setAgents] = useState<UserProfile[]>([]);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -41,8 +44,18 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     }
   };
 
+  const fetchAgents = async () => {
+    try {
+      const response = await userService.getAll(organizationId);
+      setAgents(response.data);
+    } catch (err) {
+      console.error('Failed to fetch agents', err);
+    }
+  };
+
   useEffect(() => {
     fetchProperties();
+    fetchAgents();
   }, [organizationId]);
 
   useEffect(() => {
@@ -110,10 +123,14 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
   };
 
   const filteredProperties = properties.filter(p => {
-    if (!searchQuery) return true;
-    return p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = !searchQuery || 
+      p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.city?.toLowerCase().includes(searchQuery.toLowerCase())
+      p.city?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesAgent = selectedAgentId === 'all' || p.assignedUserId === selectedAgentId;
+    
+    return matchesSearch && matchesAgent;
   });
 
   if (view === 'form') {
@@ -178,6 +195,23 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             icon={Search}
+            style={{ fontSize: '0.875rem' }}
+          />
+        </div>
+        <div style={{ width: '200px' }}>
+          <Select
+            id="agentFilter"
+            name="agentFilter"
+            value={selectedAgentId}
+            onChange={(e) => setSelectedAgentId(e.target.value)}
+            icon={User}
+            options={[
+              { value: 'all', label: 'All Agents' },
+              ...agents.map(a => ({ 
+                value: a.id, 
+                label: `${a.firstName} ${a.lastName}` 
+              }))
+            ]}
             style={{ fontSize: '0.875rem' }}
           />
         </div>

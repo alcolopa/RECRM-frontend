@@ -6,6 +6,7 @@ export interface UserProfile {
   firstName?: string;
   lastName?: string;
   avatar?: string;
+  phone?: string;
   role: string;
   unitPreference: 'METRIC' | 'IMPERIAL';
   organizationId: string;
@@ -18,6 +19,7 @@ export interface UserProfile {
 
 export const userService = {
   getMe: () => api.get<UserProfile>('/users/me'),
+  getAll: (orgId?: string) => api.get<UserProfile[]>('/users', { params: { organizationId: orgId } }),
   updateMe: (data: Partial<UserProfile> & { password?: string; oldPassword?: string }) => 
     api.patch<UserProfile>('/users/me', data),
   uploadAvatar: (file: File) => {

@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
 import { Input } from '../components/Input';
+import PhoneInput from '../components/PhoneInput';
 
 interface ProfileViewProps {
   user: UserProfile;
@@ -25,6 +26,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     email: user.email || '',
+    phone: user.phone || '',
     oldPassword: '',
     password: '',
     confirmPassword: '',
@@ -34,6 +36,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     firstName: string;
     lastName: string;
     email: string;
+    phone: string;
     oldPassword?: string;
     password?: string;
     confirmPassword?: string;
@@ -52,6 +55,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       email: user.email || '',
+      phone: user.phone || '',
       oldPassword: '',
       password: '',
       confirmPassword: '',
@@ -298,6 +302,18 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               placeholder="email@example.com"
               icon={Mail}
             />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Phone Number</label>
+              <PhoneInput
+                id="phone"
+                value={formData.phone}
+                onChange={(val) => {
+                  setFormData(prev => ({ ...prev, phone: val }));
+                  setHasChanges(true);
+                }}
+              />
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Unit Preference</label>

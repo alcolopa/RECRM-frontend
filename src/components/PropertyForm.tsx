@@ -21,6 +21,7 @@ import { type Property, propertyService, type PropertyImage, type Feature } from
 import { Input, Select, Textarea } from './Input';
 import Button from './Button';
 import ContactSelector from './ContactSelector';
+import UserSelector from './UserSelector';
 import ConfirmModal from './ConfirmModal';
 import { ContactType } from '../api/contacts';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -35,8 +36,34 @@ interface PropertyFormProps {
   organizationId: string;
 }
 
+interface PropertyFormData {
+  id?: string;
+  title: string;
+  description: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  governorate: string;
+  price: string | number;
+  status: 'AVAILABLE' | 'UNDER_CONTRACT' | 'SOLD' | 'RENTED' | 'OFF_MARKET';
+  type: 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CONDO' | 'TOWNHOUSE' | 'LAND' | 'COMMERCIAL' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL';
+  bedrooms: string | number;
+  bathrooms: string | number;
+  area: string | number;
+  yearBuilt: string | number;
+  features: any[];
+  featureIds: string[];
+  propertyImages: any[];
+  organizationId: string;
+  assignedUserId: string;
+  sellerProfileId: string;
+  [key: string]: any;
+}
+
 const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel, onSuccess, organizationId }) => {
-  const [formData, setFormData] = useState<Partial<Property>>({
+  const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
     description: '',
     address: '',
@@ -45,16 +72,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     zipCode: '',
     country: 'Lebanon',
     governorate: '',
-    price: 0,
+    price: '',
     status: 'AVAILABLE',
     type: 'HOUSE',
-    bedrooms: 0,
-    bathrooms: 0,
-    area: 0,
+    bedrooms: '',
+    bathrooms: '',
+    area: '',
+    yearBuilt: '',
     features: [],
     featureIds: [],
     propertyImages: [],
     organizationId,
+    assignedUserId: '',
     sellerProfileId: ''
   });
 
@@ -88,7 +117,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   useEffect(() => {
     // 1. Initial load or switch: set property data
     if (property) {
-      setFormData(prev => ({ 
+      setFormData((prev: PropertyFormData) => ({ 
         ...prev, 
         ...property,
         area: displayAreaValue(property.area || 0),
@@ -108,7 +137,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
     // 2. Draft restoration (for both NEW and EDIT flows)
     if (navigationState.context === 'creating-seller' && navigationState.draftData) {
-      setFormData(prev => ({ ...prev, ...navigationState.draftData }));
+      setFormData((prev: PropertyFormData) => ({ ...prev, ...navigationState.draftData }));
       
       // Restore selected features from draft
       if (navigationState.draftData.featureIds) {
@@ -117,7 +146,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       
       // 3. New seller ID application
       if (navigationState.prefillData?.newSellerProfileId) {
-        setFormData(prev => ({ 
+        setFormData((prev: PropertyFormData) => ({ 
           ...prev, 
           sellerProfileId: navigationState.prefillData.newSellerProfileId 
         }));
@@ -209,26 +238,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { id, value, type } = e.target;
-    // Check if value is numeric and convert
-    const val = type === 'number' ? (value === '' ? 0 : parseFloat(value)) : value;
-    setFormData(prev => ({ ...prev, [id]: val }));
+    const { id, value } = e.target;
+    setFormData((prev: PropertyFormData) => ({ ...prev, [id]: value }));
   };
 
   // Location handlers
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value;
-    setFormData(prev => ({ ...prev, country, governorate: '', city: '' }));
+    setFormData((prev: PropertyFormData) => ({ ...prev, country, governorate: '', city: '' }));
   };
 
   const handleGovernorateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const governorate = e.target.value;
-    setFormData(prev => ({ ...prev, governorate, city: '' }));
+    setFormData((prev: PropertyFormData) => ({ ...prev, governorate, city: '' }));
   };
 
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const city = e.target.value;
-    setFormData(prev => ({ ...prev, city }));
+    setFormData((prev: PropertyFormData) => ({ ...prev, city }));
   };
 
   // Feature handlers
@@ -248,13 +275,29 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     e.preventDefault();
     setIsSaving(true);
     setError(null);
+
+    // Filter out fields that the backend doesn't accept in Create/Update DTOs
+    const { 
+      assignedUser, 
+      sellerProfile, 
+      propertyImages, 
+      propertyFeatures, 
+      deals, 
+      tags,
+      createdAt,
+      updatedAt,
+      id,
+      features: _features, // We send featureIds instead
+      ...rest 
+    } = formData;
+
     const submissionData = {
-      ...formData,
-      price: Number(formData.price) || 0,
-      bedrooms: Number(formData.bedrooms) || 0,
-      bathrooms: Number(formData.bathrooms) || 0,
-      area: convertToSqm(Number(formData.area)) || 0,
-      yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
+      ...rest,
+      price: formData.price === '' ? 0 : Number(formData.price),
+      bedrooms: formData.bedrooms === '' ? 0 : Number(formData.bedrooms),
+      bathrooms: formData.bathrooms === '' ? 0 : Number(formData.bathrooms),
+      area: formData.area === '' ? 0 : convertToSqm(Number(formData.area)),
+      yearBuilt: formData.yearBuilt === '' || formData.yearBuilt === undefined ? undefined : Number(formData.yearBuilt),
       featureIds: Array.from(selectedFeatureIds),
     };
 
@@ -431,12 +474,25 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <ContactSelector 
             organizationId={organizationId}
             selectedContactId={formData.sellerProfileId}
-            onSelect={(sellerProfileId) => setFormData(prev => ({ ...prev, sellerProfileId }))}
+            onSelect={(sellerProfileId) => setFormData((prev: PropertyFormData) => ({ ...prev, sellerProfileId }))}
             restrictType={ContactType.SELLER}
             onNewContactRequested={handleNewSellerRedirect}
           />
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
             Link this property to an existing contact or create a new one as a seller.
+          </p>
+        </div>
+
+        {/* Section: Agent */}
+        <div style={sectionStyle}>
+          <h3 style={sectionTitleStyle}><User size={18} /> Listing Agent</h3>
+          <UserSelector 
+            organizationId={organizationId}
+            selectedUserId={formData.assignedUserId}
+            onSelect={(assignedUserId) => setFormData((prev: PropertyFormData) => ({ ...prev, assignedUserId }))}
+          />
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+            Assign an agent to manage this property.
           </p>
         </div>
 

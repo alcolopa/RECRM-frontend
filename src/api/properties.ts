@@ -1,5 +1,6 @@
 import api from './client';
 import { type SellerProfile, type Contact } from './contacts';
+import { type UserProfile } from './users';
 
 export interface PropertyImage {
   id: string;
@@ -44,6 +45,8 @@ export interface Property {
   featureIds?: string[];
   propertyImages: PropertyImage[];
   organizationId: string;
+  assignedUserId?: string;
+  assignedUser?: UserProfile;
   sellerProfileId?: string;
   sellerProfile?: SellerProfile & { contact: Contact };
   createdAt: string;

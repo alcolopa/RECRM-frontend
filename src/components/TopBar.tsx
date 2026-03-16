@@ -20,9 +20,10 @@ interface TopBarProps {
   isMobile: boolean;
   user: any;
   onProfileClick: () => void;
+  onOrganizationClick: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onProfileClick }) => {
+const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onProfileClick, onOrganizationClick }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
@@ -47,6 +48,11 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
   const handleProfileClick = () => {
     setIsDropdownOpen(false);
     onProfileClick();
+  };
+
+  const handleOrganizationClick = () => {
+    setIsDropdownOpen(false);
+    onOrganizationClick();
   };
 
   return (
@@ -205,7 +211,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   <UserIcon size={16} />
                   <span>My Profile</span>
                 </button>
-                <button style={dropdownItemStyle}>
+                <button onClick={handleOrganizationClick} style={dropdownItemStyle}>
                   <Building size={16} />
                   <span>Organization Settings</span>
                 </button>

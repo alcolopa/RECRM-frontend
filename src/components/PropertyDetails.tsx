@@ -353,6 +353,75 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           </div>
         )}
 
+        {/* Listing Agent Info */}
+        {!isPublic && (
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}><User size={20} /> Listing Agent</h2>
+            {property.assignedUser ? (
+              <div className="card" style={{
+                padding: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                marginTop: '0.5rem',
+                minWidth: 0
+              }}>
+                <div style={{
+                  width: '3.5rem',
+                  height: '3.5rem',
+                  borderRadius: '50%',
+                  background: 'rgba(var(--color-primary-rgb), 0.1)',
+                  backgroundImage: property.assignedUser.avatar ? `url(${property.assignedUser.avatar})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-primary)',
+                  flexShrink: 0
+                }}>
+                  {!property.assignedUser.avatar && <User size={28} />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {property.assignedUser.firstName} {property.assignedUser.lastName}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                      <Mail size={16} /> {property.assignedUser.email}
+                    </div>
+                    {property.assignedUser.phone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                        <Phone size={16} /> {property.assignedUser.phone}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius)',
+                border: '1px dashed var(--color-border)',
+                color: 'var(--color-text-muted)',
+                fontSize: '0.875rem'
+              }}>
+                No realtor assigned to this property.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Action Buttons */}
         {!isPublic && (
           <div style={footerActionsStyle}>
@@ -377,13 +446,61 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 
         {/* Public CTA */}
         {isPublic && (
-          <div className="card" style={{ padding: '2rem', border: '2px solid var(--color-primary)', textAlign: 'center' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Interested in this property?</h3>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-              Get in touch with the listing agent for more details or to schedule a viewing.
-            </p>
-            <Button fullWidth size="lg">Contact Agent</Button>
-          </div>
+          <>
+            {(property.assignedUser?.phone || property.assignedUser?.email) ? (
+              <div className="card" style={{ padding: '2rem', border: '2px solid var(--color-primary)', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Interested in this property?</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    backgroundImage: property.assignedUser?.avatar ? `url(${property.assignedUser.avatar})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--color-primary)',
+                    fontWeight: 600,
+                    fontSize: '1rem'
+                  }}>
+                    {!property.assignedUser?.avatar && `${property.assignedUser?.firstName?.[0] || ''}${property.assignedUser?.lastName?.[0] || ''}`}
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>{property.assignedUser?.firstName} {property.assignedUser?.lastName}</p>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: 0 }}>Listing Agent</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {property.assignedUser?.phone && (
+                    <Button 
+                      fullWidth 
+                      size="lg"
+                      onClick={() => window.open(`https://wa.me/${property.assignedUser?.phone?.replace(/\D/g, '')}`, '_blank')}
+                      style={{ backgroundColor: '#25D366', border: 'none' }}
+                      leftIcon={<i className="fa-brands fa-whatsapp" style={{ fontSize: '20px' }}></i>}
+                    >
+                      Contact via WhatsApp
+                    </Button>
+                  )}
+                  {property.assignedUser?.email && (
+                    <Button 
+                      fullWidth 
+                      variant="outline"
+                      size="lg"
+                      onClick={() => window.location.href = `mailto:${property.assignedUser?.email}`}
+                      leftIcon={<Mail size={20} />}
+                    >
+                      Contact via Email
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
 
