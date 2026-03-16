@@ -1,5 +1,17 @@
 import api from './client';
 
+export interface Membership {
+  id: string;
+  role: string;
+  organizationId: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    logo?: string;
+  };
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -7,19 +19,17 @@ export interface UserProfile {
   lastName?: string;
   avatar?: string;
   phone?: string;
-  role: string;
   unitPreference: 'METRIC' | 'IMPERIAL';
-  organizationId: string;
-  organization?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  memberships: Membership[];
+  ownedOrganizations: any[];
+  // Legacy fields for easier transition
+  role?: string;
+  organizationId?: string;
 }
 
 export const userService = {
   getMe: () => api.get<UserProfile>('/users/me'),
-  getAll: (orgId?: string) => api.get<UserProfile[]>('/users', { params: { organizationId: orgId } }),
+  getAll: (orgId: string) => api.get<UserProfile[]>('/users', { params: { organizationId: orgId } }),
   updateMe: (data: Partial<UserProfile> & { password?: string; oldPassword?: string }) => 
     api.patch<UserProfile>('/users/me', data),
   uploadAvatar: (file: File) => {

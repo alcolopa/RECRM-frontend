@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Bell, 
   Search, 
-  Settings, 
   LogOut, 
   User as UserIcon, 
   ChevronDown,
@@ -27,6 +26,11 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
+
+  // Derive active organization and role from memberships
+  const activeMembership = user?.memberships?.[0];
+  const activeOrg = activeMembership?.organization || user?.organization;
+  const activeRole = activeMembership?.role || user?.role || 'Agent';
   
   const displayName = user?.firstName && user?.lastName 
     ? `${user.firstName} ${user.lastName}` 
@@ -165,7 +169,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{displayName}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{user?.role || 'Agent'}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{activeRole}</span>
                 </div>
                 <ChevronDown size={16} color="var(--color-text-muted)" />
               </>
@@ -182,7 +186,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   position: 'absolute',
                   right: 0,
                   top: '110%',
-                  width: '200px',
+                  width: '300px',
                   backgroundColor: 'var(--color-surface)',
                   borderRadius: 'var(--radius)',
                   boxShadow: 'var(--shadow-xl)',
@@ -194,7 +198,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                 <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', marginBottom: '0.5rem' }}>
                   <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{displayName}</p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayEmail}</p>
-                  {user?.organization?.name && (
+                  {activeOrg?.name && (
                     <p style={{ 
                       fontSize: '0.7rem', 
                       color: 'var(--color-primary)', 
@@ -202,7 +206,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                       fontWeight: 600,
                       textTransform: 'uppercase'
                     }}>
-                      {user.organization.name}
+                      {activeOrg.name}
                     </p>
                   )}
                 </div>
@@ -214,10 +218,6 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                 <button onClick={handleOrganizationClick} style={dropdownItemStyle}>
                   <Building size={16} />
                   <span>Organization Settings</span>
-                </button>
-                <button style={dropdownItemStyle}>
-                  <Settings size={16} />
-                  <span>System Settings</span>
                 </button>
                 
                 <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.5rem 0' }}></div>

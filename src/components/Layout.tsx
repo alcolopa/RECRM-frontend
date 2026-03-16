@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 const Dashboard = lazy(() => import('../screens/Dashboard'));
 const ContactsView = lazy(() => import('../screens/ContactsView'));
 const PropertiesView = lazy(() => import('../screens/PropertiesView'));
+const OffersView = lazy(() => import('../screens/OffersView'));
 const ProfileView = lazy(() => import('../screens/ProfileView'));
 const OrganizationSettings = lazy(() => import('../screens/OrganizationSettings'));
 
@@ -29,6 +30,11 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
+
+  // Derive active organization and role from memberships
+  const activeMembership = user?.memberships?.[0];
+  const activeOrgId = activeMembership?.organizationId || user?.organizationId;
+  const activeRole = activeMembership?.role || user?.role;
 
   useEffect(() => {
     const handleResize = () => {
@@ -61,13 +67,15 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
             case 'dashboard':
               return <Dashboard />;
             case 'contacts':
-              return <ContactsView organizationId={user?.organizationId} />;
+              return <ContactsView organizationId={activeOrgId} />;
             case 'properties':
-              return <PropertiesView organizationId={user?.organizationId} />;
+              return <PropertiesView organizationId={activeOrgId} />;
+            case 'offers':
+              return <OffersView organizationId={activeOrgId} />;
             case 'profile':
-              return <ProfileView user={user} onUserUpdate={onUserUpdate} />;
+              return <ProfileView user={{ ...user, role: activeRole, organizationId: activeOrgId }} onUserUpdate={onUserUpdate} />;
             case 'organization':
-              return <OrganizationSettings user={user} />;
+              return <OrganizationSettings user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             default:
               return (
                 <div style={{ padding: '2rem', textAlign: 'center' }}>

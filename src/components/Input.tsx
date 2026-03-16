@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -71,65 +72,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
+  icon?: LucideIcon;
   error?: string;
   helperText?: string;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, className = '', style, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
-        {label && (
-          <label
-            htmlFor={inputId}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--color-text)',
-              display: 'block'
-            }}
-          >
-            {label}
-          </label>
-        )}
-        <textarea
-          id={inputId}
-          ref={ref}
-          className={className}
-          style={{
-            ...style,
-            borderColor: error ? 'var(--color-error)' : style?.borderColor || 'var(--color-border)',
-            minHeight: style?.minHeight || '100px'
-          }}
-          {...props}
-        />
-        {(error || helperText) && (
-          <span
-            style={{
-              fontSize: '0.75rem',
-              color: error ? 'var(--color-error)' : 'var(--muted-foreground)',
-              marginTop: '0.125rem'
-            }}
-          >
-            {error || helperText}
-          </span>
-        )}
-      </div>
-    );
-  }
-);
-
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  icon?: LucideIcon;
-  error?: string;
-  options: { value: string | number; label: string }[];
-}
-
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, icon: Icon, error, options, className = '', style, id, ...props }, ref) => {
+  ({ label, icon: Icon, error, helperText, className = '', style, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
@@ -155,51 +104,90 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               style={{
                 position: 'absolute',
                 left: '0.875rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                zIndex: 1
+                top: '0.875rem',
+                pointerEvents: 'none'
               }}
             />
           )}
-          <select
+          <textarea
             id={inputId}
             ref={ref}
             className={className}
             style={{
               ...style,
               paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '1rem',
+              paddingTop: Icon ? '0.75rem' : style?.paddingTop || '0.75rem',
               borderColor: error ? 'var(--color-error)' : style?.borderColor || 'var(--color-border)',
-              appearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748B\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 0.75rem center',
-              backgroundSize: '1.25rem'
+              minHeight: style?.minHeight || '100px'
             }}
             {...props}
-          >
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
-        {error && (
+        {(error || helperText) && (
           <span
             style={{
               fontSize: '0.75rem',
-              color: 'var(--color-error)',
+              color: error ? 'var(--color-error)' : 'var(--muted-foreground)',
               marginTop: '0.125rem'
             }}
           >
-            {error}
+            {error || helperText}
           </span>
         )}
       </div>
     );
   }
 );
+
+interface SelectProps {
+  label?: string;
+  icon?: LucideIcon;
+  error?: string;
+  options: { value: string | number; label: string }[];
+  value?: string | number;
+  onChange?: (e: any) => void;
+  placeholder?: string;
+  searchable?: boolean;
+  disabled?: boolean;
+  id?: string;
+  name?: string;
+  required?: boolean;
+  style?: React.CSSProperties;
+}
+
+export const Select: React.FC<SelectProps> = ({ 
+  label, 
+  icon, 
+  error, 
+  options, 
+  value = '', 
+  onChange, 
+  placeholder, 
+  searchable, 
+  disabled, 
+  id, 
+  name, 
+  required,
+  style
+}) => {
+  return (
+    <CustomSelect
+      label={label}
+      icon={icon}
+      error={error}
+      options={options}
+      value={value}
+      onChange={(val) => onChange?.({ target: { value: val, name, id } } as any)}
+      placeholder={placeholder}
+      searchable={searchable}
+      disabled={disabled}
+      id={id}
+      name={name}
+      required={required}
+      style={style}
+    />
+  );
+};
 
 export const Checkbox = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { label: string }>(
   ({ label, id, style, ...props }, ref) => {
@@ -238,5 +226,4 @@ export const Checkbox = forwardRef<HTMLInputElement, React.InputHTMLAttributes<H
 
 Input.displayName = 'Input';
 Textarea.displayName = 'Textarea';
-Select.displayName = 'Select';
 Checkbox.displayName = 'Checkbox';

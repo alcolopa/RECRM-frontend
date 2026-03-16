@@ -51,7 +51,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
     try {
       let savedContact: Contact;
       if (editingContact) {
-        const response = await contactService.update(editingContact.id, data);
+        const response = await contactService.update(editingContact.id, data, organizationId);
         savedContact = response.data;
       } else {
         const response = await contactService.create({ ...data, organizationId });
@@ -64,7 +64,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
         
         if (!sellerProfileId) {
           try {
-            const fullContact = await contactService.getById(savedContact.id);
+            const fullContact = await contactService.getById(savedContact.id, organizationId);
             sellerProfileId = fullContact.data.sellerProfile?.id;
           } catch (err) {
             console.error('Failed to fetch full contact for seller profile', err);
@@ -98,7 +98,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
     
     setIsDeleting(true);
     try {
-      await contactService.delete(deletingContactId);
+      await contactService.delete(deletingContactId, organizationId);
       if (viewingContact?.id === deletingContactId) {
         setView('list');
         setViewingContact(undefined);

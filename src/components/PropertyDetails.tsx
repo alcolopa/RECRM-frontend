@@ -17,12 +17,14 @@ import {
   User,
   Mail,
   Phone,
-  Copy
+  Copy,
+  HandCoins
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
 import Button from './Button';
 import { useUnits } from '../contexts/UnitContext';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface PropertyDetailsProps {
   property: Property;
@@ -40,6 +42,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
   isPublic = false 
 }) => {
   const { formatAreaDisplay } = useUnits();
+  const { navigate } = useNavigation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
@@ -91,27 +94,65 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
       exit={{ opacity: 0 }}
       style={containerStyle}
     >
-      {/* Top Header - Sticky on Mobile */}
-      <div style={headerStyle}>
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          aria-label="Back to properties"
-          style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
-        >
-          <ChevronLeft size={24} />
-        </Button>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <Button
-              variant="ghost"
-              onClick={handleShare}
-              aria-label="Share property"
-              style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
-              title="Share property"
-            >
-              <Share2 size={20} />
-            </Button>
+      {/* Top Header - Organizations Logo/Branding for Public view */}
+      {isPublic && (
+        <div style={publicHeaderStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ 
+              width: '2.5rem', 
+              height: '2.5rem', 
+              background: property.organization?.logo ? `url(${property.organization.logo})` : 'rgba(5, 150, 105, 0.1)',
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-primary)',
+              border: property.organization?.logo ? '1px solid var(--color-border)' : 'none'
+            }}>
+              {!property.organization?.logo && <Building2 size={24} />}
+            </div>
+            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--color-text)' }}>
+              {property.organization?.name || 'EstateHub'}
+            </span>
+          </div>
+          <Button 
+            variant="ghost" 
+            onClick={handleShare}
+            aria-label="Share property"
+            style={{ borderRadius: '50%', width: '40px', height: '40px' }}
+          >
+            <Share2 size={20} />
+          </Button>
         </div>
+      )}
+
+      {/* Internal Header - Sticky on Mobile */}
+      {!isPublic && (
+        <div style={headerStyle}>
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            aria-label="Back to properties"
+            style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
+          >
+            <ChevronLeft size={24} />
+          </Button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Button
+                variant="ghost"
+                onClick={handleShare}
+                aria-label="Share property"
+                style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', background: 'var(--color-surface)' }}
+                title="Share property"
+              >
+                <Share2 size={20} />
+              </Button>
+          </div>
+        </div>
+      )}
 
       {/* Global Toast Popup */}
       <AnimatePresence>
@@ -145,7 +186,6 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-      </div>
 
       {/* Hero Image Section / Carousel */}
       <div style={heroSectionStyle}>
@@ -426,6 +466,14 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         {!isPublic && (
           <div style={footerActionsStyle}>
             <Button
+              variant="primary"
+              onClick={() => navigate('offers', { prefillData: { propertyId: property.id } })}
+              style={{ flex: 1.5 }}
+              leftIcon={<HandCoins size={18} />}
+            >
+              Make Offer
+            </Button>
+            <Button
               variant="secondary"
               onClick={() => onEdit && onEdit(property)}
               style={{ flex: 1 }}
@@ -578,6 +626,19 @@ const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
   position: 'relative',
   paddingBottom: '2rem'
+};
+
+const publicHeaderStyle: React.CSSProperties = {
+  height: '4.5rem',
+  backgroundColor: 'var(--color-surface)',
+  borderBottom: '1px solid var(--color-border)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0 1.5rem',
+  position: 'sticky',
+  top: 0,
+  zIndex: 100,
 };
 
 const headerStyle: React.CSSProperties = {

@@ -45,6 +45,11 @@ export interface Property {
   featureIds?: string[];
   propertyImages: PropertyImage[];
   organizationId: string;
+  organization?: {
+    id: string;
+    name: string;
+    logo?: string;
+  };
   assignedUserId?: string;
   assignedUser?: UserProfile;
   sellerProfileId?: string;
@@ -54,20 +59,20 @@ export interface Property {
 }
 
 export const propertyService = {
-  getAll: (orgId?: string) => 
+  getAll: (orgId: string) => 
     api.get<Property[]>('/properties', { params: { organizationId: orgId } }),
   
-  getOne: (id: string) => 
-    api.get<Property>(`/properties/${id}`),
+  getOne: (id: string, orgId: string) => 
+    api.get<Property>(`/properties/${id}`, { params: { organizationId: orgId } }),
   
-  create: (data: Partial<Property>) => 
-    api.post<Property>('/properties', data),
+  create: (data: Partial<Property> & { organizationId: string }) => 
+    api.post<Property>(`/properties?organizationId=${data.organizationId}`, data),
   
-  update: (id: string, data: Partial<Property>) => 
-    api.patch<Property>(`/properties/${id}`, data),
+  update: (id: string, data: Partial<Property>, orgId: string) => 
+    api.patch<Property>(`/properties/${id}`, data, { params: { organizationId: orgId } }),
   
-  delete: (id: string) => 
-    api.delete(`/properties/${id}`),
+  delete: (id: string, orgId: string) => 
+    api.delete(`/properties/${id}`, { params: { organizationId: orgId } }),
 
   getFeatures: () =>
     api.get<Feature[]>('/properties/features'),
@@ -75,10 +80,10 @@ export const propertyService = {
   getPublic: (id: string) =>
     api.get<Property>(`/properties/public/${id}`),
 
-  uploadImage: (propertyId: string, file: File, onProgress?: (progress: number) => void) => {
+  uploadImage: (propertyId: string, file: File, orgId: string, onProgress?: (progress: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<PropertyImage>(`/properties/${propertyId}/images`, formData, {
+    return api.post<PropertyImage>(`/properties/${propertyId}/images?organizationId=${orgId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -91,6 +96,6 @@ export const propertyService = {
     });
   },
 
-  deleteImage: (imageId: string) => 
-    api.delete(`/properties/images/${imageId}`)
+  deleteImage: (imageId: string, orgId: string) => 
+    api.delete(`/properties/images/${imageId}?organizationId=${orgId}`)
 };

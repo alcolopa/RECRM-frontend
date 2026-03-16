@@ -180,7 +180,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           const response = await propertyService.uploadImage(
             property.id, 
             file, 
-            (progress) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
+            organizationId,
+            (progress: number) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
           );
           
           setInternalImages(prev => [...prev, response.data]);
@@ -226,7 +227,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
     setIsDeletingImage(true);
     try {
-      await propertyService.deleteImage(deletingImageId);
+      await propertyService.deleteImage(deletingImageId, organizationId);
       setInternalImages(prev => prev.filter(img => img.id !== deletingImageId));
       setDeletingImageId(null);
     } catch (err) {
@@ -277,22 +278,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     setError(null);
 
     // Filter out fields that the backend doesn't accept in Create/Update DTOs
-    const { 
-      assignedUser, 
-      sellerProfile, 
-      propertyImages, 
-      propertyFeatures, 
-      deals, 
-      tags,
-      createdAt,
-      updatedAt,
-      id,
-      features: _features, // We send featureIds instead
-      ...rest 
-    } = formData;
+    const cleanRest = { ...formData } as any;
+    delete cleanRest.assignedUser;
+    delete cleanRest.sellerProfile;
+    delete cleanRest.propertyImages;
+    delete cleanRest.propertyFeatures;
+    delete cleanRest.deals;
+    delete cleanRest.tags;
+    delete cleanRest.createdAt;
+    delete cleanRest.updatedAt;
+    delete cleanRest.id;
+    delete cleanRest.features; // We send featureIds instead
 
     const submissionData = {
-      ...rest,
+      ...cleanRest,
       price: formData.price === '' ? 0 : Number(formData.price),
       bedrooms: formData.bedrooms === '' ? 0 : Number(formData.bedrooms),
       bathrooms: formData.bathrooms === '' ? 0 : Number(formData.bathrooms),
@@ -316,7 +315,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             await propertyService.uploadImage(
               savedProperty.id, 
               file,
-              (progress) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
+              organizationId,
+              (progress: number) => setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
             );
           } catch (err) {
             console.error('Failed to upload a pending image', err);
@@ -693,6 +693,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               name="country"
               value={formData.country || ''}
               onChange={handleCountryChange}
+              searchable
               options={[
                 { value: '', label: 'Select Country' },
                 ...countries.map(c => ({ value: c, label: c }))
@@ -704,6 +705,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               name="governorate"
               value={formData.governorate || ''}
               onChange={handleGovernorateChange}
+              searchable
               options={[
                 { value: '', label: 'Select Governorate' },
                 ...governorates.map(g => ({ value: g, label: g }))
@@ -715,6 +717,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               name="city"
               value={formData.city || ''}
               onChange={handleCityChange}
+              searchable
               options={[
                 { value: '', label: 'Select City' },
                 ...cities.map(c => ({ value: c, label: c }))

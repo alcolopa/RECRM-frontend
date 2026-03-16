@@ -70,23 +70,21 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
 
   const handleSave = async (data: Partial<Property>) => {
     // Strip metadata and relationship fields that backend doesn't accept in Create/Update DTOs
-    const { 
-      id, 
-      createdAt, 
-      updatedAt, 
-      propertyImages, 
-      deals, 
-      activities, 
-      sellerProfile,
-      organization,
-      tags,
-      ...cleanData 
-    } = data as any;
+    const cleanData = { ...data } as any;
+    delete cleanData.id;
+    delete cleanData.createdAt;
+    delete cleanData.updatedAt;
+    delete cleanData.propertyImages;
+    delete cleanData.deals;
+    delete cleanData.activities;
+    delete cleanData.sellerProfile;
+    delete cleanData.organization;
+    delete cleanData.tags;
     
     try {
       let savedProperty: Property;
       if (editingProperty) {
-        const response = await propertyService.update(editingProperty.id, cleanData);
+        const response = await propertyService.update(editingProperty.id, cleanData, organizationId);
         savedProperty = response.data;
       } else {
         const response = await propertyService.create({ ...cleanData, organizationId });
@@ -108,7 +106,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     
     setIsDeleting(true);
     try {
-      await propertyService.delete(deletingPropertyId);
+      await propertyService.delete(deletingPropertyId, organizationId);
       if (selectedProperty?.id === deletingPropertyId) {
         setView('list');
         setSelectedProperty(undefined);
@@ -203,7 +201,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
             id="agentFilter"
             name="agentFilter"
             value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value)}
+            onChange={(e) => setSelectedAgentId(e.target.value as string)}
             icon={User}
             options={[
               { value: 'all', label: 'All Agents' },

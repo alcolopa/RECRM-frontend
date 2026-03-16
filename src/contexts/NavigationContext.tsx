@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
-export type NavigationTab = 'dashboard' | 'properties' | 'contacts' | 'deals' | 'leads' | 'profile' | 'organization';
+export type NavigationTab = 'dashboard' | 'properties' | 'contacts' | 'deals' | 'leads' | 'profile' | 'organization' | 'offers';
 
 interface NavigationState {
   returnTo?: NavigationTab;

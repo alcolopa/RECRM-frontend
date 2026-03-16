@@ -174,8 +174,8 @@ export interface Contact {
 export const contactService = {
   getAll: (orgId: string, type?: ContactType) => 
     api.get<Contact[]>(`/contacts?organizationId=${orgId}${type ? `&type=${type}` : ''}`),
-  getById: (id: string) => api.get<Contact>(`/contacts/${id}`),
-  create: (data: Partial<Contact>) => api.post<Contact>('/contacts', data),
-  update: (id: string, data: Partial<Contact>) => api.patch<Contact>(`/contacts/${id}`, data),
-  delete: (id: string) => api.delete(`/contacts/${id}`),
+  getById: (id: string, orgId: string) => api.get<Contact>(`/contacts/${id}?organizationId=${orgId}`),
+  create: (data: Partial<Contact> & { organizationId: string }) => api.post<Contact>(`/contacts?organizationId=${data.organizationId}`, data),
+  update: (id: string, data: Partial<Contact>, orgId: string) => api.patch<Contact>(`/contacts/${id}?organizationId=${orgId}`, data),
+  delete: (id: string, orgId: string) => api.delete(`/contacts/${id}?organizationId=${orgId}`),
 };

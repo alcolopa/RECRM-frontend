@@ -26,6 +26,7 @@ import {
 import PhoneInput from './PhoneInput';
 import { Input, Select, Textarea, Checkbox } from './Input';
 import Button from './Button';
+import UserSelector from './UserSelector';
 
 interface ContactFormProps {
   contact?: Contact;
@@ -55,7 +56,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
     status: contact?.status || ContactStatus.NEW,
     leadSource: contact?.leadSource || '',
     notes: contact?.notes || '',
-    tags: contact?.tags || []
+    tags: contact?.tags || [],
+    assignedAgentId: contact?.assignedAgentId || ''
   });
 
   // Buyer Profile Data
@@ -286,6 +288,15 @@ const ContactForm: React.FC<ContactFormProps> = ({
               onChange={handleBaseChange}
               placeholder="Any additional details..."
             />
+
+            <div style={{ marginTop: '0.5rem' }}>
+              <UserSelector 
+                organizationId={organizationId}
+                selectedUserId={baseData.assignedAgentId}
+                onSelect={(id) => setBaseData(prev => ({ ...prev, assignedAgentId: id }))}
+                label="Assigned Agent"
+              />
+            </div>
 
             <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
               <Button 

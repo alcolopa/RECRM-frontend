@@ -234,7 +234,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               </div>
               <div style={badgeStyle}>
                 <Building size={16} />
-                <span>Org: {user.organization?.name || 'Loading...'}</span>
+                <span>Org: {user.memberships?.[0]?.organization?.name || 'No Organization'}</span>
               </div>
             </div>
           </div>

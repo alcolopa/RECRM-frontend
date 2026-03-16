@@ -4,11 +4,11 @@ import {
   Users, 
   UserSquare2, 
   Building2, 
-  Briefcase, 
   ChevronLeft, 
   ChevronRight,
   Home,
-  X
+  X,
+  HandCoins
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigation, type NavigationTab } from '../contexts/NavigationContext';
@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
     { id: 'leads', label: 'Leads', icon: UserSquare2 },
     { id: 'contacts', label: 'Contacts', icon: Users },
     { id: 'properties', label: 'Properties', icon: Building2 },
-    { id: 'deals', label: 'Deals', icon: Briefcase },
+    { id: 'offers', label: 'Offers', icon: HandCoins },
     { id: 'profile', label: 'Profile', icon: UserSquare2 },
   ];
 

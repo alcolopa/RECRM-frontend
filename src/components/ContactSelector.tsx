@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, User, Mail, Phone, X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Plus, User, X, Loader2, ChevronDown } from 'lucide-react';
 import { type Contact, contactService, ContactType } from '../api/contacts';
-import { Input } from './Input';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import ContactForm from './ContactForm';
@@ -32,6 +31,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -43,6 +43,8 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
         if (selectedContactId) {
           const contact = response.data.find(c => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId);
           if (contact) setSelectedContact(contact);
+        } else {
+          setSelectedContact(null);
         }
       } catch (err) {
         console.error('Failed to fetch contacts', err);
@@ -52,7 +54,18 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
     };
 
     fetchContacts();
-  }, [organizationId, selectedContactId]);
+  }, [organizationId, selectedContactId, restrictType]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredContacts = contacts.filter(c => {
     const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
@@ -62,23 +75,25 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
 
   const handleSelect = (contact: Contact) => {
     setSelectedContact(contact);
-    // Use sellerProfile ID if it exists, otherwise we'll handle creation in backend or elsewhere
-    // But for the DTO we need sellerProfileId
     if (contact.sellerProfile) {
       onSelect(contact.sellerProfile.id, contact);
     } else {
-      // If no seller profile, we might need a way to create one or the backend handles it via contactId
-      // Actually the schema has sellerProfileId on Property.
-      // So we should ideally ensure the contact has a seller profile.
-      onSelect('', contact); // Signal that we need to create a profile or handle it
+      onSelect('', contact);
     }
     setIsDropdownOpen(false);
     setSearchQuery('');
   };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedContact(null);
+    onSelect('');
+  };
+
   const handleCreateContact = async (data: Partial<Contact>) => {
     try {
       setError(null);
-      const response = await contactService.create(data);
+      const response = await contactService.create({ ...data, organizationId });
       const newContact = response.data;
       setContacts(prev => [newContact, ...prev]);
       handleSelect(newContact);
@@ -90,160 +105,189 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem', display: 'block' }}>
-        {label}
-      </label>
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%', position: 'relative' }}>
+      {label && (
+        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>
+          {label}
+        </label>
+      )}
 
       {selectedContact ? (
-        <div className="card" style={{ 
-          padding: '0.75rem 1rem', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-primary)',
-          borderRadius: 'var(--radius)',
-          gap: '1rem',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
-            <div style={{ 
-              width: '2.5rem', 
-              height: '2.5rem', 
-              borderRadius: '50%', 
-              background: 'rgba(var(--color-primary-rgb), 0.1)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              color: 'var(--color-primary)',
-              flexShrink: 0
-            }}>
-              <User size={20} />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ 
-                fontWeight: 600, 
-                whiteSpace: 'nowrap', 
-                overflow: 'hidden', 
-                textOverflow: 'ellipsis' 
-              }}>
-                {selectedContact.firstName} {selectedContact.lastName}
-              </div>
-              <div style={{ 
-                fontSize: '0.75rem', 
-                color: 'var(--color-text-muted)', 
-                display: 'flex', 
-                flexDirection: window.innerWidth <= 480 ? 'column' : 'row',
-                gap: window.innerWidth <= 480 ? '0.125rem' : '0.5rem',
-                overflow: 'hidden'
-              }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  <Mail size={12} /> {selectedContact.email || 'No email'}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  <Phone size={12} /> {selectedContact.phone}
-                </span>
-              </div>
-            </div>
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--color-primary)',
+            background: 'rgba(var(--color-primary-rgb), 0.05)',
+            minHeight: '2.75rem',
+          }}
+        >
+          <div style={{ 
+            width: '1.75rem', 
+            height: '1.75rem', 
+            borderRadius: '50%', 
+            background: 'rgba(var(--color-primary-rgb), 0.1)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: 'var(--color-primary)',
+            flexShrink: 0
+          }}>
+            <User size={14} />
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => {
-              setSelectedContact(null);
-              onSelect('');
-            }}
-            aria-label="Clear selection"
-            style={{ padding: '0.25rem', flexShrink: 0 }}
-          >
-            <X size={18} />
-          </Button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--color-text)' }}>
+              {selectedContact.firstName} {selectedContact.lastName}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
+            <X 
+              size={16} 
+              onClick={handleClear}
+              style={{ cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-error)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted-foreground)')}
+            />
+            <ChevronDown size={18} />
+          </div>
         </div>
       ) : (
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Input
-                id="contact-search"
-                name="contact-search"
-                placeholder="Search existing contacts..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                icon={Search}
-              />
-            </div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => {
-                if (onNewContactRequested) {
-                  onNewContactRequested();
-                } else {
-                  setIsAddingNew(true);
-                }
-              }}
-              leftIcon={<Plus size={18} />}
-            >
-              New
-            </Button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius)',
+              border: `1px solid ${isDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)'}`,
+              background: 'var(--color-surface)',
+              cursor: 'pointer',
+              minHeight: '2.75rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Search size={18} color="var(--muted-foreground)" />
+            <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)' }}>Select contact...</span>
+            <ChevronDown size={18} color="var(--muted-foreground)" style={{ marginLeft: 'auto', transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </div>
-
-          <AnimatePresence>
-            {isDropdownOpen && searchQuery && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                style={dropdownStyle}
-              >
-                {isLoading ? (
-                  <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    <Loader2 size={24} className="animate-spin" color="var(--color-primary)" />
-                  </div>
-                ) : filteredContacts.length > 0 ? (
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {filteredContacts.map(contact => (
-                      <div 
-                        key={contact.id} 
-                        style={itemStyle}
-                        onClick={() => handleSelect(contact)}
-                      >
-                        <div style={{ fontWeight: 600 }}>{contact.firstName} {contact.lastName}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                          {contact.email} • {contact.phone}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                    <p>No contacts found.</p>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => {
-                        setIsAddingNew(true);
-                        setIsDropdownOpen(false);
-                      }}
-                      style={{ marginTop: '0.5rem' }}
-                    >
-                      <Plus size={16} /> Create "{searchQuery}"
-                    </Button>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => onNewContactRequested ? onNewContactRequested() : setIsAddingNew(true)}
+            leftIcon={<Plus size={18} />}
+            style={{ height: '2.75rem' }}
+          >
+            New
+          </Button>
         </div>
       )}
 
+      <AnimatePresence>
+        {isDropdownOpen && !selectedContact && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '0.5rem',
+              backgroundColor: 'var(--color-surface)',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--color-border)',
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)' }} />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Filter contacts..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem 0.5rem 2.25rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-surface)',
+                    outline: 'none',
+                    fontSize: '0.8125rem',
+                    color: 'var(--color-text)'
+                  }}
+                />
+              </div>
+            </div>
 
-      {/* Modal for adding new contact */}
+            <div style={{ maxHeight: '250px', overflowY: 'auto', padding: '0.25rem' }}>
+              {isLoading ? (
+                <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                  <Loader2 size={20} className="animate-spin" color="var(--color-primary)" />
+                </div>
+              ) : filteredContacts.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {filteredContacts.map(contact => (
+                    <div 
+                      key={contact.id} 
+                      onClick={(e) => { e.stopPropagation(); handleSelect(contact); }}
+                      style={{
+                        padding: '0.625rem 0.75rem',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.125rem'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{contact.firstName} {contact.lastName}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                        {contact.email} {contact.email && contact.phone && '•'} {contact.phone}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
+                  <p>No contacts found.</p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      if (onNewContactRequested) {
+                        onNewContactRequested();
+                      } else {
+                        setIsAddingNew(true);
+                      }
+                      setIsDropdownOpen(false);
+                    }}
+                    style={{ marginTop: '0.5rem' }}
+                  >
+                    <Plus size={16} /> Create "{searchQuery}"
+                  </Button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Modal
         isOpen={isAddingNew}
         onClose={() => {
@@ -295,29 +339,4 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   );
 };
 
-
 export default ContactSelector;
-
-const dropdownStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: '100%',
-  left: 0,
-  right: 0,
-  background: 'var(--color-bg)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius)',
-  boxShadow: 'var(--shadow-lg)',
-  zIndex: 1000,
-  marginTop: '0.5rem',
-  overflow: 'hidden'
-};
-
-const itemStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  cursor: 'pointer',
-  transition: 'background 0.2s',
-  borderBottom: '1px solid var(--color-border)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.25rem'
-};
