@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
 import { Input } from '../components/Input';
 import PhoneInput from '../components/PhoneInput';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface ProfileViewProps {
   user: UserProfile;
@@ -103,24 +104,39 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     setHasChanges(true);
   };
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (formData.password) {
+      if (!formData.oldPassword) {
+        newErrors.oldPassword = 'Current password is required to set a new one';
+      }
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'New passwords do not match';
+      }
+      if (formData.password.length < 8) {
+        newErrors.password = 'New password must be at least 8 characters';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!hasChanges && !formData.password) return;
 
-    if (formData.password) {
-      if (!formData.oldPassword) {
-        setError('Current password is required to set a new one.');
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError('New passwords do not match.');
-        return;
-      }
-      if (formData.password.length < 6) {
-        setError('New password must be at least 6 characters.');
-        return;
-      }
-    }
+    if (!validate()) return;
 
     setIsLoading(true);
     setError(null);
@@ -148,7 +164,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error('Update failed', err);
-      setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
+      setError(getErrorMessage(err, 'Failed to update profile. Please try again.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -277,18 +297,26 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 id="firstName"
                 name="firstName"
                 value={formData.firstName}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
+                }}
                 placeholder="First name"
                 icon={UserIcon}
+                error={errors.firstName}
               />
               <Input
                 label="Last Name"
                 id="lastName"
                 name="lastName"
                 value={formData.lastName}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
+                }}
                 placeholder="Last name"
                 icon={UserIcon}
+                error={errors.lastName}
               />
             </div>
 
@@ -298,9 +326,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               name="email"
               type="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+              }}
               placeholder="email@example.com"
               icon={Mail}
+              error={errors.email}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -345,10 +377,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               name="oldPassword"
               type="password"
               value={formData.oldPassword}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (errors.oldPassword) setErrors(prev => ({ ...prev, oldPassword: '' }));
+              }}
               placeholder="Enter current password"
               icon={Lock}
               helperText="Required only if you are changing your password."
+              error={errors.oldPassword}
             />
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
@@ -358,9 +394,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 name="password"
                 type="password"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                }}
                 placeholder="New password"
                 icon={Lock}
+                error={errors.password}
               />
               <Input
                 label="Confirm New Password"
@@ -368,9 +408,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 name="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                }}
                 placeholder="Confirm new password"
                 icon={Lock}
+                error={errors.confirmPassword}
               />
             </div>
 

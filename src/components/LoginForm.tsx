@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
 import api from '../api/client';
 import { Input } from './Input';
 import Button from './Button';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface LoginFormProps {
     onSwitchToSignup?: () => void;
@@ -24,8 +24,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         
         if (!email.trim()) {
             newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = 'Invalid email address';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = 'Please enter a valid email address';
         }
         
         if (!password) {
@@ -56,11 +56,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
             window.location.href = '/';
         } catch (err: unknown) {
             console.error('Login failed', err);
-            let message = 'Login failed. Please check your credentials.';
-            if (axios.isAxiosError(err)) {
-                message = err.response?.data?.message || message;
+            setError(getErrorMessage(err, 'Login failed. Please check your credentials.'));
+            const backendErrors = mapBackendErrors(err);
+            if (Object.keys(backendErrors).length > 0) {
+                setErrors(backendErrors);
             }
-            setError(message);
         } finally {
             setIsLoading(false);
         }

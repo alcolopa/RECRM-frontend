@@ -11,7 +11,8 @@ import {
   Layers,
   ArrowRight,
   ArrowLeft,
-  ChevronLeft
+  ChevronLeft,
+  X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -27,6 +28,8 @@ import PhoneInput from './PhoneInput';
 import { Input, Select, Textarea, Checkbox } from './Input';
 import Button from './Button';
 import UserSelector from './UserSelector';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
+import { AnimatePresence } from 'framer-motion';
 
 interface ContactFormProps {
   contact?: Contact;
@@ -111,6 +114,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleBaseChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -146,6 +150,12 @@ const ContactForm: React.FC<ContactFormProps> = ({
 
     // Step 2 Validation (Buyer Profile)
     if (step === 2) {
+      if (buyerProfile.minBudget && Number(buyerProfile.minBudget) < 0) {
+        newErrors.minBudget = 'Budget cannot be negative';
+      }
+      if (buyerProfile.maxBudget && Number(buyerProfile.maxBudget) < 0) {
+        newErrors.maxBudget = 'Budget cannot be negative';
+      }
       if (buyerProfile.minBudget && buyerProfile.maxBudget && Number(buyerProfile.minBudget) > Number(buyerProfile.maxBudget)) {
         newErrors.maxBudget = 'Max budget must be greater than min budget';
       }
@@ -229,6 +239,13 @@ const ContactForm: React.FC<ContactFormProps> = ({
       }
 
       await onSave(finalData);
+    } catch (err: any) {
+      console.error('Failed to save contact', err);
+      setError(getErrorMessage(err, 'Failed to save contact. Please check your information.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -322,6 +339,37 @@ const ContactForm: React.FC<ContactFormProps> = ({
           />
         </div>
       )}
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{
+              padding: '1rem',
+              background: 'rgba(220, 38, 38, 0.1)',
+              color: 'var(--color-error)',
+              borderRadius: 'var(--radius)',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              maxWidth: '800px',
+              border: '1px solid var(--color-error)'
+            }}
+          >
+            {error}
+            <button
+              onClick={() => setError(null)}
+              style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0.25rem' }}
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="card" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 

@@ -25,6 +25,7 @@ import { type Property } from '../api/properties';
 import Button from './Button';
 import { useUnits } from '../contexts/UnitContext';
 import { useNavigation } from '../contexts/NavigationContext';
+import { getImageUrl } from '../utils/url';
 
 interface PropertyDetailsProps {
   property: Property;
@@ -101,7 +102,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             <div style={{ 
               width: '2.5rem', 
               height: '2.5rem', 
-              background: property.organization?.logo ? `url(${property.organization.logo})` : 'rgba(var(--color-primary-rgb), 0.1)',
+              background: property.organization?.logo ? `url(${getImageUrl(property.organization.logo)})` : 'rgba(var(--color-primary-rgb), 0.1)',
               backgroundSize: 'contain',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -194,7 +195,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             <AnimatePresence mode="wait" initial={false}>
               <motion.img
                 key={currentImageIndex}
-                src={property.propertyImages[currentImageIndex].url}
+                src={getImageUrl(property.propertyImages[currentImageIndex].url)}
                 alt={property.title}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -254,7 +255,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                 className={`gallery-thumbnail-item ${idx === currentImageIndex ? 'active' : ''}`}
                 onClick={() => setCurrentImageIndex(idx)}
               >
-                <img src={img.url} alt={`Thumbnail ${idx + 1}`} />
+                <img src={getImageUrl(img.url)} alt={`Thumbnail ${idx + 1}`} />
               </div>
             ))}
           </div>
@@ -413,7 +414,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                   height: '3.5rem',
                   borderRadius: '50%',
                   background: 'rgba(var(--color-primary-rgb), 0.1)',
-                  backgroundImage: property.assignedUser.avatar ? `url(${property.assignedUser.avatar})` : 'none',
+                  backgroundImage: property.assignedUser.avatar ? `url(${getImageUrl(property.assignedUser.avatar)})` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   display: 'flex',
@@ -565,7 +566,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                     height: '3rem',
                     borderRadius: '50%',
                     backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-                    backgroundImage: property.assignedUser?.avatar ? `url(${property.assignedUser.avatar})` : 'none',
+                    backgroundImage: property.assignedUser?.avatar ? `url(${getImageUrl(property.assignedUser.avatar)})` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     display: 'flex',
@@ -640,7 +641,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 
               <motion.img
                 key={currentImageIndex}
-                src={property.propertyImages[currentImageIndex].url}
+                src={getImageUrl(property.propertyImages[currentImageIndex].url)}
                 className="lightbox-image"
                 alt="Fullscreen view"
                 initial={{ opacity: 0, x: 20 }}

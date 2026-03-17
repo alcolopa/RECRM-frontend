@@ -27,6 +27,8 @@ import { ContactType } from '../api/contacts';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useUnits } from '../contexts/UnitContext';
 import { getCountries, getGovernorates, getCities } from '../data/locationData';
+import { getImageUrl } from '../utils/url';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface PropertyFormProps {
   property?: Property;
@@ -254,7 +256,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.price) newErrors.price = 'Price is required';
+    
+    if (!formData.price) {
+      newErrors.price = 'Price is required';
+    } else if (Number(formData.price) < 0) {
+      newErrors.price = 'Price cannot be negative';
+    }
+
+    if (formData.area && Number(formData.area) <= 0) {
+      newErrors.area = 'Area must be greater than 0';
+    }
+
+    if (formData.bedrooms && Number(formData.bedrooms) < 0) {
+      newErrors.bedrooms = 'Bedrooms cannot be negative';
+    }
+
+    if (formData.bathrooms && Number(formData.bathrooms) < 0) {
+      newErrors.bathrooms = 'Bathrooms cannot be negative';
+    }
+
+    if (!formData.type) newErrors.type = 'Property type is required';
+    if (!formData.status) newErrors.status = 'Status is required';
+    
     if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.sellerProfileId) newErrors.sellerProfileId = 'Seller is required';
 
@@ -374,12 +397,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       else onCancel();
     } catch (err: any) {
       console.error('Failed to submit form', err);
-      const errorMessage = err.response?.data?.message;
-      setError(
-        Array.isArray(errorMessage) 
-          ? errorMessage.join('\n') 
-          : errorMessage || 'Failed to save property. Please check your information.'
-      );
+      setError(getErrorMessage(err, 'Failed to save property. Please check your information.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsSaving(false);
       setIsUploading(false);
@@ -542,7 +564,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             {/* Existing Images */}
             {internalImages.map((img, idx) => (
               <div key={img.id} style={imageContainerStyle}>
-                <img src={img.url} alt="Property" style={imageStyle} />
+                <img src={getImageUrl(img.url)} alt="Property" style={imageStyle} />
                 <Button
                   variant="danger"
                   size="sm"

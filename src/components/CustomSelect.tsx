@@ -115,13 +115,13 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       >
         {Icon && <Icon size={18} color="var(--muted-foreground)" style={{ flexShrink: 0 }} />}
         
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {selectedOption ? (
-            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--color-text)' }}>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--color-text)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {selectedOption.label}
             </span>
           ) : (
-            <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)' }}>
+            <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {placeholder}
             </span>
           )}
@@ -214,7 +214,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                       <span style={{ 
                         fontSize: '0.875rem', 
                         fontWeight: value === option.value ? 600 : 400,
-                        color: value === option.value ? 'var(--color-primary)' : 'var(--color-text)'
+                        color: value === option.value ? 'var(--color-primary)' : 'var(--color-text)',
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginRight: '0.5rem'
                       }}>
                         {option.label}
                       </span>

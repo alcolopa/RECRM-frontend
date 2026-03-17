@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, User, X, Loader2, ChevronDown } from 'lucide-react';
 import { type UserProfile, userService } from '../api/users';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../utils/url';
 
 interface UserSelectorProps {
   organizationId: string;
@@ -107,7 +108,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
           height: '1.75rem',
           borderRadius: '50%',
           backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-          backgroundImage: selectedUser?.avatar ? `url(${selectedUser.avatar})` : 'none',
+          backgroundImage: selectedUser?.avatar ? `url(${getImageUrl(selectedUser.avatar)})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           display: 'flex',
@@ -225,7 +226,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
                         height: '2rem',
                         borderRadius: '50%',
                         backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-                        backgroundImage: user.avatar ? `url(${user.avatar})` : 'none',
+                        backgroundImage: user.avatar ? `url(${getImageUrl(user.avatar)})` : 'none',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         display: 'flex',

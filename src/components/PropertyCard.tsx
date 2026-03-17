@@ -11,6 +11,7 @@ import {
 import { type Property } from '../api/properties';
 import Button from './Button';
 import { useUnits } from '../contexts/UnitContext';
+import { getImageUrl } from '../utils/url';
 
 interface PropertyCardProps {
   property: Property;
@@ -67,7 +68,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
         position: 'relative',
         height: '200px',
         backgroundColor: 'var(--color-bg)',
-        backgroundImage: property.propertyImages?.[0]?.url ? `url(${property.propertyImages[0].url})` : 'none',
+        backgroundImage: property.propertyImages?.[0]?.url ? `url(${getImageUrl(property.propertyImages[0].url)})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'flex',

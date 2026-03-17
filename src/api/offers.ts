@@ -31,6 +31,12 @@ export const FinancingType = {
   OTHER: 'OTHER' as FinancingType,
 };
 
+export type OffererType = 'AGENCY' | 'BUYER';
+export const OffererType = {
+  AGENCY: 'AGENCY' as OffererType,
+  BUYER: 'BUYER' as OffererType,
+};
+
 export interface OfferNegotiation {
   id: string;
   status: NegotiationStatus;
@@ -56,6 +62,7 @@ export interface Offer {
   expirationDate?: string;
   status: OfferStatus;
   notes?: string;
+  offerer: OffererType;
   negotiationId: string;
   negotiation: OfferNegotiation;
   organizationId: string;
@@ -72,6 +79,7 @@ export interface OfferHistory {
   field?: string;
   oldValue?: string;
   newValue?: string;
+  offerer?: OffererType;
   offerId: string;
   userId: string;
   user: UserProfile;
@@ -96,4 +104,7 @@ export const offersService = {
   
   reject: (id: string, orgId: string) => 
     api.post<Offer>(`/offers/${id}/reject?organizationId=${orgId}`),
+
+  update: (id: string, data: any, orgId: string) =>
+    api.patch<Offer>(`/offers/${id}?organizationId=${orgId}`, data),
 };

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import { getImageUrl } from '../utils/url';
 
 interface TopBarProps {
   onLogout: () => void;
@@ -96,7 +97,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
             height: '2.5rem',
             borderRadius: 'var(--radius)',
             backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-            backgroundImage: activeOrg?.logo ? `url("${activeOrg.logo}")` : 'none',
+            backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
             backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -158,7 +159,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               height: '2rem',
               borderRadius: '50%',
               backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-              backgroundImage: user?.avatar ? `url("${user.avatar}")` : 'none',
+              backgroundImage: user?.avatar ? `url("${getImageUrl(user.avatar)}")` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               display: 'flex',

@@ -211,6 +211,23 @@ section {
   section { padding: 3rem 0; }
   .card { padding: 1.25rem !important; }
   .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Disable card hover lift on mobile/touch */
+  .card:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .offer-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Offers filters card should not lift on hover */
+  .offers-filters:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 @media (min-width: 1025px) {

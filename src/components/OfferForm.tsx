@@ -14,10 +14,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property, propertyService } from '../api/properties';
 import { type Contact } from '../api/contacts';
-import { offersService, FinancingType, OfferStatus } from '../api/offers';
+import { offersService, FinancingType, OfferStatus, OffererType } from '../api/offers';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
 import ContactSelector from './ContactSelector';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface OfferFormProps {
   onCancel: () => void;
@@ -52,6 +53,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
     closingDate: '',
     expirationDate: '',
     notes: '',
+    offerer: OffererType.BUYER,
     status: OfferStatus.SUBMITTED
   });
 
@@ -92,10 +94,30 @@ const OfferForm: React.FC<OfferFormProps> = ({
     const newErrors: Record<string, string> = {};
     if (!formData.propertyId) newErrors.propertyId = 'Property is required';
     if (!formData.contactId) newErrors.contactId = 'Contact is required';
+    
     if (!formData.price) {
       newErrors.price = 'Price is required';
     } else if (Number(formData.price) <= 0) {
       newErrors.price = 'Price must be greater than 0';
+    }
+
+    if (formData.deposit && Number(formData.deposit) < 0) {
+      newErrors.deposit = 'Deposit cannot be negative';
+    }
+
+    if (formData.closingDate && formData.expirationDate) {
+      const closing = new Date(formData.closingDate);
+      const expiration = new Date(formData.expirationDate);
+      if (expiration > closing) {
+        newErrors.expirationDate = 'Offer must expire before the closing date';
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (formData.expirationDate && new Date(formData.expirationDate) < today) {
+      newErrors.expirationDate = 'Expiration date cannot be in the past';
     }
 
     setErrors(newErrors);
@@ -131,7 +153,11 @@ const OfferForm: React.FC<OfferFormProps> = ({
       onSuccess();
     } catch (err: any) {
       console.error('Failed to create offer', err);
-      setError(err.response?.data?.message || 'Failed to create offer. Please try again.');
+      setError(getErrorMessage(err, 'Failed to create offer. Please try again.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -319,7 +345,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '1.25rem' }}>
             <Select
               id="financingType"
               name="financingType"
@@ -350,6 +376,19 @@ const OfferForm: React.FC<OfferFormProps> = ({
               value={formData.expirationDate}
               onChange={(e) => handleFieldChange('expirationDate', e.target.value)}
               icon={Calendar}
+            />
+            <Select
+              id="offerer"
+              name="offerer"
+              label="Offerer"
+              value={formData.offerer}
+              onChange={(e) => handleFieldChange('offerer', e.target.value as OffererType)}
+              icon={User}
+              options={[
+                { value: OffererType.BUYER, label: 'Buyer' },
+                { value: OffererType.AGENCY, label: 'Agency' },
+              ]}
+              required
             />
           </div>
 

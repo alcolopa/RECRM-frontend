@@ -103,9 +103,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.375rem' }} ref={dropdownRef}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <label htmlFor={id} style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em' }}>
-          Phone Number
-        </label>
         {externalError && (
           <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 600 }}>
             {externalError}

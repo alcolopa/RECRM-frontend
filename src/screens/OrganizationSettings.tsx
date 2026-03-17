@@ -18,6 +18,8 @@ import { Input } from '../components/Input';
 import PhoneInput from '../components/PhoneInput';
 import UserSelector from '../components/UserSelector';
 import { useTheme, ACCENTS, type AccentColor } from '../contexts/ThemeContext';
+import { getImageUrl } from '../utils/url';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface OrganizationSettingsProps {
   user: UserProfile;
@@ -117,13 +119,31 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     }
   };
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = 'Organization name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+      newErrors.website = 'Website must start with http:// or https://';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isOwner || !hasChanges) return;
 
+    if (!validate()) return;
     setIsSaving(true);
     setError(null);
-    setSuccess(false);
 
     try {
       const { logo: _logo, ...updateData } = formData;
@@ -132,7 +152,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       setOrg(updatedOrg);
       
       // Sync local theme if accent color changed
-      if (updateData.accentColor) {
+      if (updateData.accentColor && updateData.accentColor !== org?.accentColor) {
         setAccentColor(updateData.accentColor as AccentColor);
       }
 
@@ -153,7 +173,11 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error('Update failed', err);
-      setError(err.response?.data?.message || 'Failed to update organization. Please try again.');
+      setError(getErrorMessage(err, 'Failed to update organization. Please try again.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -198,7 +222,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 height: '100%',
                 borderRadius: '1rem',
                 backgroundColor: 'rgba(5, 150, 105, 0.05)',
-                backgroundImage: formData.logo ? `url("${formData.logo}")` : 'none',
+                backgroundImage: formData.logo ? `url("${getImageUrl(formData.logo)}")` : 'none',
                 backgroundSize: 'contain',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
@@ -291,7 +315,6 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                     if (!isOwner) return;
                     setFormData(prev => ({ ...prev, accentColor: accent }));
                     setHasChanges(true);
-                    setAccentColor(accent); // Preview immediately
                   }}
                   disabled={!isOwner}
                   style={{
@@ -347,10 +370,14 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
               id="name"
               name="name"
               value={formData.name}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+              }}
               placeholder="Company Name"
               icon={Building}
               disabled={!isOwner}
+              error={errors.name}
             />
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
@@ -360,10 +387,14 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                }}
                 placeholder="contact@company.com"
                 icon={Mail}
                 disabled={!isOwner}
+                error={errors.email}
               />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Phone Number</label>
@@ -384,10 +415,14 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
               id="website"
               name="website"
               value={formData.website}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (errors.website) setErrors(prev => ({ ...prev, website: '' }));
+              }}
               placeholder="https://www.company.com"
               icon={Globe}
               disabled={!isOwner}
+              error={errors.website}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

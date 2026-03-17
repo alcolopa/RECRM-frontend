@@ -1,0 +1,1 @@
+export const getImageUrl = (url?: string) => { if (!url) return ""; if (url.startsWith("http")) return url; return `${import.meta.env.VITE_API_URL || "http://localhost:3000"}${url.startsWith("/") ? "" : "/"}${url}`; };

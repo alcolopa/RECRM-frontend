@@ -9,6 +9,8 @@ const Dashboard = lazy(() => import('../screens/Dashboard'));
 const ContactsView = lazy(() => import('../screens/ContactsView'));
 const PropertiesView = lazy(() => import('../screens/PropertiesView'));
 const OffersView = lazy(() => import('../screens/OffersView'));
+const OfferDetailsView = lazy(() => import('../screens/OfferDetailsView'));
+const LeadsView = lazy(() => import('../screens/LeadsView'));
 const ProfileView = lazy(() => import('../screens/ProfileView'));
 const OrganizationSettings = lazy(() => import('../screens/OrganizationSettings'));
 
@@ -72,6 +74,10 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
               return <PropertiesView organizationId={activeOrgId} />;
             case 'offers':
               return <OffersView organizationId={activeOrgId} />;
+            case 'offer-details':
+              return <OfferDetailsView organizationId={activeOrgId} />;
+            case 'leads':
+              return <LeadsView organizationId={activeOrgId} />;
             case 'profile':
               return <ProfileView user={{ ...user, role: activeRole, organizationId: activeOrgId }} onUserUpdate={onUserUpdate} />;
             case 'organization':

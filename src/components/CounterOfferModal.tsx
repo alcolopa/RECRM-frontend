@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   HandCoins, 
   DollarSign, 
   Calendar, 
-  FileText
+  FileText,
+  User
 } from 'lucide-react';
-import { type Offer, offersService, FinancingType } from '../api/offers';
+import { type Offer, offersService, FinancingType, OffererType } from '../api/offers';
 import Modal from './Modal';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface CounterOfferModalProps {
   isOpen: boolean;
@@ -23,19 +25,40 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
   originalOffer, 
   onSuccess 
 }) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [formData, setFormData] = useState({
     price: originalOffer.price,
     deposit: originalOffer.deposit || 0,
     financingType: originalOffer.financingType,
     closingDate: originalOffer.closingDate ? new Date(originalOffer.closingDate).toISOString().split('T')[0] : '',
     expirationDate: '',
-    notes: ''
+    notes: '',
+    offerer: OffererType.AGENCY
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.price || Number(formData.price) <= 0) {
+      newErrors.price = 'Counter price must be greater than 0';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
+    
     setIsSubmitting(true);
     setError(null);
 
@@ -48,7 +71,11 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
       onSuccess();
     } catch (err: any) {
       console.error('Failed to create counter offer', err);
-      setError(err.response?.data?.message || 'Failed to create counter offer. Please try again.');
+      setError(getErrorMessage(err, 'Failed to create counter offer. Please try again.'));
+      const backendErrors = mapBackendErrors(err);
+      if (Object.keys(backendErrors).length > 0) {
+        setErrors(backendErrors);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -92,9 +119,13 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             label="Counter Price"
             type="number"
             value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+            onChange={(e) => {
+              setFormData({ ...formData, price: Number(e.target.value) });
+              if (errors.price) setErrors(prev => { const n = { ...prev }; delete n.price; return n; });
+            }}
             icon={DollarSign}
             required
+            error={errors.price}
           />
           <Input
             id="deposit"
@@ -102,8 +133,12 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             label="Security Deposit"
             type="number"
             value={formData.deposit}
-            onChange={(e) => setFormData({ ...formData, deposit: Number(e.target.value) })}
+            onChange={(e) => {
+              setFormData({ ...formData, deposit: Number(e.target.value) });
+              if (errors.deposit) setErrors(prev => { const n = { ...prev }; delete n.deposit; return n; });
+            }}
             icon={DollarSign}
+            error={errors.deposit}
           />
         </div>
 
@@ -139,10 +174,30 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             label="Offer Expiration"
             type="date"
             value={formData.expirationDate}
-            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, expirationDate: e.target.value });
+              if (errors.expirationDate) setErrors(prev => { const n = { ...prev }; delete n.expirationDate; return n; });
+            }}
             icon={Calendar}
+            error={errors.expirationDate}
           />
-          <div /> {/* Spacer */}
+          <Select
+            id="offerer"
+            name="offerer"
+            label="Offerer"
+            value={formData.offerer}
+            onChange={(e) => {
+              setFormData({ ...formData, offerer: e.target.value as OffererType });
+              if (errors.offerer) setErrors(prev => { const n = { ...prev }; delete n.offerer; return n; });
+            }}
+            icon={User}
+            options={[
+              { value: OffererType.AGENCY, label: 'Agency' },
+              { value: OffererType.BUYER, label: 'Buyer' },
+            ]}
+            required
+            error={errors.offerer}
+          />
         </div>
 
         <Textarea
@@ -156,8 +211,8 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
           rows={3}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
-          <Button type="button" variant="outline" onClick={onClose} style={{ minWidth: '100px' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end', gap: isMobile ? '0.75rem' : '1rem', marginTop: '0.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
+          <Button type="button" variant="outline" onClick={onClose} style={{ minWidth: isMobile ? undefined : '100px', width: isMobile ? '100%' : 'auto' }}>
             Cancel
           </Button>
           <Button 
@@ -165,7 +220,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             variant="primary" 
             isLoading={isSubmitting}
             leftIcon={!isSubmitting && <HandCoins size={18} />}
-            style={{ minWidth: '180px' }}
+            style={{ minWidth: isMobile ? undefined : '180px', width: isMobile ? '100%' : 'auto' }}
           >
             Submit Counter Offer
           </Button>

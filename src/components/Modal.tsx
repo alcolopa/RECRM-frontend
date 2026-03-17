@@ -54,7 +54,10 @@ const Modal: React.FC<ModalProps> = ({
         >
           {/* Backdrop Blur/Overlay */}
           <div
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -69,6 +72,7 @@ const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.3 }}
+            onClick={(e) => e.stopPropagation()}
             style={{
               position: 'relative',
               width,

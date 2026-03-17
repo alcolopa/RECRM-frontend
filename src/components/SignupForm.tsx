@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Mail, Lock, User, Building, Globe, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
 import api from '../api/client';
 import { Input } from './Input';
 import Button from './Button';
+import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface SignupFormProps {
     onSwitchToLogin?: () => void;
@@ -73,8 +73,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
         
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Invalid email address';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address';
         }
         
         if (!formData.password) {
@@ -89,6 +89,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
         
         if (!formData.organizationSlug.trim()) {
             newErrors.organizationSlug = 'Workspace URL is required';
+        } else if (formData.organizationSlug.length < 3) {
+            newErrors.organizationSlug = 'URL must be at least 3 characters';
+        } else if (!/^[a-z0-9-]+$/.test(formData.organizationSlug)) {
+            newErrors.organizationSlug = 'Only lowercase letters, numbers, and hyphens allowed';
         }
         
         setErrors(newErrors);
@@ -124,16 +128,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
             }
         } catch (err: unknown) {
             console.error('Registration failed', err);
-            let message = 'Registration failed. Please try again.';
-            if (axios.isAxiosError(err)) {
-                message = err.response?.data?.message || message;
-                
-                // Handle field-specific errors from backend if available
-                if (err.response?.data?.errors) {
-                    setErrors(err.response.data.errors);
-                }
+            setError(getErrorMessage(err, 'Registration failed. Please try again.'));
+            const backendErrors = mapBackendErrors(err);
+            if (Object.keys(backendErrors).length > 0) {
+                setErrors(backendErrors);
             }
-            setError(message);
         } finally {
             setIsLoading(false);
         }

@@ -1,31 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   User, 
-  Calendar, 
-  Check, 
-  ExternalLink,
-  History,
-  Clock
+  Clock,
+  ChevronRight
 } from 'lucide-react';
-import { type Offer, OfferStatus, offersService } from '../api/offers';
-import Button from './Button';
-import ConfirmModal from './ConfirmModal';
-import CounterOfferModal from './CounterOfferModal';
-import Modal from './Modal';
-import NegotiationTimeline from './NegotiationTimeline';
+import { type Offer, OfferStatus } from '../api/offers';
+import { getImageUrl } from '../utils/url';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface OfferCardProps {
   offer: Offer;
   onRefresh: () => void;
 }
 
-const OfferCard: React.FC<OfferCardProps> = ({ offer, onRefresh }) => {
-  const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [isCounterModalOpen, setIsCounterModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+const OfferCard: React.FC<OfferCardProps> = ({ offer }) => {
+  const { navigate } = useNavigation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -44,32 +41,6 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, onRefresh }) => {
     });
   };
 
-  const handleAccept = async () => {
-    setIsProcessing(true);
-    try {
-      await offersService.accept(offer.id, offer.organizationId);
-      onRefresh();
-      setIsAcceptModalOpen(false);
-    } catch (err) {
-      console.error('Failed to accept offer', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleReject = async () => {
-    setIsProcessing(true);
-    try {
-      await offersService.reject(offer.id, offer.organizationId);
-      onRefresh();
-      setIsRejectModalOpen(false);
-    } catch (err) {
-      console.error('Failed to reject offer', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const getStatusStyle = (status: OfferStatus): React.CSSProperties => {
     switch (status) {
       case OfferStatus.ACCEPTED:
@@ -86,204 +57,111 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, onRefresh }) => {
     }
   };
 
-  const canAction = [OfferStatus.SUBMITTED, OfferStatus.UNDER_REVIEW].includes(offer.status);
-
   return (
-    <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ 
-            width: '3rem', 
-            height: '3rem', 
-            borderRadius: '0.75rem', 
-            backgroundColor: 'var(--color-bg)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            color: 'var(--color-primary)'
-          }}>
-            <Building2 size={24} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>
+    <div 
+      className="card offer-card" 
+      onClick={() => navigate('offer-details', { prefillData: { offerId: offer.id } })}
+      style={{ 
+        padding: isMobile ? '1rem' : '1.5rem', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: isMobile ? '1rem' : '1.25rem', 
+        height: '100%',
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: isMobile ? '0.75rem' : '1rem', alignItems: 'center', minWidth: 0, flex: 1 }}>
+          {offer.negotiation?.property?.propertyImages?.[0]?.url ? (
+            <div style={{ 
+              width: isMobile ? '2.5rem' : '3rem', 
+              height: isMobile ? '2.5rem' : '3rem', 
+              borderRadius: '0.75rem', 
+              overflow: 'hidden',
+              flexShrink: 0
+            }}>
+              <img 
+                src={getImageUrl(offer.negotiation.property.propertyImages[0].url)} 
+                alt={offer.negotiation.property.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          ) : (
+            <div style={{ 
+              width: isMobile ? '2.5rem' : '3rem', 
+              height: isMobile ? '2.5rem' : '3rem', 
+              borderRadius: '0.75rem', 
+              backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'var(--color-primary)',
+              flexShrink: 0
+            }}>
+              <Building2 size={isMobile ? 20 : 24} />
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontSize: isMobile ? '0.9375rem' : '1.125rem', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {offer.negotiation?.property?.title || 'Unknown Property'}
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: isMobile ? '0.8125rem' : '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
               <User size={14} />
-              <span>{offer.negotiation?.contact?.firstName} {offer.negotiation?.contact?.lastName}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{offer.negotiation?.contact?.firstName} {offer.negotiation?.contact?.lastName}</span>
             </div>
           </div>
         </div>
         <div style={{ 
-          padding: '0.375rem 0.75rem', 
+          padding: '0.25rem 0.625rem', 
           borderRadius: '2rem', 
-          fontSize: '0.75rem', 
+          fontSize: '0.6875rem', 
           fontWeight: 700, 
           textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
           ...getStatusStyle(offer.status)
         }}>
           {offer.status.replace('_', ' ')}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '0.75rem' : '1rem', padding: isMobile ? '0.75rem' : '1rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.75rem' }}>
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Offer Price</div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{formatPrice(offer.price)}</div>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Current Price</div>
+          <div style={{ fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{formatPrice(offer.price)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Financing</div>
-          <div style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{offer.financingType.replace('_', ' ')}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Closing Date</div>
-          <div style={{ fontSize: '0.9375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <Calendar size={14} />
-            {formatDate(offer.closingDate)}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Expires</div>
-          <div style={{ fontSize: '0.9375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <Clock size={14} />
-            {formatDate(offer.expirationDate)}
-          </div>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Financing</div>
+          <div style={{ fontSize: isMobile ? '0.8125rem' : '0.9375rem', fontWeight: 600 }}>{offer.financingType.replace('_', ' ')}</div>
         </div>
       </div>
 
-      {offer.notes && (
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontStyle: 'italic', padding: '0 0.5rem' }}>
-          "{offer.notes}"
+      <div style={{ 
+        marginTop: 'auto', 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: '1rem', 
+        borderTop: '1px solid var(--color-border)', 
+        gap: '1rem' 
+      }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+           <Clock size={14} />
+           Updated {formatDate(offer.updatedAt)}
         </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
-        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-          Created by <strong>{offer.createdBy?.firstName} {offer.createdBy?.lastName}</strong> on {formatDate(offer.createdAt)}
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {canAction ? (
-            <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsCounterModalOpen(true)}
-                style={{ color: '#3b82f6' }}
-              >
-                Counter
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsRejectModalOpen(true)}
-                style={{ color: 'var(--color-error)' }}
-              >
-                Reject
-              </Button>
-              <Button 
-                variant="primary" 
-                size="sm" 
-                onClick={() => setIsAcceptModalOpen(true)}
-                leftIcon={<Check size={16} />}
-              >
-                Accept
-              </Button>
-            </>
-          ) : (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsDetailsModalOpen(true)}
-              leftIcon={<ExternalLink size={16} />}
-            >
-              Details
-            </Button>
-          )}
-          {(!canAction || offer.status === OfferStatus.COUNTERED) && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsDetailsModalOpen(true)}
-              aria-label="View negotiation history"
-              title="Negotiation History"
-            >
-              <History size={16} />
-            </Button>
-          )}
+        <div style={{ color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', fontWeight: 600 }}>
+          Details <ChevronRight size={16} />
         </div>
       </div>
-
-      <ConfirmModal
-        isOpen={isAcceptModalOpen}
-        onClose={() => setIsAcceptModalOpen(false)}
-        onConfirm={handleAccept}
-        title="Accept Offer"
-        message={`Are you sure you want to accept this offer of ${formatPrice(offer.price)}? This will automatically create a new Deal and mark the negotiation as closed.`}
-        confirmLabel="Accept Offer"
-        variant="primary"
-        isLoading={isProcessing}
-      />
-
-      <ConfirmModal
-        isOpen={isRejectModalOpen}
-        onClose={() => setIsRejectModalOpen(false)}
-        onConfirm={handleReject}
-        title="Reject Offer"
-        message="Are you sure you want to reject this offer? This action cannot be undone."
-        confirmLabel="Reject Offer"
-        variant="danger"
-        isLoading={isProcessing}
-      />
-
-      <CounterOfferModal
-        isOpen={isCounterModalOpen}
-        onClose={() => setIsCounterModalOpen(false)}
-        originalOffer={offer}
-        onSuccess={() => {
-          setIsCounterModalOpen(false);
-          onRefresh();
-        }}
-      />
-
-      <Modal
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        title="Negotiation Details"
-        maxWidth="700px"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '1.25rem', backgroundColor: 'var(--color-bg)', borderRadius: '1rem' }}>
-            <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', overflow: 'hidden', flexShrink: 0 }}>
-              <img 
-                src={offer.negotiation?.property?.propertyImages?.[0]?.url || 'https://via.placeholder.com/150'} 
-                alt={offer.negotiation?.property?.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>{offer.negotiation?.property?.title}</h4>
-              <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{offer.negotiation?.property?.address}</p>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-                  <User size={14} />
-                  Buyer: {offer.negotiation?.contact?.firstName} {offer.negotiation?.contact?.lastName}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <section>
-            <h5 style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <History size={16} /> Negotiation Timeline
-            </h5>
-            <NegotiationTimeline offers={offer.negotiation?.offers || []} />
-          </section>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <Button variant="outline" onClick={() => setIsDetailsModalOpen(false)}>Close</Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
