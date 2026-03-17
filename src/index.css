@@ -11,6 +11,8 @@
   --muted-foreground: #52525B;
 
   --color-border: #E2E8F0;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F1F5F9;
 
   --color-success: #15803D;
   --color-warning: #B45309;
@@ -51,6 +53,8 @@
   --muted-foreground: #94A3B8;
 
   --color-border: #1F2937;
+  --color-bg-card: #111827;
+  --color-bg-hover: #1F2937;
 
   --color-success: #22C55E;
   --color-warning: #FBBF24;

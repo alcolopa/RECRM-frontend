@@ -73,14 +73,14 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, onRefresh }) => {
   const getStatusStyle = (status: OfferStatus): React.CSSProperties => {
     switch (status) {
       case OfferStatus.ACCEPTED:
-        return { backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' };
+        return { backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)' };
       case OfferStatus.REJECTED:
-        return { backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
+        return { backgroundColor: 'rgba(220, 38, 38, 0.1)', color: 'var(--color-error)' };
       case OfferStatus.COUNTERED:
         return { backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' };
       case OfferStatus.SUBMITTED:
       case OfferStatus.UNDER_REVIEW:
-        return { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' };
+        return { backgroundColor: 'rgba(180, 83, 9, 0.1)', color: 'var(--color-warning)' };
       default:
         return { backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' };
     }
@@ -176,7 +176,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, onRefresh }) => {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setIsRejectModalOpen(true)}
-                style={{ color: '#ef4444' }}
+                style={{ color: 'var(--color-error)' }}
               >
                 Reject
               </Button>

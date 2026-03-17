@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowLeft, 
+  ChevronLeft, 
   HandCoins, 
   DollarSign, 
   Calendar, 
   FileText,
   Building2,
   User,
-  Check
+  Check,
+  AlertCircle,
+  X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { type Property, propertyService } from '../api/properties';
 import { type Contact } from '../api/contacts';
 import { offersService, FinancingType, OfferStatus } from '../api/offers';
@@ -21,13 +24,15 @@ interface OfferFormProps {
   onSuccess: () => void;
   organizationId: string;
   initialProperty?: Property;
+  initialContactId?: string;
 }
 
 const OfferForm: React.FC<OfferFormProps> = ({ 
   onCancel, 
   onSuccess, 
   organizationId,
-  initialProperty 
+  initialProperty,
+  initialContactId
 }) => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -40,7 +45,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
   
   const [formData, setFormData] = useState({
     propertyId: initialProperty?.id || '',
-    contactId: '',
+    contactId: initialContactId || '',
     price: '',
     deposit: '',
     financingType: FinancingType.MORTGAGE,
@@ -67,6 +72,21 @@ const OfferForm: React.FC<OfferFormProps> = ({
 
     fetchProperties();
   }, [organizationId]);
+
+  useEffect(() => {
+    if (initialContactId) {
+      const fetchContact = async () => {
+        try {
+          const { contactService } = await import('../api/contacts');
+          const response = await contactService.getById(initialContactId, organizationId);
+          setSelectedContact(response.data);
+        } catch (err) {
+          console.error('Failed to fetch prefill contact', err);
+        }
+      };
+      fetchContact();
+    }
+  }, [initialContactId, organizationId]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -131,23 +151,67 @@ const OfferForm: React.FC<OfferFormProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '850px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <Button variant="ghost" onClick={onCancel} style={{ padding: '0.5rem', borderRadius: '50%', width: '36px', height: '36px', minWidth: '36px' }}>
-          <ArrowLeft size={20} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          aria-label="Back to offers"
+          style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px' }}
+        >
+          <ChevronLeft size={24} />
         </Button>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Create New Offer</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Start a negotiation for a property.</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Create New Offer</h2>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: 0 }}>Start a negotiation for a property.</p>
         </div>
-      </header>
+      </div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '1rem',
+              background: 'rgba(220, 38, 38, 0.1)',
+              border: '1px solid var(--color-error)',
+              borderRadius: 'var(--radius)',
+              color: 'var(--color-error)',
+              fontSize: '0.875rem',
+              marginBottom: '1.5rem',
+              fontWeight: 500,
+              overflow: 'hidden'
+            }}
+          >
+            <AlertCircle size={20} />
+            <div style={{ flex: 1 }}>{error}</div>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer', 
+                padding: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'inherit',
+                opacity: 0.7
+              }}
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="card" style={{ padding: isMobile ? '1rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {error && (
-          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.5rem', fontSize: '0.8125rem', fontWeight: 500 }}>
-            {error}
-          </div>
-        )}
-
         {/* Section 1: Property & Buyer */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '1.25rem' : '2.5rem' }}>
           {/* Property Section */}

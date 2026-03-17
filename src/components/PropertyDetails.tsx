@@ -101,7 +101,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
             <div style={{ 
               width: '2.5rem', 
               height: '2.5rem', 
-              background: property.organization?.logo ? `url(${property.organization.logo})` : 'rgba(5, 150, 105, 0.1)',
+              background: property.organization?.logo ? `url(${property.organization.logo})` : 'rgba(var(--color-primary-rgb), 0.1)',
               backgroundSize: 'contain',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -564,7 +564,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                     width: '3rem',
                     height: '3rem',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
                     backgroundImage: property.assignedUser?.avatar ? `url(${property.assignedUser.avatar})` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',

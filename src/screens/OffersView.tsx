@@ -31,6 +31,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
   const [agents, setAgents] = useState<UserProfile[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
   const [prefillProperty, setPrefillProperty] = useState<any>(null);
+  const [prefillContactId, setPrefillContactId] = useState<string | undefined>(undefined);
 
   const fetchOffers = async () => {
     setIsLoading(true);
@@ -72,6 +73,10 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
         }
       };
       fetchProperty();
+    } else if (navigationState.prefillData?.contactId) {
+      setPrefillContactId(navigationState.prefillData.contactId);
+      setView('form');
+      clearNavigationState();
     }
   }, [navigationState]);
 
@@ -101,14 +106,17 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
         onCancel={() => {
           setView('list');
           setPrefillProperty(null);
+          setPrefillContactId(undefined);
         }}
         onSuccess={() => {
           setView('list');
           setPrefillProperty(null);
+          setPrefillContactId(undefined);
           fetchOffers();
         }}
         organizationId={organizationId}
         initialProperty={prefillProperty}
+        initialContactId={prefillContactId}
       />
     );
   }
@@ -117,13 +125,12 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.125rem' }}>Offers & Negotiations</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Track property offers and negotiation history.</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Offers & Negotiations</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>Track property offers and negotiation history.</p>
         </div>
         <Button
           onClick={() => setView('form')}
           leftIcon={<Plus size={20} />}
-          size="sm"
         >
           Create Offer
         </Button>
@@ -131,38 +138,38 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
 
       {/* Stats Cards */}
       <div className="grid grid-3" style={{ gap: '1rem' }}>
-        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)' }}>
-            <HandCoins size={20} />
+        <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)' }}>
+            <HandCoins size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Total Offers</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.total}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Offers</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.total}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-            <Clock size={20} />
+        <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <Clock size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Active</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.active}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.active}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-            <CheckCircle2 size={20} />
+        <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle2 size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Accepted</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.accepted}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accepted</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.accepted}</div>
           </div>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: '200px' }}>
+      <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '250px' }}>
           <Input
             id="searchQuery"
             name="searchQuery"
@@ -171,10 +178,10 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             icon={Search}
-            style={{ minHeight: '2.5rem' }}
+            style={{ fontSize: '0.875rem' }}
           />
         </div>
-        <div style={{ width: '160px' }}>
+        <div style={{ width: '180px' }}>
           <Select
             id="statusFilter"
             name="statusFilter"
@@ -189,10 +196,10 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
               { value: OfferStatus.ACCEPTED, label: 'Accepted' },
               { value: OfferStatus.REJECTED, label: 'Rejected' },
             ]}
-            style={{ minHeight: '2.5rem' }}
+            style={{ fontSize: '0.875rem' }}
           />
         </div>
-        <div style={{ width: '160px' }}>
+        <div style={{ width: '180px' }}>
           <Select
             id="agentFilter"
             name="agentFilter"
@@ -206,17 +213,17 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
                 label: `${a.firstName} ${a.lastName}` 
               }))
             ]}
-            style={{ minHeight: '2.5rem' }}
+            style={{ fontSize: '0.875rem' }}
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <Loader2 size={32} className="animate-spin" color="var(--color-primary)" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+          <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredOffers.length > 0 ? (
-        <div className="grid grid-1 grid-2" style={{ gap: '1rem' }}>
+        <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
           {filteredOffers.map((offer) => (
             <OfferCard
               key={offer.id}

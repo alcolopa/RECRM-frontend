@@ -4,8 +4,7 @@ import {
   Edit2, 
   Trash2, 
   Mail, 
-  Phone, 
-  MapPin, 
+  Phone,
   Briefcase, 
   DollarSign, 
   Target, 
@@ -23,7 +22,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 interface ContactDetailsProps {
   contact: Contact;
   onBack: () => void;
-  onEdit: (contact: Contact) => void;
+  onEdit: (contact: Contact, initialStep?: number, isIsolatedProfile?: boolean) => void;
   onDelete: (id: string) => void;
 }
 
@@ -65,6 +64,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
     return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const isBoth = contact.type === ContactType.BOTH;
+  const isBuyer = contact.type === ContactType.BUYER || isBoth;
+  const isSeller = contact.type === ContactType.SELLER || isBoth;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       {/* Header Actions */}
@@ -80,15 +83,27 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
         >
           <span className="btn-label">Back to Contacts</span>
         </Button>
-        <div className="details-actions">
+        <div className="details-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {isBuyer && (
+            <Button 
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('offers', { prefillData: { contactId: contact.id } })}
+              leftIcon={<HandCoins size={16} />}
+            >
+              Make Offer
+            </Button>
+          )}
+          
           <Button 
-            variant="primary"
+            variant="outline"
             size="sm"
-            onClick={() => onEdit(contact)}
+            onClick={() => onEdit(contact, 1, false)}
             leftIcon={<Edit2 size={16} />}
           >
-            Edit
+            Edit Info
           </Button>
+
           <Button 
             variant="outline"
             size="sm"
@@ -109,11 +124,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           width: '6rem', 
           height: '6rem', 
           borderRadius: '50%', 
-          backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)', 
+          backgroundColor: isBoth ? 'rgba(79, 70, 229, 0.1)' : (isBuyer ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)'), 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
+          color: isBoth ? 'var(--color-indigo)' : (isBuyer ? 'var(--color-primary)' : 'var(--color-warning)'),
           fontWeight: 700,
           fontSize: '2rem',
           border: '4px solid var(--color-surface)',
@@ -129,12 +144,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
               fontSize: '0.75rem', 
               padding: '0.25rem 0.75rem', 
               borderRadius: '1rem', 
-              backgroundColor: contact.type === ContactType.BUYER ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
-              color: contact.type === ContactType.BUYER ? 'var(--color-primary)' : 'var(--color-warning)',
+              backgroundColor: isBoth ? 'rgba(79, 70, 229, 0.1)' : (isBuyer ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)'),
+              color: isBoth ? '#4f46e5' : (isBuyer ? 'var(--color-primary)' : 'var(--color-warning)'),
               fontWeight: 700,
               textTransform: 'uppercase'
             }}>
-              {contact.type}
+              {isBoth ? 'Buyer & Seller' : contact.type}
             </span>
             <span style={{ 
               fontSize: '0.75rem', 
@@ -153,144 +168,168 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
       </div>
 
       {/* Two Column Grid for Main Content */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1.5rem', '@media (min-width: 768px)': { gridTemplateColumns: '1fr 1fr' } } as React.CSSProperties}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1.5rem' }}>
         
-        {/* Contact Information */}
-        <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-            Contact Information
-          </h3>
-          
-          <div style={infoRowStyle}>
-            <div style={iconBoxStyle}><Mail size={18} color="var(--color-primary)" /></div>
-            <div>
-              <div style={labelStyle}>Email</div>
-              <div style={valueStyle}>{contact.email || 'Not provided'}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          {/* Contact Information */}
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+              Contact Information
+            </h3>
+            
+            <div style={infoRowStyle}>
+              <div style={iconBoxStyle}><Mail size={18} color="var(--color-primary)" /></div>
+              <div>
+                <div style={labelStyle}>Email</div>
+                <div style={valueStyle}>{contact.email || 'Not provided'}</div>
+              </div>
             </div>
-          </div>
-          
-          <div style={infoRowStyle}>
-            <div style={iconBoxStyle}><Phone size={18} color="var(--color-primary)" /></div>
-            <div>
-              <div style={labelStyle}>Phone Number</div>
-              <div style={valueStyle}>{contact.phone}</div>
-            </div>
-          </div>
-          
-          {contact.secondaryPhone && (
+            
             <div style={infoRowStyle}>
               <div style={iconBoxStyle}><Phone size={18} color="var(--color-primary)" /></div>
               <div>
-                <div style={labelStyle}>Secondary Phone</div>
-                <div style={valueStyle}>{contact.secondaryPhone}</div>
+                <div style={labelStyle}>Phone Number</div>
+                <div style={valueStyle}>{contact.phone}</div>
               </div>
             </div>
-          )}
+            
+            {contact.secondaryPhone && (
+              <div style={infoRowStyle}>
+                <div style={iconBoxStyle}><Phone size={18} color="var(--color-primary)" /></div>
+                <div>
+                  <div style={labelStyle}>Secondary Phone</div>
+                  <div style={valueStyle}>{contact.secondaryPhone}</div>
+                </div>
+              </div>
+            )}
 
-          {contact.leadSource && (
-            <div style={infoRowStyle}>
-              <div style={iconBoxStyle}><Target size={18} color="var(--color-primary)" /></div>
-              <div>
-                <div style={labelStyle}>Lead Source</div>
-                <div style={valueStyle}>{contact.leadSource}</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Dynamic Profile Information (Buyer/Seller) */}
-        <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-            {contact.type === ContactType.BUYER ? 'Buyer Profile' : 'Seller Profile'}
-          </h3>
-          
-          {contact.type === ContactType.BUYER && contact.buyerProfile ? (
-            <>
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Budget Range</div>
-                  <div style={valueStyle}>
-                    {contact.buyerProfile.minBudget || contact.buyerProfile.maxBudget ? 
-                      `${formatCurrency(contact.buyerProfile.minBudget)} - ${formatCurrency(contact.buyerProfile.maxBudget)}` : 
-                      'Not specified'}
-                  </div>
-                </div>
-              </div>
-              
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Briefcase size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Financing Details</div>
-                  <div style={valueStyle}>
-                    {contact.buyerProfile.preApproved ? 'Pre-approved' : 'Not pre-approved'}
-                    {contact.buyerProfile.financingType && ` • ${formatEnum(contact.buyerProfile.financingType)}`}
-                  </div>
-                </div>
-              </div>
-
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Home size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Property Preferences</div>
-                  <div style={valueStyle}>
-                    {contact.buyerProfile.propertyTypes?.length > 0 ? 
-                      contact.buyerProfile.propertyTypes.map(formatEnum).join(', ') : 'Any'}
-                    {contact.buyerProfile.minBedrooms && ` • ${contact.buyerProfile.minBedrooms}+ beds`}
-                  </div>
-                </div>
-              </div>
-
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><MapPin size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Preferred Locations</div>
-                  <div style={valueStyle}>
-                    {contact.buyerProfile.preferredCities?.length > 0 ? 
-                      contact.buyerProfile.preferredCities.join(', ') : 'Not specified'}
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : contact.type === ContactType.SELLER && contact.sellerProfile ? (
-            <>
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Minimum Price Expected</div>
-                  <div style={valueStyle}>{formatCurrency(contact.sellerProfile.minimumPrice)}</div>
-                </div>
-              </div>
-              
+            {contact.leadSource && (
               <div style={infoRowStyle}>
                 <div style={iconBoxStyle}><Target size={18} color="var(--color-primary)" /></div>
                 <div>
-                  <div style={labelStyle}>Ready to List?</div>
-                  <div style={valueStyle}>{contact.sellerProfile.readyToList ? 'Yes' : 'No'}</div>
+                  <div style={labelStyle}>Lead Source</div>
+                  <div style={valueStyle}>{contact.leadSource}</div>
                 </div>
               </div>
-              
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><Calendar size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Selling Timeline</div>
-                  <div style={valueStyle}>{formatEnum(contact.sellerProfile.sellingTimeline)}</div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Buyer Profile Info */}
+            {isBuyer && (
+              <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', borderLeft: '4px solid var(--color-primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                    <Target size={18} color="var(--color-primary)" /> Buyer Profile
+                  </h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onEdit(contact, 2, true)}
+                    leftIcon={<Edit2 size={14} />}
+                    style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                  >
+                    Edit Profile
+                  </Button>
                 </div>
+                
+                {contact.buyerProfile ? (
+                  <>
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Budget Range</div>
+                        <div style={valueStyle}>
+                          {contact.buyerProfile.minBudget || contact.buyerProfile.maxBudget ? 
+                            `${formatCurrency(contact.buyerProfile.minBudget)} - ${formatCurrency(contact.buyerProfile.maxBudget)}` : 
+                            'Not specified'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><Briefcase size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Financing Details</div>
+                        <div style={valueStyle}>
+                          {contact.buyerProfile.preApproved ? 'Pre-approved' : 'Not pre-approved'}
+                          {contact.buyerProfile.financingType && ` • ${formatEnum(contact.buyerProfile.financingType)}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><Home size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Property Preferences</div>
+                        <div style={valueStyle}>
+                          {contact.buyerProfile.propertyTypes?.length > 0 ? 
+                            contact.buyerProfile.propertyTypes.map(formatEnum).join(', ') : 'Any'}
+                          {contact.buyerProfile.minBedrooms && ` • ${contact.buyerProfile.minBedrooms}+ beds`}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                    No detailed buyer criteria recorded.
+                  </div>
+                )}
               </div>
-              
-              <div style={infoRowStyle}>
-                <div style={iconBoxStyle}><FileText size={18} color="var(--color-primary)" /></div>
-                <div>
-                  <div style={labelStyle}>Reason For Selling</div>
-                  <div style={valueStyle}>{formatEnum(contact.sellerProfile.reasonForSelling)}</div>
+            )}
+
+            {/* Seller Profile Info */}
+            {isSeller && (
+              <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', borderLeft: '4px solid var(--color-warning)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                    <Home size={18} color="var(--color-warning)" /> Seller Profile
+                  </h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onEdit(contact, 3, true)}
+                    leftIcon={<Edit2 size={14} />}
+                    style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                  >
+                    Edit Profile
+                  </Button>
                 </div>
+                
+                {contact.sellerProfile ? (
+                  <>
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><DollarSign size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Minimum Price Expected</div>
+                        <div style={valueStyle}>{formatCurrency(contact.sellerProfile.minimumPrice)}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><Target size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Ready to List?</div>
+                        <div style={valueStyle}>{contact.sellerProfile.readyToList ? 'Yes' : 'No'}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={infoRowStyle}>
+                      <div style={iconBoxStyle}><Calendar size={18} color="var(--color-primary)" /></div>
+                      <div>
+                        <div style={labelStyle}>Selling Timeline</div>
+                        <div style={valueStyle}>{formatEnum(contact.sellerProfile.sellingTimeline)}</div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                    No detailed seller profile recorded.
+                  </div>
+                )}
               </div>
-            </>
-          ) : (
-            <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-              No detailed profile information recorded yet.
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

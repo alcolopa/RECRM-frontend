@@ -69,8 +69,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             {cancelLabel}
           </Button>
           <Button
-            variant={variant === 'danger' ? 'primary' : variant}
-            style={variant === 'danger' ? { backgroundColor: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' } : {}}
+            variant={variant}
             onClick={onConfirm}
             isLoading={isLoading}
           >

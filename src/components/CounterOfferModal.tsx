@@ -80,7 +80,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>
+          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(220, 38, 38, 0.1)', color: 'var(--color-error)', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>
             {error}
           </div>
         )}

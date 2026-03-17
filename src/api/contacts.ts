@@ -1,10 +1,11 @@
 import api from './client';
 
 // Replace enums with union types + const objects for erasableSyntaxOnly compatibility
-export type ContactType = 'BUYER' | 'SELLER';
+export type ContactType = 'BUYER' | 'SELLER' | 'BOTH';
 export const ContactType = {
   BUYER: 'BUYER' as ContactType,
   SELLER: 'SELLER' as ContactType,
+  BOTH: 'BOTH' as ContactType,
 } as const;
 
 export type ContactStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'ACTIVE' | 'INACTIVE' | 'LOST';

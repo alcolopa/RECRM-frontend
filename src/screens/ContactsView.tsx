@@ -20,6 +20,8 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
   const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
   const [viewingContact, setViewingContact] = useState<Contact | undefined>(undefined);
+  const [initialStep, setInitialStep] = useState<number>(1);
+  const [isIsolatedProfile, setIsIsolatedProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | ContactType>('ALL');
   const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
@@ -80,8 +82,21 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           }
         });
       } else {
-        setView('list');
+        // If we were viewing details, update the viewing contact
+        if (viewingContact && savedContact.id === viewingContact.id) {
+          // Re-fetch full contact to get relations
+          try {
+            const fullContact = await contactService.getById(savedContact.id, organizationId);
+            setViewingContact(fullContact.data);
+          } catch (err) {
+            console.error('Failed to refresh viewing contact', err);
+          }
+        }
+        
+        setView(viewingContact ? 'details' : 'list');
         setEditingContact(undefined);
+        setInitialStep(1);
+        setIsIsolatedProfile(false);
         fetchContacts();
       }
     } catch (err) {
@@ -118,7 +133,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
       c.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesFilter = filterType === 'ALL' || c.type === filterType;
+    const matchesFilter = filterType === 'ALL' || c.type === filterType || (c.type === ContactType.BOTH && (filterType === ContactType.BUYER || filterType === ContactType.SELLER));
 
     return matchesSearch && matchesFilter;
   });
@@ -132,12 +147,16 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           if (navigationState.returnTo === 'properties') {
             navigate('properties', navigationState);
           } else {
-            setView('list');
+            setView(viewingContact ? 'details' : 'list');
             setEditingContact(undefined);
+            setInitialStep(1);
+            setIsIsolatedProfile(false);
           }
         }}
         organizationId={organizationId}
         fixedType={navigationState.context === 'creating-seller' ? ContactType.SELLER : undefined}
+        initialStep={initialStep}
+        isIsolatedProfile={isIsolatedProfile}
       />
     );
   }
@@ -150,8 +169,10 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           setView('list');
           setViewingContact(undefined);
         }}
-        onEdit={(c) => {
+        onEdit={(c, step, isIsolated) => {
           setEditingContact(c);
+          setInitialStep(step || 1);
+          setIsIsolatedProfile(!!isIsolated);
           setView('form');
         }}
         onDelete={handleDelete}
@@ -167,7 +188,12 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your buyers and sellers in one place.</p>
         </div>
         <Button
-          onClick={() => setView('form')}
+          onClick={() => {
+            setEditingContact(undefined);
+            setInitialStep(1);
+            setIsIsolatedProfile(false);
+            setView('form');
+          }}
           leftIcon={<UserPlus size={20} />}
         >
           Add Contact
@@ -230,6 +256,8 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
               }}
               onEdit={(c) => {
                 setEditingContact(c);
+                setIsIsolatedProfile(false);
+                setInitialStep(1);
                 setView('form');
               }}
               onDelete={handleDelete}

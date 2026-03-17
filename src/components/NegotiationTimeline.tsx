@@ -35,15 +35,15 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
   const getStatusIcon = (status: OfferStatus) => {
     switch (status) {
       case OfferStatus.ACCEPTED:
-        return <Check size={16} color="#10b981" />;
+        return <Check size={16} color="var(--color-success)" />;
       case OfferStatus.REJECTED:
-        return <X size={16} color="#ef4444" />;
+        return <X size={16} color="var(--color-error)" />;
       case OfferStatus.COUNTERED:
         return <RotateCcw size={16} color="#3b82f6" />;
       case OfferStatus.SUBMITTED:
-        return <Send size={16} color="#f59e0b" />;
+        return <Send size={16} color="var(--color-warning)" />;
       case OfferStatus.UNDER_REVIEW:
-        return <Eye size={16} color="#f59e0b" />;
+        return <Eye size={16} color="var(--color-warning)" />;
       default:
         return <HandCoins size={16} color="var(--color-text-muted)" />;
     }
@@ -82,7 +82,11 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
             {getStatusIcon(offer.status)}
           </div>
 
-          <div className="card" style={{ padding: '1rem', background: offer.status === OfferStatus.ACCEPTED ? 'rgba(16, 185, 129, 0.05)' : 'var(--color-surface)', border: offer.status === OfferStatus.ACCEPTED ? '1px solid #10b981' : '1px solid var(--color-border)' }}>
+          <div className="card" style={{ 
+            padding: '1rem', 
+            background: offer.status === OfferStatus.ACCEPTED ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)', 
+            border: offer.status === OfferStatus.ACCEPTED ? '1px solid var(--color-primary)' : '1px solid var(--color-border)' 
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1rem' }}>{formatPrice(offer.price)}</div>
@@ -95,13 +99,34 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
               </div>
             </div>
             
-            {(offer.notes || offer.financingType) && (
+            {(offer.notes || offer.financingType || (offer.history && offer.history.length > 0)) && (
               <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--color-border)', fontSize: '0.875rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
                   <span>Financing: <strong>{offer.financingType.replace('_', ' ')}</strong></span>
                   {offer.deposit && <span>Deposit: <strong>{formatPrice(offer.deposit)}</strong></span>}
                 </div>
-                {offer.notes && <div style={{ color: 'var(--color-text)', fontStyle: 'italic' }}>"{offer.notes}"</div>}
+                
+                {offer.notes && (
+                  <div style={{ color: 'var(--color-text)', fontStyle: 'italic', marginBottom: '0.75rem' }}>
+                    "{offer.notes}"
+                  </div>
+                )}
+
+                {offer.history && offer.history.length > 0 && (
+                  <div style={{ backgroundColor: 'var(--color-bg)', padding: '0.75rem', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.025em' }}>Action Log</div>
+                    {offer.history.map((h) => (
+                      <div key={h.id} style={{ fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--color-text)' }}>
+                          {h.action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
+                          {h.user?.firstName} • {new Date(h.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
