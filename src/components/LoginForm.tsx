@@ -14,12 +14,35 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [success, setSuccess] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
+    const validate = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
+            newErrors.email = 'Invalid email address';
+        }
+        
+        if (!password) {
+            newErrors.password = 'Password is required';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!validate()) {
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
 
@@ -108,14 +131,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                     placeholder="name@company.com"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
                     icon={Mail}
+                    error={errors.email}
                 />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                         <label htmlFor="password" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Password</label>
-                        <a href="#" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>Forgot?</a>
+                        {errors.password && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 500 }}>{errors.password}</span>
+                        )}
                     </div>
                     <div style={{ position: 'relative' }}>
                         <Input
@@ -125,9 +154,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             placeholder="••••••••"
                             required
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                            }}
                             icon={Lock}
-                            style={{ paddingRight: '2.5rem' }}
+                            style={{ 
+                                paddingRight: '2.5rem',
+                                borderColor: errors.password ? 'var(--color-error)' : undefined,
+                                boxShadow: errors.password ? '0 0 0 1px var(--color-error)' : undefined
+                            }}
                         />
                         <Button
                             type="button"
@@ -146,6 +182,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                             }}
                             leftIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         />
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                        <a href="#" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>Forgot?</a>
                     </div>
                 </div>
 

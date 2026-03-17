@@ -114,66 +114,67 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Offers & Negotiations</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>Track property offers and negotiation history.</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.125rem' }}>Offers & Negotiations</h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Track property offers and negotiation history.</p>
         </div>
         <Button
           onClick={() => setView('form')}
           leftIcon={<Plus size={20} />}
+          size="sm"
         >
           Create Offer
         </Button>
       </header>
 
       {/* Stats Cards */}
-      <div className="grid grid-3" style={{ gap: '1.5rem' }}>
-        <div className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)' }}>
-            <HandCoins size={24} />
+      <div className="grid grid-3" style={{ gap: '1rem' }}>
+        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)' }}>
+            <HandCoins size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Total Offers</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.total}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Total Offers</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.total}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-            <Clock size={24} />
+        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <Clock size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Active Negotiations</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.active}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Active</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.active}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-            <CheckCircle2 size={24} />
+        <div className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle2 size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Accepted Offers</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.accepted}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Accepted</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.accepted}</div>
           </div>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: '250px' }}>
+      <div className="card" style={{ padding: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '200px' }}>
           <Input
             id="searchQuery"
             name="searchQuery"
             type="text"
-            placeholder="Search by property or buyer..."
+            placeholder="Search property or buyer..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             icon={Search}
-            style={{ fontSize: '0.875rem' }}
+            style={{ minHeight: '2.5rem' }}
           />
         </div>
-        <div style={{ width: '180px' }}>
+        <div style={{ width: '160px' }}>
           <Select
             id="statusFilter"
             name="statusFilter"
@@ -188,10 +189,10 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
               { value: OfferStatus.ACCEPTED, label: 'Accepted' },
               { value: OfferStatus.REJECTED, label: 'Rejected' },
             ]}
-            style={{ fontSize: '0.875rem' }}
+            style={{ minHeight: '2.5rem' }}
           />
         </div>
-        <div style={{ width: '180px' }}>
+        <div style={{ width: '160px' }}>
           <Select
             id="agentFilter"
             name="agentFilter"
@@ -205,17 +206,17 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
                 label: `${a.firstName} ${a.lastName}` 
               }))
             ]}
-            style={{ fontSize: '0.875rem' }}
+            style={{ minHeight: '2.5rem' }}
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-          <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+          <Loader2 size={32} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredOffers.length > 0 ? (
-        <div className="grid grid-1 grid-2" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-1 grid-2" style={{ gap: '1rem' }}>
           {filteredOffers.map((offer) => (
             <OfferCard
               key={offer.id}
@@ -224,8 +225,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
             />
           ))}
         </div>
-      ) : (
-        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+      ) : (        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
             <HandCoins size={32} />
           </div>

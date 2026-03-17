@@ -43,7 +43,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
       await offersService.counter(originalOffer.id, {
         ...formData,
         price: Number(formData.price),
-        deposit: Number(formData.deposit)
+        deposit: formData.deposit ? Number(formData.deposit) : undefined,
       }, originalOffer.organizationId);
       onSuccess();
     } catch (err: any) {
@@ -61,26 +61,31 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
       title="Create Counter Offer"
       maxWidth="600px"
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.75rem', border: '1px solid var(--color-border)' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)', borderRadius: '0.75rem', border: '1px solid var(--color-primary)' }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Original Offer</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '1.125rem' }}>
+            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--color-primary)' }}>
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(originalOffer.price)}
             </span>
-            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-              {originalOffer.financingType.replace('_', ' ')}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                {originalOffer.financingType.replace('_', ' ')}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                Deposit: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(originalOffer.deposit || 0)}
+              </span>
+            </div>
           </div>
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>
             {error}
           </div>
         )}
 
-        <div className="grid grid-2" style={{ gap: '1rem' }}>
+        <div className="grid grid-2" style={{ gap: '1.25rem' }}>
           <Input
             id="price"
             name="price"
@@ -102,7 +107,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
           />
         </div>
 
-        <div className="grid grid-2" style={{ gap: '1rem' }}>
+        <div className="grid grid-2" style={{ gap: '1.25rem' }}>
           <Select
             id="financingType"
             name="financingType"
@@ -112,7 +117,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             options={[
               { value: FinancingType.CASH, label: 'Cash' },
               { value: FinancingType.MORTGAGE, label: 'Mortgage' },
-              { value: FinancingType.PRIVATE_FINANCING, label: 'Private Financing' },
+              { value: FinancingType.PRIVATE_FINANCING, label: 'Private' },
               { value: FinancingType.OTHER, label: 'Other' },
             ]}
           />
@@ -127,15 +132,18 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
           />
         </div>
 
-        <Input
-          id="expirationDate"
-          name="expirationDate"
-          label="Offer Expiration"
-          type="date"
-          value={formData.expirationDate}
-          onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-          icon={Calendar}
-        />
+        <div className="grid grid-2" style={{ gap: '1.25rem' }}>
+          <Input
+            id="expirationDate"
+            name="expirationDate"
+            label="Offer Expiration"
+            type="date"
+            value={formData.expirationDate}
+            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+            icon={Calendar}
+          />
+          <div /> {/* Spacer */}
+        </div>
 
         <Textarea
           id="notes"
@@ -148,8 +156,8 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
           rows={3}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
+          <Button type="button" variant="outline" onClick={onClose} style={{ minWidth: '100px' }}>
             Cancel
           </Button>
           <Button 
@@ -157,6 +165,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
             variant="primary" 
             isLoading={isSubmitting}
             leftIcon={!isSubmitting && <HandCoins size={18} />}
+            style={{ minWidth: '180px' }}
           >
             Submit Counter Offer
           </Button>

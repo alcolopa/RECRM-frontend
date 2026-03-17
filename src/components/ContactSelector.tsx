@@ -14,6 +14,7 @@ interface ContactSelectorProps {
   label?: string;
   restrictType?: ContactType;
   onNewContactRequested?: () => void;
+  error?: string;
 }
 
 const ContactSelector: React.FC<ContactSelectorProps> = ({ 
@@ -22,7 +23,8 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   onSelect,
   label = "Seller",
   restrictType,
-  onNewContactRequested
+  onNewContactRequested,
+  error: externalError
 }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,9 +107,15 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%', position: 'relative' }}>
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%', position: 'relative' }}>
       {label && (
-        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>
+        <label style={{ 
+          fontSize: '0.8125rem', 
+          fontWeight: 700, 
+          color: 'var(--color-text-muted)', 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.025em' 
+        }}>
           {label}
         </label>
       )}
@@ -120,9 +128,10 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
             gap: '0.75rem',
             padding: '0.75rem 1rem',
             borderRadius: 'var(--radius)',
-            border: '1px solid var(--color-primary)',
+            border: `1px solid ${externalError ? 'var(--color-error)' : 'var(--color-primary)'}`,
             background: 'rgba(var(--color-primary-rgb), 0.05)',
             minHeight: '2.75rem',
+            boxShadow: externalError ? '0 0 0 1px var(--color-error)' : 'none'
           }}
         >
           <div style={{ 
@@ -165,11 +174,12 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
               gap: '0.75rem',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius)',
-              border: `1px solid ${isDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)'}`,
+              border: `1px solid ${externalError ? 'var(--color-error)' : (isDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
               background: 'var(--color-surface)',
               cursor: 'pointer',
               minHeight: '2.75rem',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              boxShadow: externalError ? '0 0 0 1px var(--color-error)' : 'none'
             }}
           >
             <Search size={18} color="var(--muted-foreground)" />
@@ -287,6 +297,12 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {externalError && (
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.125rem', fontWeight: 500 }}>
+          {externalError}
+        </span>
+      )}
 
       <Modal
         isOpen={isAddingNew}

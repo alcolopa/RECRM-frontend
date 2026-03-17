@@ -75,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
             case 'profile':
               return <ProfileView user={{ ...user, role: activeRole, organizationId: activeOrgId }} onUserUpdate={onUserUpdate} />;
             case 'organization':
-              return <OrganizationSettings user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
+              return <OrganizationSettings user={{ ...user, role: activeRole, organizationId: activeOrgId }} onUserUpdate={onUserUpdate} />;
             default:
               return (
                 <div style={{ padding: '2rem', textAlign: 'center' }}>

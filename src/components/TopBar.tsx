@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   Bell, 
-  Search, 
   LogOut, 
   User as UserIcon, 
   ChevronDown,
@@ -70,7 +69,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
       padding: isMobile ? '0 1rem' : '0 2rem',
       position: 'sticky',
       top: 0,
-      zIndex: 40,
+      zIndex: 1000,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {isMobile && (
@@ -90,30 +89,34 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
           </button>
         )}
 
-        {!isMobile && (
-          <div className="hidden-tablet" style={{ position: 'relative', width: 'min(300px, 30vw)' }}>
-            <Search 
-              size={18} 
-              color="var(--color-text-muted)" 
-              style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} 
-            />
-            <input 
-              id="globalSearch"
-              name="globalSearch"
-              type="text" 
-              placeholder="Search..." 
-              style={{
-                width: '100%',
-                padding: '0.625rem 1rem 0.625rem 2.5rem',
-                borderRadius: 'var(--radius)',
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-bg)',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
-            />
+        {/* Organization Branding on the left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '2.5rem',
+            height: '2.5rem',
+            borderRadius: 'var(--radius)',
+            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+            backgroundImage: activeOrg?.logo ? `url("${activeOrg.logo}")` : 'none',
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-primary)',
+            fontWeight: 700,
+            fontSize: '1rem',
+            border: activeOrg?.logo ? '1px solid var(--color-border)' : 'none',
+            cursor: 'pointer'
+          }} onClick={onOrganizationClick}>
+            {!activeOrg?.logo && <Building size={20} />}
           </div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }} onClick={onOrganizationClick}>
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.2 }}>
+              {activeOrg?.name || 'EstateHub'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem' }}>
@@ -142,38 +145,38 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
               alignItems: 'center',
               gap: '0.75rem',
               background: 'none',
-              border: 'none',
+              border: `1px solid ${isDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)'}`,
               cursor: 'pointer',
-              padding: '0.25rem 0.5rem',
-              borderRadius: 'var(--radius)',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '2rem',
+              transition: 'all 0.2s ease',
+              backgroundColor: isDropdownOpen ? 'rgba(var(--color-primary-rgb), 0.05)' : 'transparent'
             }}
           >
             <div style={{
-              width: '2.25rem',
-              height: '2.25rem',
+              width: '2rem',
+              height: '2rem',
               borderRadius: '50%',
-              backgroundColor: 'rgba(5, 150, 105, 0.1)',
-              backgroundImage: user?.avatar ? `url(${user.avatar})` : 'none',
+              backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+              backgroundImage: user?.avatar ? `url("${user.avatar}")` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--color-primary)',
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '0.75rem'
             }}>
               {!user?.avatar && displayName.split(' ').map((n: string) => n[0]).join('')}
             </div>
             {!isMobile && (
-              <>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{displayName}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{activeRole}</span>
-                </div>
-                <ChevronDown size={16} color="var(--color-text-muted)" />
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.2 }}>{displayName}</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>{activeRole}</span>
+              </div>
             )}
+            <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
 
           <AnimatePresence>

@@ -9,6 +9,7 @@ export interface Organization {
   email?: string;
   website?: string;
   logo?: string;
+  accentColor?: string;
   ownerId?: string;
   owner?: {
     id: string;

@@ -209,7 +209,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
                 justifyContent: 'center',
                 opacity: isUploading ? 0.7 : 1
               }}>
-                <Camera size={18} />
+                <Camera size={18} color='white' />
                 <input 
                   id="avatar-upload" 
                   name="avatar-upload"

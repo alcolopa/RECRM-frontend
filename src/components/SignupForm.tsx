@@ -15,6 +15,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [success, setSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -34,15 +35,73 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
             .replace(/[\s_-]+/g, '-')
             .replace(/^-+|-+$/g, '');
         setFormData(prev => ({ ...prev, organizationSlug: slug }));
+        
+        // Clear slug error if name is typed
+        if (formData.organizationName && errors.organizationName) {
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next.organizationName;
+                return next;
+            });
+        }
     }, [formData.organizationName]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
+        
+        // Clear error when user types
+        if (errors[id]) {
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+        }
+    };
+
+    const validate = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+        }
+        
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
+        }
+        
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = 'Invalid email address';
+        }
+        
+        if (!formData.password) {
+            newErrors.password = 'Password is required';
+        } else if (formData.password.length < 8) {
+            newErrors.password = 'Minimum 8 characters';
+        }
+        
+        if (!formData.organizationName.trim()) {
+            newErrors.organizationName = 'Organization name is required';
+        }
+        
+        if (!formData.organizationSlug.trim()) {
+            newErrors.organizationSlug = 'Workspace URL is required';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!validate()) {
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
 
@@ -68,6 +127,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
             let message = 'Registration failed. Please try again.';
             if (axios.isAxiosError(err)) {
                 message = err.response?.data?.message || message;
+                
+                // Handle field-specific errors from backend if available
+                if (err.response?.data?.errors) {
+                    setErrors(err.response.data.errors);
+                }
             }
             setError(message);
         } finally {
@@ -156,6 +220,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         value={formData.firstName}
                         onChange={handleChange}
                         icon={User}
+                        error={errors.firstName}
                     />
                     <Input
                         label="Last Name"
@@ -166,6 +231,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         value={formData.lastName}
                         onChange={handleChange}
                         icon={User}
+                        error={errors.lastName}
                     />
                 </div>
 
@@ -179,6 +245,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                     value={formData.email}
                     onChange={handleChange}
                     icon={Mail}
+                    error={errors.email}
                 />
 
                 <div style={{ position: 'relative' }}>
@@ -193,6 +260,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         onChange={handleChange}
                         icon={Lock}
                         style={{ paddingRight: '2.5rem' }}
+                        error={errors.password}
                     />
                     <Button
                         type="button"
@@ -201,7 +269,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                         style={{
                             position: 'absolute',
                             right: '0.25rem',
-                            top: '2rem',
+                            top: errors.password ? '2rem' : '2rem', // Maintain position even with error
                             padding: '0.5rem',
                             borderRadius: '50%',
                             width: '32px',
@@ -223,7 +291,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                             value={formData.organizationName}
                             onChange={handleChange}
                             icon={Building}
-                            style={{ borderColor: 'var(--color-primary)' }}
+                            error={errors.organizationName}
                         />
                         <div style={{ position: 'relative' }}>
                             <Input
@@ -235,9 +303,17 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
                                 value={formData.organizationSlug}
                                 onChange={handleChange}
                                 icon={Globe}
-                                style={{ borderColor: 'var(--color-primary)', paddingRight: '7rem' }}
+                                style={{ paddingRight: '7rem' }}
+                                error={errors.organizationSlug}
                             />
-                            <span style={{ position: 'absolute', right: '0.75rem', top: '2.25rem', fontSize: '0.75rem', color: 'var(--color-primary)', opacity: 0.7 }}>.estatehub.com</span>
+                            <span style={{ 
+                                position: 'absolute', 
+                                right: '0.75rem', 
+                                top: errors.organizationSlug ? '2.25rem' : '2.25rem', 
+                                fontSize: '0.75rem', 
+                                color: 'var(--color-primary)', 
+                                opacity: 0.7 
+                            }}>.estatehub.com</span>
                         </div>
                     </div>
                 </div>

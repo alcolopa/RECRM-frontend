@@ -49,6 +49,7 @@ export interface Property {
     id: string;
     name: string;
     logo?: string;
+    accentColor?: string;
   };
   assignedUserId?: string;
   assignedUser?: UserProfile;

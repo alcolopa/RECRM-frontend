@@ -17,12 +17,14 @@ import { type UserProfile } from '../api/users';
 import { Input } from '../components/Input';
 import PhoneInput from '../components/PhoneInput';
 import UserSelector from '../components/UserSelector';
+import { useTheme, ACCENTS, type AccentColor } from '../contexts/ThemeContext';
 
 interface OrganizationSettingsProps {
   user: UserProfile;
+  onUserUpdate?: (updatedUser: any) => void;
 }
 
-const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => {
+const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUserUpdate }) => {
   const [org, setOrg] = useState<Organization | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -31,6 +33,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
     website: '',
     address: '',
     logo: '',
+    accentColor: 'EMERALD',
     ownerId: ''
   });
   
@@ -40,6 +43,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const { setAccentColor } = useTheme();
 
   const isOwner = user.role === 'OWNER';
 
@@ -59,6 +63,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
         website: response.data.website || '',
         address: response.data.address || '',
         logo: response.data.logo || '',
+        accentColor: response.data.accentColor || 'EMERALD',
         ownerId: response.data.ownerId || ''
       });
     } catch (err: any) {
@@ -90,7 +95,18 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
 
     try {
       const response = await organizationService.uploadLogo(file);
-      setFormData(prev => ({ ...prev, logo: response.data.logo }));
+      const newLogoUrl = response.data.logo;
+      setFormData(prev => ({ ...prev, logo: newLogoUrl }));
+      
+      // Update global user state if possible
+      if (onUserUpdate) {
+        const updatedUser = { ...user };
+        if (updatedUser.memberships?.[0]?.organization) {
+          updatedUser.memberships[0].organization.logo = newLogoUrl;
+          onUserUpdate(updatedUser);
+        }
+      }
+      
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -112,7 +128,26 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
     try {
       const { logo: _logo, ...updateData } = formData;
       const response = await organizationService.update(updateData);
-      setOrg(response.data);
+      const updatedOrg = response.data;
+      setOrg(updatedOrg);
+      
+      // Sync local theme if accent color changed
+      if (updateData.accentColor) {
+        setAccentColor(updateData.accentColor as AccentColor);
+      }
+
+      // Update global user state
+      if (onUserUpdate) {
+        const updatedUser = { ...user };
+        if (updatedUser.memberships?.[0]) {
+          updatedUser.memberships[0].organization = {
+            ...updatedUser.memberships[0].organization,
+            ...updatedOrg
+          };
+          onUserUpdate(updatedUser);
+        }
+      }
+      
       setSuccess(true);
       setHasChanges(false);
       setTimeout(() => setSuccess(false), 3000);
@@ -163,7 +198,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
                 height: '100%',
                 borderRadius: '1rem',
                 backgroundColor: 'rgba(5, 150, 105, 0.05)',
-                backgroundImage: formData.logo ? `url(${formData.logo})` : 'none',
+                backgroundImage: formData.logo ? `url("${formData.logo}")` : 'none',
                 backgroundSize: 'contain',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
@@ -197,7 +232,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
                   opacity: isUploading ? 0.7 : 1,
                   border: '3px solid var(--color-surface)'
                 }}>
-                  <Camera size={18} />
+                  <Camera size={18} color='white' />
                   <input 
                     id="logo-upload" 
                     name="logo-upload"
@@ -242,6 +277,52 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user }) => 
 
         {/* Right Side: Update Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Theme Selector */}
+          <div className="card" style={{ padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Theme & Appearance</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Choose your organization's primary accent color.</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.75rem' }}>
+              {(Object.keys(ACCENTS) as AccentColor[]).map((accent) => (
+                <button
+                  key={accent}
+                  type="button"
+                  onClick={() => {
+                    if (!isOwner) return;
+                    setFormData(prev => ({ ...prev, accentColor: accent }));
+                    setHasChanges(true);
+                    setAccentColor(accent); // Preview immediately
+                  }}
+                  disabled={!isOwner}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius)',
+                    border: `2px solid ${formData.accentColor === accent ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    background: formData.accentColor === accent ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
+                    cursor: isOwner ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s ease',
+                    outline: 'none'
+                  }}
+                >
+                  <div style={{ 
+                    width: '2rem', 
+                    height: '2rem', 
+                    borderRadius: '50%', 
+                    backgroundColor: ACCENTS[accent].primary,
+                    boxShadow: formData.accentColor === accent ? `0 0 0 2px var(--color-surface), 0 0 0 4px ${ACCENTS[accent].primary}` : 'none'
+                  }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: formData.accentColor === accent ? 'var(--color-primary)' : 'var(--color-text)' }}>
+                    {accent.charAt(0) + accent.slice(1).toLowerCase()}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
             <div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>General Information</h3>

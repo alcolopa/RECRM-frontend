@@ -95,30 +95,92 @@ const ContactForm: React.FC<ContactFormProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleBaseChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setBaseData(prev => ({ ...prev, [id]: value }));
+    // Clear error when user types
+    if (errors[id]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    
+    // Step 1 Validation
+    if (step === 1) {
+      if (!baseData.firstName.trim()) newErrors.firstName = 'First name is required';
+      if (!baseData.lastName.trim()) newErrors.lastName = 'Last name is required';
+      if (!baseData.phone.trim() || baseData.phone === '+1 ') newErrors.phone = 'Phone number is required';
+      
+      if (baseData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(baseData.email)) {
+        newErrors.email = 'Incorrect email format';
+      }
+    }
+
+    // Step 2 Validation (Optional, can add more specific rules)
+    if (step === 2) {
+      if (type === ContactType.BUYER) {
+        if (buyerProfile.minBudget && buyerProfile.maxBudget && buyerProfile.minBudget > buyerProfile.maxBudget) {
+          newErrors.maxBudget = 'Max budget must be greater than min budget';
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handlePhoneChange = (value: string) => {
     setBaseData(prev => ({ ...prev, phone: value }));
+    if (errors.phone) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phone;
+        return newErrors;
+      });
+    }
   };
 
   const handleBuyerChange = (field: string, value: any) => {
     setBuyerProfile(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSellerChange = (field: string, value: any) => {
     setSellerProfile(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validate()) return;
+
     setIsLoading(true);
     try {
       const finalData: any = {
         ...baseData,
+        email: baseData.email.trim() || null,
+        assignedAgentId: baseData.assignedAgentId || null,
         type,
         organizationId
       };
@@ -135,7 +197,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
     }
   };
 
-  const nextStep = () => setStep(prev => prev + 1);
+  const nextStep = () => {
+    if (validate()) {
+      setStep(prev => prev + 1);
+    }
+  };
   const prevStep = () => setStep(prev => prev - 1);
 
   const formatTimelineLabel = (value: string) => {
@@ -241,6 +307,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 onChange={handleBaseChange}
                 placeholder="John"
                 icon={User}
+                error={errors.firstName}
               />
               <Input
                 label="Last Name"
@@ -251,6 +318,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 onChange={handleBaseChange}
                 placeholder="Doe"
                 icon={User}
+                error={errors.lastName}
               />
             </div>
 
@@ -263,12 +331,15 @@ const ContactForm: React.FC<ContactFormProps> = ({
               onChange={handleBaseChange}
               placeholder="john@example.com"
               icon={Mail}
+              error={errors.email}
             />
 
-            <div style={inputGroupStyle}>
-              <label htmlFor="phone" style={labelStyle}>Phone Number</label>
-              <PhoneInput id="phone" value={baseData.phone} onChange={handlePhoneChange} />
-            </div>
+            <PhoneInput 
+              id="phone" 
+              value={baseData.phone} 
+              onChange={handlePhoneChange}
+              error={errors.phone}
+            />
 
             <Input
               label="Lead Source"
@@ -278,6 +349,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
               onChange={handleBaseChange}
               placeholder="e.g. Website, Referral, Zillow"
               icon={Layers}
+              error={errors.leadSource}
             />
 
             <Textarea
@@ -287,6 +359,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
               value={baseData.notes}
               onChange={handleBaseChange}
               placeholder="Any additional details..."
+              error={errors.notes}
             />
 
             <div style={{ marginTop: '0.5rem' }}>
@@ -295,6 +368,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 selectedUserId={baseData.assignedAgentId}
                 onSelect={(id) => setBaseData(prev => ({ ...prev, assignedAgentId: id }))}
                 label="Assigned Agent"
+                error={errors.assignedAgentId}
               />
             </div>
 

@@ -96,6 +96,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
   const { displayAreaValue, displayAreaLabel, convertToSqm } = useUnits();
@@ -241,6 +242,35 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setFormData((prev: PropertyFormData) => ({ ...prev, [id]: value }));
+    if (errors[id]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.price) newErrors.price = 'Price is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.sellerProfileId) newErrors.sellerProfileId = 'Seller is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFieldChange = (id: string, value: any) => {
+    setFormData((prev: any) => ({ ...prev, [id]: value }));
+    if (errors[id]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
   };
 
   // Location handlers
@@ -274,6 +304,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
+    
     setIsSaving(true);
     setError(null);
 
@@ -298,6 +330,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       area: formData.area === '' ? 0 : convertToSqm(Number(formData.area)),
       yearBuilt: formData.yearBuilt === '' || formData.yearBuilt === undefined ? undefined : Number(formData.yearBuilt),
       featureIds: Array.from(selectedFeatureIds),
+      assignedUserId: formData.assignedUserId || null,
     };
 
     try {
@@ -443,6 +476,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               placeholder="Modern Villa"
               value={formData.title}
               onChange={handleChange}
+              error={errors.title}
             />
             <Input
               label="Price ($)*"
@@ -454,6 +488,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               value={formData.price}
               onChange={handleChange}
               icon={DollarSign}
+              error={errors.price}
             />
           </div>
           <Textarea
@@ -465,6 +500,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             value={formData.description}
             onChange={handleChange}
             style={{ resize: 'vertical' }}
+            error={errors.description}
           />
         </div>
 
@@ -474,9 +510,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <ContactSelector 
             organizationId={organizationId}
             selectedContactId={formData.sellerProfileId}
-            onSelect={(sellerProfileId) => setFormData((prev: PropertyFormData) => ({ ...prev, sellerProfileId }))}
+            onSelect={(sellerProfileId) => handleFieldChange('sellerProfileId', sellerProfileId)}
             restrictType={ContactType.SELLER}
             onNewContactRequested={handleNewSellerRedirect}
+            error={errors.sellerProfileId}
           />
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
             Link this property to an existing contact or create a new one as a seller.
@@ -489,7 +526,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           <UserSelector 
             organizationId={organizationId}
             selectedUserId={formData.assignedUserId}
-            onSelect={(assignedUserId) => setFormData((prev: PropertyFormData) => ({ ...prev, assignedUserId }))}
+            onSelect={(assignedUserId) => handleFieldChange('assignedUserId', assignedUserId)}
+            error={errors.assignedUserId}
           />
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
             Assign an agent to manage this property.
@@ -685,6 +723,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             placeholder="123 Main St"
             value={formData.address}
             onChange={handleChange}
+            error={errors.address}
           />
           <div className="grid grid-3" style={{ gap: '1rem' }}>
             <Select

@@ -66,12 +66,34 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%', position: 'relative' }}>
-      {label && (
-        <label htmlFor={id} style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>
-          {label}{required && '*'}
-        </label>
-      )}
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%', position: 'relative' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {label && (
+          <label 
+            htmlFor={id} 
+            style={{ 
+              fontSize: '0.8125rem', 
+              fontWeight: 700, 
+              color: 'var(--color-text-muted)', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.025em' 
+            }}
+          >
+            {label}{required && '*'}
+          </label>
+        )}
+        {error && (
+          <span
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--color-error)',
+              fontWeight: 600
+            }}
+          >
+            {error}
+          </span>
+        )}
+      </div>
 
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -79,7 +101,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem',
-          padding: '0.75rem 1rem',
+          padding: '0.625rem 0.875rem',
           borderRadius: 'var(--radius)',
           border: `1px solid ${error ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
           background: disabled ? 'var(--color-bg)' : 'var(--color-surface)',
@@ -87,7 +109,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           minHeight: '2.75rem',
           transition: 'all 0.2s ease',
           opacity: disabled ? 0.6 : 1,
-          boxShadow: isOpen ? '0 0 0 2px rgba(var(--color-primary-rgb), 0.1)' : 'none',
+          boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none'),
           ...style
         }}
       >

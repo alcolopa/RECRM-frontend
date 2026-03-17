@@ -1,6 +1,7 @@
 :root {
   --color-primary: #059669;
   --color-primary-hover: #047857;
+  --color-primary-rgb: 5, 150, 105;
 
   --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
@@ -236,17 +237,19 @@ input, textarea, select {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text);
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   border-radius: var(--radius);
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   transition: all 0.2s ease;
   width: 100%;
+  min-height: 2.75rem;
 }
 
 input::placeholder, textarea::placeholder {
   color: var(--muted-foreground);
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 /* Autofill Overrides */
@@ -267,13 +270,13 @@ select:-webkit-autofill:focus {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+  box-shadow: 0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
 }
 
 [data-theme="dark"] input:focus, 
 [data-theme="dark"] textarea:focus, 
 [data-theme="dark"] select:focus {
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.15);
 }
 
 /* Gallery & Lightbox Styles */

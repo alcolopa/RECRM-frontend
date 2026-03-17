@@ -2,19 +2,19 @@ import {
   TrendingUp, 
   Users, 
   Building2, 
-  Briefcase, 
   ArrowUpRight, 
   ArrowDownRight,
   Clock,
-  Calendar
+  Calendar,
+  HandCoins
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Dashboard: React.FC = () => {
   const stats = [
-    { label: 'Total Leads', value: '1,284', change: '+12.5%', icon: Users, color: 'var(--color-primary)', trend: 'up' }, // Using primary for leads
-    { label: 'Properties', value: '452', change: '+3.2%', icon: Building2, color: 'var(--color-success)', trend: 'up' }, // Using success for properties
-    { label: 'Active Deals', value: '84', change: '-2.4%', icon: Briefcase, color: 'var(--color-warning)', trend: 'down' },
+    { label: 'Total Leads', value: '1,284', change: '+12.5%', icon: Users, color: 'var(--color-primary)', trend: 'up' },
+    { label: 'Properties', value: '452', change: '+3.2%', icon: Building2, color: 'var(--color-success)', trend: 'up' },
+    { label: 'Active Offers', value: '84', change: '+5.4%', icon: HandCoins, color: 'var(--color-warning)', trend: 'up' },
     { label: 'Revenue', value: '$2.4M', change: '+18.7%', icon: TrendingUp, color: 'var(--color-primary)', trend: 'up' },
   ];
 

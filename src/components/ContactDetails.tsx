@@ -12,10 +12,13 @@ import {
   Calendar, 
   Tag,
   Home,
+  HandCoins,
+  ChevronRight,
   FileText
 } from 'lucide-react';
 import { type Contact, ContactType, ContactStatus } from '../api/contacts';
 import Button from './Button';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface ContactDetailsProps {
   contact: Contact;
@@ -25,6 +28,7 @@ interface ContactDetailsProps {
 }
 
 const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit, onDelete }) => {
+  const { navigate } = useNavigation();
   const initials = `${contact.firstName?.[0] || ''}${contact.lastName?.[0] || ''}`;
   const fullName = `${contact.firstName} ${contact.lastName}`;
 
@@ -345,6 +349,66 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           )}
         </div>
 
+      </div>
+
+      {/* Offer History */}
+      <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+          Offer History
+        </h3>
+        
+        {(contact as any).negotiations && (contact as any).negotiations.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {(contact as any).negotiations.map((neg: any) => {
+              const latestOffer = neg.offers?.[0];
+              if (!latestOffer) return null;
+              return (
+                <div 
+                  key={neg.id} 
+                  onClick={() => navigate('offers')}
+                  style={{ 
+                    padding: '1rem', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    background: 'var(--color-bg)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '0.75rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'rgba(var(--color-primary-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+                      <HandCoins size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(latestOffer.price))}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        {neg.property?.title} • {latestOffer.status.replace('_', ' ')}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="var(--color-text-muted)" />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{
+            padding: '1rem',
+            textAlign: 'center',
+            background: 'var(--color-bg)',
+            borderRadius: 'var(--radius)',
+            border: '1px dashed var(--color-border)',
+            color: 'var(--color-text-muted)',
+            fontSize: '0.875rem'
+          }}>
+            No negotiation history for this contact.
+          </div>
+        )}
       </div>
       
     </div>

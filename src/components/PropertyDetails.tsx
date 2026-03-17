@@ -462,6 +462,67 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
           </div>
         )}
 
+        {/* Offers & Negotiations (Internal only) */}
+        {!isPublic && (
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}><HandCoins size={20} /> Active Offers</h2>
+            {(property as any).negotiations && (property as any).negotiations.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                {(property as any).negotiations.map((neg: any) => {
+                  const latestOffer = neg.offers?.[0];
+                  if (!latestOffer) return null;
+                  return (
+                    <div 
+                      key={neg.id} 
+                      className="card" 
+                      onClick={() => navigate('offers')}
+                      style={{ 
+                        padding: '1rem', 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        background: 'var(--color-bg)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '0.75rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'rgba(var(--color-primary-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+                          <User size={18} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(latestOffer.price))}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                            {neg.contact?.firstName} {neg.contact?.lastName} • {latestOffer.status.replace('_', ' ')}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight size={18} color="var(--color-text-muted)" />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                background: 'var(--color-bg)',
+                borderRadius: 'var(--radius)',
+                border: '1px dashed var(--color-border)',
+                color: 'var(--color-text-muted)',
+                fontSize: '0.875rem',
+                marginTop: '0.5rem'
+              }}>
+                No active offers for this property yet.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Action Buttons */}
         {!isPublic && (
           <div style={footerActionsStyle}>
@@ -649,7 +710,7 @@ const headerStyle: React.CSSProperties = {
   padding: '1rem',
   display: 'flex',
   justifyContent: 'space-between',
-  zIndex: 100,
+  zIndex: 10,
   background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)'
 };
 

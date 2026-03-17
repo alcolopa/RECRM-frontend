@@ -95,13 +95,23 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
     border: `1px solid ${externalError ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
     background: 'var(--color-surface)',
     transition: 'all 0.2s ease',
-    boxShadow: isOpen ? '0 0 0 3px rgba(16, 185, 129, 0.1)' : 'none',
+    boxShadow: externalError ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none'),
     overflow: 'hidden',
     height: '2.75rem'
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }} ref={dropdownRef}>
+    <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.375rem' }} ref={dropdownRef}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <label htmlFor={id} style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em' }}>
+          Phone Number
+        </label>
+        {externalError && (
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 600 }}>
+            {externalError}
+          </span>
+        )}
+      </div>
       <div style={containerStyle}>
         {/* Unified Country Selector */}
         <button

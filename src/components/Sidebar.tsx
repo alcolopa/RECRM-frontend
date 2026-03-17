@@ -6,7 +6,6 @@ import {
   Building2, 
   ChevronLeft, 
   ChevronRight,
-  Home,
   X,
   HandCoins
 } from 'lucide-react';
@@ -74,49 +73,44 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
         flexShrink: 0
       }}
     >
-      {/* Sidebar Header */}
+      {/* Sidebar Header - Minimalist */}
       <div style={{ 
-        padding: '1.5rem', 
+        padding: '0 1.5rem', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: (isCollapsed && !isMobile) ? 'center' : 'space-between',
         height: '4.5rem',
-        borderBottom: '1px solid var(--color-border)'
+        borderBottom: '1px solid var(--color-border)',
       }}>
         {(!isCollapsed || isMobile) && (
-          <div 
-            onClick={() => setActiveTab('dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', cursor: 'pointer' }}
-          >
-            <Home color="var(--color-primary)" size={24} />
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.025em', color: 'var(--color-text)' }}>
-              Estate<span style={{ color: 'var(--color-primary)' }}>Hub</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Menu
             </span>
           </div>
         )}
-        {(isCollapsed && !isMobile) && (
-          <div 
-            onClick={() => setActiveTab('dashboard')}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Home color="var(--color-primary)" size={24} />
-          </div>
-        )}
         
-        {isMobile ? (
-          <button onClick={onClose} style={iconButtonStyle} aria-label="Close sidebar">
-            <X size={20} color="var(--color-text-muted)" />
-          </button>
-        ) : (
+        {!isMobile && (
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             style={{
               ...iconButtonStyle,
-              display: isCollapsed ? 'none' : 'flex',
+              background: 'rgba(var(--color-primary-rgb), 0.05)',
+              color: 'var(--color-primary)',
+              borderRadius: '0.5rem',
+              width: '2rem',
+              height: '2rem'
             }}
           >
-            <ChevronLeft size={16} color="var(--color-text-muted)" />
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        )}
+
+        {isMobile && (
+          <button onClick={onClose} style={iconButtonStyle} aria-label="Close sidebar">
+            <X size={20} color="var(--color-text-muted)" />
           </button>
         )}
       </div>
@@ -159,15 +153,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
           );
         })}
       </nav>
-
-      {/* Collapse Toggle for collapsed state */}
-      {isCollapsed && !isMobile && (
-        <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <button onClick={() => setIsCollapsed(false)} style={iconButtonStyle} aria-label="Expand sidebar">
-            <ChevronRight size={16} color="var(--color-text-muted)" />
-          </button>
-        </div>
-      )}
 
       {/* Version Info */}
       {(!isCollapsed || isMobile) && (

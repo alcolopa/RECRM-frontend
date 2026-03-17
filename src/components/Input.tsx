@@ -14,31 +14,47 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
-        {label && (
-          <label
-            htmlFor={inputId}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--color-text)',
-              display: 'block'
-            }}
-          >
-            {label}
-          </label>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {label && (
+            <label
+              htmlFor={inputId}
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                color: 'var(--color-text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.025em',
+                display: 'block'
+              }}
+            >
+              {label}
+            </label>
+          )}
+          {error && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--color-error)',
+                fontWeight: 600
+              }}
+            >
+              {error}
+            </span>
+          )}
+        </div>
         <div style={{ position: 'relative', width: '100%' }}>
           {Icon && (
             <Icon
               size={18}
-              color="var(--muted-foreground)"
+              color={error ? 'var(--color-error)' : 'var(--muted-foreground)'}
               style={{
                 position: 'absolute',
                 left: '0.875rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                opacity: 0.8
               }}
             />
           )}
@@ -48,21 +64,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={className}
             style={{
               ...style,
-              paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '1rem',
+              paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '0.875rem',
               borderColor: error ? 'var(--color-error)' : style?.borderColor || 'var(--color-border)',
+              boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : style?.boxShadow,
             }}
             {...props}
           />
         </div>
-        {(error || helperText) && (
+        {helperText && !error && (
           <span
             style={{
               fontSize: '0.75rem',
-              color: error ? 'var(--color-error)' : 'var(--muted-foreground)',
+              color: 'var(--muted-foreground)',
               marginTop: '0.125rem'
             }}
           >
-            {error || helperText}
+            {helperText}
           </span>
         )}
       </div>
@@ -82,30 +99,46 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
-        {label && (
-          <label
-            htmlFor={inputId}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--color-text)',
-              display: 'block'
-            }}
-          >
-            {label}
-          </label>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {label && (
+            <label
+              htmlFor={inputId}
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                color: 'var(--color-text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.025em',
+                display: 'block'
+              }}
+            >
+              {label}
+            </label>
+          )}
+          {error && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--color-error)',
+                fontWeight: 600
+              }}
+            >
+              {error}
+            </span>
+          )}
+        </div>
         <div style={{ position: 'relative', width: '100%' }}>
           {Icon && (
             <Icon
               size={18}
-              color="var(--muted-foreground)"
+              color={error ? 'var(--color-error)' : 'var(--muted-foreground)'}
               style={{
                 position: 'absolute',
                 left: '0.875rem',
                 top: '0.875rem',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                opacity: 0.8
               }}
             />
           )}
@@ -115,23 +148,24 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             className={className}
             style={{
               ...style,
-              paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '1rem',
+              paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '0.875rem',
               paddingTop: Icon ? '0.75rem' : style?.paddingTop || '0.75rem',
               borderColor: error ? 'var(--color-error)' : style?.borderColor || 'var(--color-border)',
+              boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : style?.boxShadow,
               minHeight: style?.minHeight || '100px'
             }}
             {...props}
           />
         </div>
-        {(error || helperText) && (
+        {helperText && !error && (
           <span
             style={{
               fontSize: '0.75rem',
-              color: error ? 'var(--color-error)' : 'var(--muted-foreground)',
+              color: 'var(--muted-foreground)',
               marginTop: '0.125rem'
             }}
           >
-            {error || helperText}
+            {helperText}
           </span>
         )}
       </div>

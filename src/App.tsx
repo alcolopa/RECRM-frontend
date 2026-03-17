@@ -22,7 +22,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, setAccentColor } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
   const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'share'>('landing');
@@ -56,7 +56,15 @@ const AppContent = () => {
   const fetchProfile = async () => {
     try {
       const response = await api.get('/auth/profile');
-      setUser(response.data);
+      const userData = response.data;
+      setUser(userData);
+      
+      // Sync accent color from active organization
+      const activeOrg = userData.memberships?.[0]?.organization;
+      if (activeOrg?.accentColor) {
+        setAccentColor(activeOrg.accentColor as any);
+      }
+      
       setIsAuthenticated(true);
       setView('dashboard');
     } catch (err) {
@@ -75,6 +83,12 @@ const AppContent = () => {
 
   const handleUserUpdate = (updatedUser: any) => {
     setUser(updatedUser);
+    
+    // Update accent color if organization settings changed
+    const activeOrg = updatedUser.memberships?.[0]?.organization;
+    if (activeOrg?.accentColor) {
+      setAccentColor(activeOrg.accentColor as any);
+    }
   };
 
   const handleSignupSuccess = (token: string) => {
@@ -87,7 +101,13 @@ const AppContent = () => {
     try {
       const { propertyService } = await import('./api/properties');
       const response = await propertyService.getPublic(id);
-      setSharedProperty(response.data);
+      const propertyData = response.data;
+      setSharedProperty(propertyData);
+      
+      // Sync accent color from property's organization
+      if (propertyData.organization?.accentColor) {
+        setAccentColor(propertyData.organization.accentColor as any);
+      }
     } catch (err) {
       console.error('Failed to fetch public property', err);
     } finally {
@@ -99,25 +119,6 @@ const AppContent = () => {
   if (view === 'share' && sharedPropertyId) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
-        <nav className="glass" style={{ height: '4rem', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
-          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <div 
-              onClick={() => window.location.href = '/'}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', cursor: 'pointer' }}
-            >
-              <Home color="var(--primary)" size={24} />
-              <span style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: 'var(--foreground)' }}>
-                Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
-              </span>
-            </div>
-            <button 
-              onClick={toggleTheme}
-              style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </div>
-        </nav>
         <Suspense fallback={<LoadingFallback />}>
           <UnitProvider user={user}>
             {isSharedLoading ? (
@@ -125,7 +126,7 @@ const AppContent = () => {
                 <Loader2 size={48} className="animate-spin" color="var(--color-primary)" />
               </div>
             ) : sharedProperty ? (
-              <div style={{ padding: '2rem 0' }}>
+              <div style={{ width: '100%' }}>
                 <PropertyDetails 
                   property={sharedProperty} 
                   onBack={() => window.location.href = '/'} 
