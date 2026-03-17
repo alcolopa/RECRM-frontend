@@ -12,6 +12,7 @@ import {
   Clock,
   User as UserIcon
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { type Lead, LeadStatus } from '../api/leads';
 import Button from './Button';
 
@@ -24,6 +25,14 @@ interface LeadDetailsProps {
 }
 
 const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelete, onConvert }) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const initials = `${lead.firstName?.[0] || ''}${lead.lastName?.[0] || ''}`;
   const fullName = `${lead.firstName} ${lead.lastName}`;
 
@@ -77,9 +86,9 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelet
         </div>
       </header>
 
-      <div className="grid grid-3" style={{ gap: '2rem', alignItems: 'start' }}>
+      <div className="grid grid-3" style={{ gap: isMobile ? '1.5rem' : '2rem', alignItems: 'start' }}>
         {/* Main Info Card */}
-        <div className="card" style={{ gridColumn: 'span 2', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="card" style={{ gridColumn: isMobile ? 'span 1' : 'span 2', padding: isMobile ? '1.25rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
             <div style={{ 
               width: '5rem', 
@@ -187,7 +196,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelet
 
         {/* Sidebar Info Card */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="card" style={{ padding: isMobile ? '1.25rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Communication</h3>
             <div style={sidebarItemStyle}>
               <Mail size={18} color="var(--color-text-muted)" />
@@ -205,7 +214,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelet
             </div>
           </div>
 
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="card" style={{ padding: isMobile ? '1.25rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Management</h3>
             <div style={sidebarItemStyle}>
               <UserIcon size={18} color="var(--color-text-muted)" />
