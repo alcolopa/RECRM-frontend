@@ -24,7 +24,7 @@ interface LayoutProps {
 }
 
 const LoadingView = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4rem' }}>
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4rem', backgroundColor: 'var(--color-bg)' }}>
     <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
   </div>
 );

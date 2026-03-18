@@ -17,7 +17,15 @@ const Layout = lazy(() => import('./components/Layout'));
 const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
 
 const LoadingFallback = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
+  <div style={{ 
+    position: 'fixed',
+    inset: 0,
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'var(--color-bg)',
+    zIndex: 9999
+  }}>
     <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
   </div>
 );

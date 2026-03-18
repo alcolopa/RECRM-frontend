@@ -80,6 +80,8 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
     delete cleanData.sellerProfile;
     delete cleanData.organization;
     delete cleanData.tags;
+    delete cleanData.negotiations;
+    delete cleanData.assignedUser;
     
     try {
       let savedProperty: Property;

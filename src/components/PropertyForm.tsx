@@ -388,6 +388,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     delete cleanRest.updatedAt;
     delete cleanRest.id;
     delete cleanRest.features; // We send featureIds instead
+    delete cleanRest.negotiations;
+    delete cleanRest.assignedUser;
 
     const submissionData = {
       ...cleanRest,
