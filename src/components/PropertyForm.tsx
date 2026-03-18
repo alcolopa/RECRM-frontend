@@ -29,6 +29,7 @@ import { useUnits } from '../contexts/UnitContext';
 import { getCountries, getGovernorates, getCities } from '../data/locationData';
 import { getImageUrl } from '../utils/url';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
+import { compressImage, revokeImageUrl, createImageUrl } from '../utils/image';
 
 interface PropertyFormProps {
   property?: Property;
@@ -101,8 +102,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const { displayAreaValue, displayAreaLabel, convertToSqm } = useUnits();
   const { navigationState, navigate, clearNavigationState } = useNavigation();
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.keys(previewUrls).forEach(key => {
+        if (previewUrls[key].startsWith('blob:')) {
+          revokeImageUrl(previewUrls[key]);
+        }
+      });
+    };
+  }, [previewUrls]);
 
   // Load available features from API
   useEffect(() => {
@@ -171,13 +184,33 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
+    setIsUploading(true);
+    
+    try {
+      // 1. Process and compress images
+      const processedFiles: File[] = [];
+      const newPreviewUrls: Record<string, string> = { ...previewUrls };
+      
+      for (const file of fileList) {
+        // Compress if it's an image
+        const processedFile = await compressImage(file);
+        processedFiles.push(processedFile);
+        
+        // Create preview URL
+        const previewUrl = createImageUrl(processedFile);
+        const fileKey = `${processedFile.name}-${Date.now()}`;
+        newPreviewUrls[fileKey] = previewUrl;
+      }
+      
+      setPreviewUrls(newPreviewUrls);
 
-    if (property?.id) {
-      // Existing property: upload immediately in parallel
-      setIsUploading(true);
-      try {
-        const uploadPromises = fileList.map(async (file) => {
-          const fileId = `${file.name}-${Date.now()}`;
+      if (property?.id) {
+        // Existing property: upload immediately
+        // We use a for-of loop to upload sequentially on mobile to avoid overwhelming the connection
+        for (let i = 0; i < processedFiles.length; i++) {
+          const file = processedFiles[i];
+          const fileId = Object.keys(newPreviewUrls).find(key => newPreviewUrls[key].includes(file.name)) || `${file.name}-${Date.now()}`;
+          
           setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
           
           const response = await propertyService.uploadImage(
@@ -188,6 +221,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           );
           
           setInternalImages(prev => [...prev, response.data]);
+          
           // Briefly keep at 100 before removing from progress tracking
           setTimeout(() => {
             setUploadProgress(prev => {
@@ -196,22 +230,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               return next;
             });
           }, 1000);
-        });
-
-        await Promise.all(uploadPromises);
-      } catch (err) {
-        console.error('Failed to upload image', err);
-        setError('Failed to upload some images. Please try again.');
-      } finally {
-        setIsUploading(false);
+        }
+      } else {
+        // New property: add to pending
+        setPendingFiles(prev => [...prev, ...processedFiles]);
       }
-    } else {
-      // New property: add to pending
-      setPendingFiles(prev => [...prev, ...fileList]);
+    } catch (err) {
+      console.error('Failed to process/upload images', err);
+      setError('Failed to process some images. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Clear input
+      e.target.value = '';
     }
-
-    // Clear input
-    e.target.value = '';
   };
 
   const handleImageDelete = (index: number, isPending: boolean) => {
@@ -223,6 +254,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
     if (deletingImageId.startsWith('pending-')) {
       const index = parseInt(deletingImageId.split('-')[1]);
+      const file = pendingFiles[index];
+      
+      // Cleanup preview URL
+      const previewKey = Object.keys(previewUrls).find(key => previewUrls[key].includes(file.name));
+      if (previewKey) {
+        revokeImageUrl(previewUrls[previewKey]);
+        setPreviewUrls(prev => {
+          const next = { ...prev };
+          delete next[previewKey];
+          return next;
+        });
+      }
+      
       setPendingFiles(prev => prev.filter((_, i) => i !== index));
       setDeletingImageId(null);
       return;
@@ -360,11 +404,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       // 1. Save property (create or update)
       const savedProperty = await onSave(submissionData);
 
-      // 2. If it was a new property and we have pending files, upload them now in parallel
+      // 2. If it was a new property and we have pending files, upload them now sequentially
       if (savedProperty && pendingFiles.length > 0) {
         setIsUploading(true);
-        const uploadPromises = pendingFiles.map(async (file) => {
-          const fileId = `${file.name}-${Date.now()}`;
+        
+        for (const file of pendingFiles) {
+          const previewKey = Object.keys(previewUrls).find(key => previewUrls[key].includes(file.name));
+          const fileId = previewKey || `${file.name}-${Date.now()}`;
+          
           setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
           
           try {
@@ -385,9 +432,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               });
             }, 1000);
           }
-        });
-
-        await Promise.all(uploadPromises);
+        }
       }
 
       // Parent handleSave already handles redirection if it finishes successfully
@@ -579,12 +624,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
             {/* Pending Previews */}
             {pendingFiles.map((file, idx) => {
-              const progress = Object.entries(uploadProgress).find(([key]) => key.startsWith(`${file.name}-`))?.[1];
+              const previewKey = Object.keys(previewUrls).find(key => previewUrls[key].includes(file.name));
+              const previewUrl = previewKey ? previewUrls[previewKey] : '';
+              const progress = previewKey ? uploadProgress[previewKey] : undefined;
               const isUploadingThis = progress !== undefined;
 
               return (
                 <div key={`pending-${idx}`} style={{ ...imageContainerStyle, opacity: isUploadingThis ? 1 : 0.7 }}>
-                  <img src={URL.createObjectURL(file)} alt="Pending" style={imageStyle} />
+                  {previewUrl && <img src={previewUrl} alt="Pending" style={imageStyle} />}
                   {!isUploadingThis && (
                     <Button
                       variant="danger"
