@@ -483,4 +483,8 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+.theme-dropdown-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
 

@@ -50,6 +50,7 @@ export interface Property {
     name: string;
     logo?: string;
     accentColor?: string;
+    defaultTheme?: 'LIGHT' | 'DARK';
   };
   assignedUserId?: string;
   assignedUser?: UserProfile;

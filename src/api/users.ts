@@ -20,6 +20,9 @@ export interface UserProfile {
   avatar?: string;
   phone?: string;
   unitPreference: 'METRIC' | 'IMPERIAL';
+  preferredTheme?: 'LIGHT' | 'DARK' | 'SYSTEM';
+  completedTutorials: string[];
+  dashboardConfig?: any;
   memberships: Membership[];
   ownedOrganizations: any[];
   // Legacy fields for easier transition
@@ -41,4 +44,6 @@ export const userService = {
       },
     });
   },
+  completeTutorial: (tutorialId: string) => api.post<UserProfile>(`/users/me/tutorials/${tutorialId}`),
+  skipAllTutorials: () => api.post<UserProfile>('/users/me/tutorials/skip-all'),
 };

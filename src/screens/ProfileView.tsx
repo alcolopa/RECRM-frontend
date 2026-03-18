@@ -32,7 +32,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     password: '',
     confirmPassword: '',
     avatar: user.avatar || '',
-    unitPreference: user.unitPreference || 'METRIC'
+    unitPreference: user.unitPreference || 'METRIC',
+    preferredTheme: user.preferredTheme || 'SYSTEM'
   } as {
     firstName: string;
     lastName: string;
@@ -43,6 +44,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
     confirmPassword?: string;
     avatar: string;
     unitPreference: 'METRIC' | 'IMPERIAL';
+    preferredTheme: 'LIGHT' | 'DARK' | 'SYSTEM';
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +63,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       password: '',
       confirmPassword: '',
       avatar: user.avatar || '',
-      unitPreference: user.unitPreference || 'METRIC'
+      unitPreference: user.unitPreference || 'METRIC',
+      preferredTheme: user.preferredTheme || 'SYSTEM'
     });
     setHasChanges(false);
   }, [user]);
@@ -347,21 +350,41 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Unit Preference</label>
-              <select
-                id="unitPreference"
-                value={formData.unitPreference}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, unitPreference: e.target.value as 'METRIC' | 'IMPERIAL' }));
-                  setHasChanges(true);
-                }}
-                className="input"
-                style={{ width: '100%', height: '2.5rem', padding: '0 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
-              >
-                <option value="METRIC">Metric (sqm)</option>
-                <option value="IMPERIAL">Imperial (sqft)</option>
-              </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Unit Preference</label>
+                <select
+                  id="unitPreference"
+                  value={formData.unitPreference}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, unitPreference: e.target.value as 'METRIC' | 'IMPERIAL' }));
+                    setHasChanges(true);
+                  }}
+                  className="input"
+                  style={{ width: '100%', height: '2.5rem', padding: '0 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+                >
+                  <option value="METRIC">Metric (sqm)</option>
+                  <option value="IMPERIAL">Imperial (sqft)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Preferred Theme</label>
+                <select
+                  id="preferredTheme"
+                  value={formData.preferredTheme}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, preferredTheme: e.target.value as 'LIGHT' | 'DARK' | 'SYSTEM' }));
+                    setHasChanges(true);
+                  }}
+                  className="input"
+                  style={{ width: '100%', height: '2.5rem', padding: '0 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+                >
+                  <option value="SYSTEM">System Default</option>
+                  <option value="LIGHT">Light Mode</option>
+                  <option value="DARK">Dark Mode</option>
+                </select>
+              </div>
             </div>
 
             <div style={{ borderBottom: '1px solid var(--color-border)', margin: '1rem 0' }}></div>

@@ -10,6 +10,7 @@ export interface Organization {
   website?: string;
   logo?: string;
   accentColor?: string;
+  defaultTheme?: 'LIGHT' | 'DARK';
   ownerId?: string;
   owner?: {
     id: string;

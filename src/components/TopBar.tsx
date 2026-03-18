@@ -5,13 +5,11 @@ import {
   User as UserIcon, 
   ChevronDown,
   Menu,
-  Building,
-  Moon,
-  Sun
+  Building
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../contexts/ThemeContext';
 import { getImageUrl } from '../utils/url';
+import ThemeSelector from './ThemeSelector';
 
 interface TopBarProps {
   onLogout: () => void;
@@ -25,7 +23,6 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onProfileClick, onOrganizationClick }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { theme, toggleTheme } = useTheme();
 
   // Derive active organization and role from memberships
   const activeMembership = user?.memberships?.[0];
@@ -121,13 +118,7 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem' }}>
-        <button 
-          onClick={toggleTheme}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        <ThemeSelector />
         
         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }} aria-label="Notifications">
           <Bell size={20} />

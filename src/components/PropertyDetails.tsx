@@ -88,6 +88,10 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [property.propertyImages]);
 
+  useEffect(() => {
+    // Logic for mobile nav or other global interactions could go here
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -119,14 +123,16 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
               {property.organization?.name || 'EstateHub'}
             </span>
           </div>
-          <Button 
-            variant="ghost" 
-            onClick={handleShare}
-            aria-label="Share property"
-            style={{ borderRadius: '50%', width: '40px', height: '40px' }}
-          >
-            <Share2 size={20} />
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <Button 
+              variant="ghost" 
+              onClick={handleShare}
+              aria-label="Share property"
+              style={{ borderRadius: '50%', width: '40px', height: '40px' }}
+            >
+              <Share2 size={20} />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -735,6 +741,7 @@ const heroImageStyle: React.CSSProperties = {
   objectFit: 'cover'
 };
 
+// Dropdown Styles
 const placeholderHeroStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',

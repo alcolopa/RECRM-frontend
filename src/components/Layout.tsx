@@ -3,6 +3,8 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { useNavigation } from '../contexts/NavigationContext';
 import { Loader2 } from 'lucide-react';
+import TutorialGuide from './TutorialGuide';
+import { tutorials } from '../data/tutorials';
 
 // Lazy load views for code splitting
 const Dashboard = lazy(() => import('../screens/Dashboard'));
@@ -67,7 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         {(() => {
           switch (activeTab) {
             case 'dashboard':
-              return <Dashboard />;
+              return <Dashboard organizationId={activeOrgId} user={user} onUserUpdate={onUserUpdate} />;
             case 'contacts':
               return <ContactsView organizationId={activeOrgId} />;
             case 'properties':
@@ -151,6 +153,17 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
           {renderContent()}
         </main>
       </div>
+
+      {/* Tutorial Overlay */}
+      {tutorials[activeTab] && (
+        <TutorialGuide
+          key={`${activeTab}-${user.id}`}
+          user={user}
+          tutorialId={activeTab}
+          steps={tutorials[activeTab]}
+          onUserUpdate={onUserUpdate}
+        />
+      )}
     </div>
   );
 };

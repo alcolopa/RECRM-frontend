@@ -36,7 +36,18 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     address: '',
     logo: '',
     accentColor: 'EMERALD',
+    defaultTheme: 'LIGHT',
     ownerId: ''
+  } as {
+    name: string;
+    email: string;
+    phone: string;
+    website: string;
+    address: string;
+    logo: string;
+    accentColor: string;
+    defaultTheme: 'LIGHT' | 'DARK';
+    ownerId: string;
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +77,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
         address: response.data.address || '',
         logo: response.data.logo || '',
         accentColor: response.data.accentColor || 'EMERALD',
+        defaultTheme: response.data.defaultTheme || 'LIGHT',
         ownerId: response.data.ownerId || ''
       });
     } catch (err: any) {
@@ -343,6 +355,50 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                   </span>
                 </button>
               ))}
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Default Theme for Public Pages</label>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isOwner) return;
+                    setFormData(prev => ({ ...prev, defaultTheme: 'LIGHT' }));
+                    setHasChanges(true);
+                  }}
+                  disabled={!isOwner}
+                  className="btn"
+                  style={{ 
+                    flex: 1,
+                    backgroundColor: formData.defaultTheme === 'LIGHT' ? 'var(--color-primary)' : 'var(--color-surface)',
+                    color: formData.defaultTheme === 'LIGHT' ? 'white' : 'var(--color-text)',
+                    border: '1px solid var(--color-border)',
+                    opacity: isOwner ? 1 : 0.7
+                  }}
+                >
+                  Light Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isOwner) return;
+                    setFormData(prev => ({ ...prev, defaultTheme: 'DARK' }));
+                    setHasChanges(true);
+                  }}
+                  disabled={!isOwner}
+                  className="btn"
+                  style={{ 
+                    flex: 1,
+                    backgroundColor: formData.defaultTheme === 'DARK' ? 'var(--color-primary)' : 'var(--color-surface)',
+                    color: formData.defaultTheme === 'DARK' ? 'white' : 'var(--color-text)',
+                    border: '1px solid var(--color-border)',
+                    opacity: isOwner ? 1 : 0.7
+                  }}
+                >
+                  Dark Mode
+                </button>
+              </div>
             </div>
           </div>
 

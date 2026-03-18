@@ -1,10 +1,11 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Home, LogIn, Moon, Sun, Loader2 } from 'lucide-react';
+import { Home, LogIn, Loader2 } from 'lucide-react';
 import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { UnitProvider } from './contexts/UnitContext';
 import Button from './components/Button';
+import ThemeSelector from './components/ThemeSelector';
 
 // Lazy load components
 const Hero = lazy(() => import('./components/Hero'));
@@ -22,7 +23,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent = () => {
-  const { theme, toggleTheme, setAccentColor } = useTheme();
+  const { setTheme, setAccentColor } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
   const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'share'>('landing');
@@ -65,6 +66,11 @@ const AppContent = () => {
         setAccentColor(activeOrg.accentColor as any);
       }
       
+      // Sync theme preference from user
+      if (userData.preferredTheme) {
+        setTheme(userData.preferredTheme.toLowerCase() as any);
+      }
+      
       setIsAuthenticated(true);
       setView('dashboard');
     } catch (err) {
@@ -89,6 +95,10 @@ const AppContent = () => {
     if (activeOrg?.accentColor) {
       setAccentColor(activeOrg.accentColor as any);
     }
+
+    if (updatedUser.preferredTheme) {
+      setTheme(updatedUser.preferredTheme.toLowerCase() as any);
+    }
   };
 
   const handleSignupSuccess = (token: string) => {
@@ -107,6 +117,11 @@ const AppContent = () => {
       // Sync accent color from property's organization
       if (propertyData.organization?.accentColor) {
         setAccentColor(propertyData.organization.accentColor as any);
+      }
+
+      // Force organization theme for public shared page
+      if (propertyData.organization?.defaultTheme) {
+        setTheme(propertyData.organization.defaultTheme.toLowerCase() as any);
       }
     } catch (err) {
       console.error('Failed to fetch public property', err);
@@ -189,13 +204,7 @@ const AppContent = () => {
               </span>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button 
-                onClick={toggleTheme}
-                style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
+              <ThemeSelector />
               <button 
                 onClick={() => setView('landing')}
                 style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 500, cursor: 'pointer' }}
@@ -247,20 +256,14 @@ const AppContent = () => {
               Estate<span style={{ color: 'var(--primary)' }}>Hub</span>
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div className="hidden-mobile" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginRight: '1rem' }}>
-              <a href="#features" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Features</a>
-              <a href="#pricing" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Pricing</a>
-            </div>
-            <button 
-              onClick={toggleTheme}
-              style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button 
-              onClick={() => setView('login')}
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div className="hidden-mobile" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginRight: '1rem' }}>
+                <a href="#features" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Features</a>
+                <a href="#pricing" style={{ textDecoration: 'none', color: 'var(--secondary)', fontWeight: 500, fontSize: '0.875rem' }}>Pricing</a>
+              </div>
+              <ThemeSelector />
+              <button 
+                onClick={() => setView('login')}
               style={{ background: 'none', border: 'none', color: 'var(--foreground)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <LogIn size={18} /> <span className="hidden-mobile">Sign In</span>
