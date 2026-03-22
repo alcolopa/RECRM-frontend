@@ -179,17 +179,33 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     try {
       setIsLoading(true);
       const response = await organizationService.get();
-      setOrg(response.data);
+      const orgData = response.data;
+      setOrg(orgData);
+
+      // Update global user state if current user's membership changed
+      if (onUserUpdate && orgData.memberships) {
+        const myMembership = orgData.memberships.find((m: any) => m.userId === user.id);
+        if (myMembership) {
+          const updatedUser = {
+            ...user,
+            memberships: user.memberships?.map((m: any) =>
+              m.organizationId === orgData.id ? { ...m, ...myMembership } : m
+            ) || [myMembership]
+          };
+          onUserUpdate(updatedUser);
+        }
+      }
+
       setFormData({
-        name: response.data.name || '',
-        email: response.data.email || '',
-        phone: response.data.phone || '',
-        website: response.data.website || '',
-        address: response.data.address || '',
-        logo: response.data.logo || '',
-        accentColor: response.data.accentColor || 'EMERALD',
-        defaultTheme: response.data.defaultTheme || 'LIGHT',
-        ownerId: response.data.ownerId || ''
+        name: orgData.name || '',
+        email: orgData.email || '',
+        phone: orgData.phone || '',
+        website: orgData.website || '',
+        address: orgData.address || '',
+        logo: orgData.logo || '',
+        accentColor: orgData.accentColor || 'EMERALD',
+        defaultTheme: orgData.defaultTheme || 'LIGHT',
+        ownerId: orgData.ownerId || ''
       });
     } catch (err: any) {
       console.error('Failed to fetch organization', err);
@@ -914,7 +930,15 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       )}
 
       {activeTab === 'roles' && (
-        <RolesManagement roles={Array.isArray(roles) ? roles : []} organizationId={org?.id || ''} onUpdate={fetchRoles} isMobileOrTablet={isMobileOrTablet} />
+        <RolesManagement 
+          roles={Array.isArray(roles) ? roles : []} 
+          organizationId={org?.id || ''} 
+          onUpdate={() => {
+            fetchRoles();
+            fetchOrganization();
+          }} 
+          isMobileOrTablet={isMobileOrTablet} 
+        />
       )}
     </div>
   );

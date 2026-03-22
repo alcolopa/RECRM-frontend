@@ -141,10 +141,19 @@ const AppContent = () => {
     try {
       const response = await api.get('/auth/profile');
       const userData = response.data;
-      setUser(userData);
+      
+      // Normalize user data with active organization and role
+      const activeMembership = userData.memberships?.[0];
+      const normalizedUser = {
+        ...userData,
+        organizationId: activeMembership?.organizationId,
+        role: activeMembership?.role
+      };
+      
+      setUser(normalizedUser);
       
       // Sync accent color from active organization
-      const activeOrg = userData.memberships?.[0]?.organization;
+      const activeOrg = activeMembership?.organization;
       if (activeOrg?.accentColor) {
         setAccentColor(activeOrg.accentColor as any);
       }

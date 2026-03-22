@@ -4,7 +4,8 @@ export const hasPermission = (user: UserProfile | null, permission: string): boo
   if (!user) return false;
   
   // Find the active membership
-  const membership = user.memberships?.find(m => m.organizationId === user.organizationId);
+  // Fallback to the first membership if organizationId is not explicitly set
+  const membership = user.memberships?.find(m => m.organizationId === user.organizationId) || user.memberships?.[0];
   if (!membership) return false;
 
   // Owner role always has all permissions
