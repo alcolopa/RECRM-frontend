@@ -467,7 +467,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
               ? 'No offers match your current filters.'
               : 'There are no offers in your organization yet.'}
           </p>
-          {!searchQuery && statusFilter === 'all' && selectedAgentId === 'all' && quickFilter === 'all' && (
+          {!searchQuery && statusFilter === 'all' && selectedAgentId === 'all' && quickFilter === 'all' && permissions.can(Permission.DEALS_CREATE) && (
             <Button onClick={() => setView('form')}>
               Create Your First Offer
             </Button>

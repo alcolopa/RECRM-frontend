@@ -492,7 +492,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
               ? 'No contacts match your current filters.'
               : 'You haven\'t added any contacts yet. Start by adding your first buyer or seller.'}
           </p>
-          {!searchQuery && filterType === 'ALL' && (
+          {!searchQuery && filterType === 'ALL' && permissions.can(Permission.CONTACTS_CREATE) && (
             <Button onClick={() => setView('form')}>
               Add Your First Contact
             </Button>

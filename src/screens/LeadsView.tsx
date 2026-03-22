@@ -424,7 +424,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
               ? 'No leads match your current search or filters.'
               : 'Start tracking potential interest and growing your pipeline.'}
           </p>
-          {!searchQuery && filterStatus === 'ALL' && (
+          {!searchQuery && filterStatus === 'ALL' && permissions.can(Permission.LEADS_CREATE) && (
             <Button onClick={() => setView('form')}>
               Add Your First Lead
             </Button>

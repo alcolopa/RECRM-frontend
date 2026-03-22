@@ -494,7 +494,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
           <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px' }}>
             {searchQuery ? 'No properties match your search criteria.' : 'You haven\'t added any properties yet. Get started by adding your first listing.'}
           </p>
-          {!searchQuery && (
+          {!searchQuery && permissions.can(Permission.PROPERTIES_CREATE) && (
             <Button onClick={() => setView('form')}>
               Add Your First Property
             </Button>
