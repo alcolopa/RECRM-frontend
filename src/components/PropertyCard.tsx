@@ -18,9 +18,11 @@ interface PropertyCardProps {
   onEdit: (property: Property) => void;
   onDelete: (id: string) => void;
   onClick: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete, onClick }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete, onClick, canEdit = true, canDelete = true }) => {
   const { formatAreaDisplay } = useUnits();
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
@@ -195,20 +197,24 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-          <Button 
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(property)}
-            aria-label={`Edit ${property.title}`}
-            leftIcon={<Edit2 size={16} color="var(--color-text-muted)" />}
-          />
-          <Button 
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(property.id)}
-            aria-label={`Delete ${property.title}`}
-            leftIcon={<Trash2 size={16} color="var(--color-error)" />}
-          />
+          {canEdit && (
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(property)}
+              aria-label={`Edit ${property.title}`}
+              leftIcon={<Edit2 size={16} color="var(--color-text-muted)" />}
+            />
+          )}
+          {canDelete && (
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(property.id)}
+              aria-label={`Delete ${property.title}`}
+              leftIcon={<Trash2 size={16} color="var(--color-error)" />}
+            />
+          )}
         </div>
       </div>
     </div>

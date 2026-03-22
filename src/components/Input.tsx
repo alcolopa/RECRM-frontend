@@ -7,10 +7,11 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: LucideIcon;
   error?: string;
   helperText?: string;
+  rightElement?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, icon: Icon, error, helperText, className = '', style, id, ...props }, ref) => {
+  ({ label, icon: Icon, error, helperText, rightElement, className = '', style, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
@@ -43,7 +44,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             </span>
           )}
         </div>
-        <div style={{ position: 'relative', width: '100%' }}>
+        <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
           {Icon && (
             <Icon
               size={18}
@@ -54,7 +55,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 top: '50%',
                 transform: 'translateY(-50%)',
                 pointerEvents: 'none',
-                opacity: 0.8
+                opacity: 0.8,
+                zIndex: 2
               }}
             />
           )}
@@ -65,11 +67,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             style={{
               ...style,
               paddingLeft: Icon ? '2.5rem' : style?.paddingLeft || '0.875rem',
+              paddingRight: rightElement ? '2.75rem' : style?.paddingRight || '0.875rem',
               borderColor: error ? 'var(--color-error)' : style?.borderColor || 'var(--color-border)',
               boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : style?.boxShadow,
+              zIndex: 1
             }}
             {...props}
           />
+          {rightElement && (
+            <div style={{
+              position: 'absolute',
+              right: '0.25rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2
+            }}>
+              {rightElement}
+            </div>
+          )}
         </div>
         {helperText && !error && (
           <span
@@ -189,18 +207,18 @@ interface SelectProps {
   style?: React.CSSProperties;
 }
 
-export const Select: React.FC<SelectProps> = ({ 
-  label, 
-  icon, 
-  error, 
-  options, 
-  value = '', 
-  onChange, 
-  placeholder, 
-  searchable, 
-  disabled, 
-  id, 
-  name, 
+export const Select: React.FC<SelectProps> = ({
+  label,
+  icon,
+  error,
+  options,
+  value = '',
+  onChange,
+  placeholder,
+  searchable,
+  disabled,
+  id,
+  name,
   required,
   style
 }) => {

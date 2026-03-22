@@ -1,39 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, User, X, Loader2, ChevronDown, Phone, Mail } from 'lucide-react';
-import { type Contact, contactService, ContactType } from '../api/contacts';
+import { Search, Plus, Building2, X, Loader2, ChevronDown, MapPin } from 'lucide-react';
+import { type Property, propertyService } from '../api/properties';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import ContactForm from './ContactForm';
+import PropertyForm from './PropertyForm';
 import Modal from './Modal';
 import { AlertCircle } from 'lucide-react';
 
-interface ContactSelectorProps {
+interface PropertySelectorProps {
   organizationId: string;
-  selectedContactId?: string;
-  onSelect: (contactId: string, contact?: Contact) => void;
+  selectedPropertyId?: string;
+  onSelect: (propertyId: string, property?: Property) => void;
   label?: string;
-  restrictType?: ContactType;
-  onNewContactRequested?: () => void;
   error?: string;
   disabled?: boolean;
+  onNewPropertyRequested?: () => void;
 }
 
-const ContactSelector: React.FC<ContactSelectorProps> = ({
+const PropertySelector: React.FC<PropertySelectorProps> = ({
   organizationId,
-  selectedContactId,
+  selectedPropertyId,
   onSelect,
-  label = "Seller",
-  restrictType,
-  onNewContactRequested,
+  label = "Property",
   error: externalError,
-  disabled
+  disabled = false,
+  onNewPropertyRequested
 }) => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,27 +43,29 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   }, []);
 
   useEffect(() => {
-    const fetchContacts = async () => {
+    const fetchProperties = async () => {
       setIsLoading(true);
       try {
-        const response = await contactService.getAll(organizationId, restrictType);
-        setContacts(response.data);
-
-        if (selectedContactId) {
-          const contact = response.data.find(c => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId);
-          if (contact) setSelectedContact(contact);
-        } else {
-          setSelectedContact(null);
-        }
+        const response = await propertyService.getAll(organizationId);
+        setProperties(response.data);
       } catch (err) {
-        console.error('Failed to fetch contacts', err);
+        console.error('Failed to fetch properties', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchContacts();
-  }, [organizationId, selectedContactId, restrictType]);
+    fetchProperties();
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (selectedPropertyId && properties.length > 0) {
+      const property = properties.find(p => p.id === selectedPropertyId);
+      if (property) setSelectedProperty(property);
+    } else if (!selectedPropertyId) {
+      setSelectedProperty(null);
+    }
+  }, [selectedPropertyId, properties]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,40 +78,38 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredContacts = contacts.filter(c => {
-    const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+  const filteredProperties = properties.filter(p => {
+    const fullSearch = `${p.title} ${p.address} ${p.city}`.toLowerCase();
     const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || c.email?.toLowerCase().includes(query) || c.phone.includes(query);
+    return fullSearch.includes(query);
   });
 
-  const handleSelect = (contact: Contact) => {
-    setSelectedContact(contact);
-    if (contact.sellerProfile) {
-      onSelect(contact.sellerProfile.id, contact);
-    } else {
-      onSelect('', contact);
-    }
+  const handleSelect = (property: Property) => {
+    setSelectedProperty(property);
+    onSelect(property.id, property);
     setIsDropdownOpen(false);
     setSearchQuery('');
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedContact(null);
+    setSelectedProperty(null);
     onSelect('');
   };
 
-  const handleCreateContact = async (data: Partial<Contact>) => {
+  const handleCreateProperty = async (data: Partial<Property>) => {
     try {
       setError(null);
-      const response = await contactService.create({ ...data, organizationId });
-      const newContact = response.data;
-      setContacts(prev => [newContact, ...prev]);
-      handleSelect(newContact);
+      const response = await propertyService.create({ ...data, organizationId } as any);
+      const newProperty = response.data;
+      setProperties(prev => [newProperty, ...prev]);
+      handleSelect(newProperty);
       setIsAddingNew(false);
+      return newProperty;
     } catch (err) {
-      console.error('Failed to create contact', err);
-      setError('Failed to create contact. Please try again.');
+      console.error('Failed to create property', err);
+      setError('Failed to create property. Please try again.');
+      throw err; // Re-throw to let PropertyForm handle it if needed
     }
   };
 
@@ -129,7 +127,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
         </label>
       )}
 
-      {selectedContact ? (
+      {selectedProperty ? (
         <div
           style={{
             display: 'flex',
@@ -157,22 +155,14 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
             color: 'var(--color-primary)',
             flexShrink: 0
           }}>
-            <User size={14} />
+            <Building2 size={14} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {selectedContact.firstName} {selectedContact.lastName}
+              {selectedProperty.title}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {selectedContact.phone ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Phone size={10} /> {selectedContact.phone}
-                </span>
-              ) : selectedContact.email ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Mail size={10} /> {selectedContact.email}
-                </span>
-              ) : null}
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <MapPin size={10} /> {selectedProperty.address}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
@@ -207,14 +197,14 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
             opacity: disabled ? 0.6 : 1
           }}
         >
-          <User size={18} color="var(--muted-foreground)" />
-          <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)' }}>Select contact...</span>
+          <Building2 size={18} color="var(--muted-foreground)" />
+          <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)' }}>Select property...</span>
           <ChevronDown size={18} color="var(--muted-foreground)" style={{ marginLeft: 'auto', transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </div>
       )}
 
       <AnimatePresence>
-        {isDropdownOpen && !selectedContact && (
+        {isDropdownOpen && !selectedProperty && (
           <>
             {isMobile && (
               <div 
@@ -254,7 +244,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
             >
               {isMobile && (
                 <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-bg)' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700 }}>Select Contact</h4>
+                  <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700 }}>Select Property</h4>
                   <button 
                     onClick={() => setIsDropdownOpen(false)}
                     style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}
@@ -269,7 +259,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Filter contacts..."
+                  placeholder="Filter properties..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   onClick={e => e.stopPropagation()}
@@ -292,8 +282,11 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onNewContactRequested) onNewContactRequested();
-                    else setIsAddingNew(true);
+                    if (onNewPropertyRequested) {
+                      onNewPropertyRequested();
+                    } else {
+                      setIsAddingNew(true);
+                    }
                     setIsDropdownOpen(false);
                   }}
                   style={{
@@ -326,19 +319,19 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
                   }}>
                     <Plus size={14} />
                   </div>
-                  New Contact
+                  New Property
                 </div>
               )}
               {isLoading ? (
                 <div style={{ padding: '1.5rem', textAlign: 'center' }}>
                   <Loader2 size={20} className="animate-spin" color="var(--color-primary)" />
                 </div>
-              ) : filteredContacts.length > 0 ? (
+              ) : filteredProperties.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {filteredContacts.map(contact => (
+                  {filteredProperties.map(property => (
                     <div
-                      key={contact.id}
-                      onClick={(e) => { e.stopPropagation(); handleSelect(contact); }}
+                      key={property.id}
+                      onClick={(e) => { e.stopPropagation(); handleSelect(property); }}
                       style={{
                         padding: '0.625rem 0.75rem',
                         borderRadius: '0.375rem',
@@ -351,25 +344,28 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{contact.firstName} {contact.lastName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                        {contact.email} {contact.email && contact.phone && '•'} {contact.phone}
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{property.title}</span>
+                        {property.price && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 700 }}>
+                            ${property.price.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <MapPin size={10} /> {property.address}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
-                  <p>No contacts found.</p>
+                  <p>No properties found.</p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      if (onNewContactRequested) {
-                        onNewContactRequested();
-                      } else {
-                        setIsAddingNew(true);
-                      }
+                      setIsAddingNew(true);
                       setIsDropdownOpen(false);
                     }}
                     style={{ marginTop: '0.5rem' }}
@@ -396,7 +392,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
           setIsAddingNew(false);
           setError(null);
         }}
-        title={`Add New ${restrictType === ContactType.SELLER ? 'Seller' : 'Contact'}`}
+        title="Add New Property"
         maxWidth="800px"
       >
         <AnimatePresence>
@@ -426,14 +422,13 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
         </AnimatePresence>
 
         <div style={{ padding: '0.5rem' }}>
-          <ContactForm
+          <PropertyForm
             organizationId={organizationId}
-            onSave={handleCreateContact}
+            onSave={handleCreateProperty}
             onCancel={() => {
               setIsAddingNew(false);
               setError(null);
             }}
-            fixedType={restrictType}
           />
         </div>
       </Modal>
@@ -441,4 +436,4 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   );
 };
 
-export default ContactSelector;
+export default PropertySelector;

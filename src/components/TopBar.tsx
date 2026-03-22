@@ -16,11 +16,12 @@ interface TopBarProps {
   onToggleSidebar: () => void;
   isMobile: boolean;
   user: any;
+  onUserUpdate: (updatedUser: any) => void;
   onProfileClick: () => void;
   onOrganizationClick: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onProfileClick, onOrganizationClick }) => {
+const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onUserUpdate, onProfileClick, onOrganizationClick }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -86,39 +87,15 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
             <Menu size={24} />
           </button>
         )}
-
-        {/* Organization Branding on the left */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '2.5rem',
-            height: '2.5rem',
-            borderRadius: 'var(--radius)',
-            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-            backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-primary)',
-            fontWeight: 700,
-            fontSize: '1rem',
-            border: activeOrg?.logo ? '1px solid var(--color-border)' : 'none',
-            cursor: 'pointer'
-          }} onClick={onOrganizationClick}>
-            {!activeOrg?.logo && <Building size={20} />}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }} onClick={onOrganizationClick}>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.2 }}>
-              {activeOrg?.name || 'EstateHub'}
-            </span>
-          </div>
-        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem' }}>
-        <ThemeSelector />
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: isMobile ? '0.5rem' : '1.5rem',
+        flexShrink: 0
+      }}>
+        <ThemeSelector onUserUpdate={onUserUpdate} />
         
         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }} aria-label="Notifications">
           <Bell size={20} />

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
+const ForgotPasswordForm = lazy(() => import('./ForgotPasswordForm'));
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Zap } from 'lucide-react';
 
 const Hero = () => {
-    const [formType, setFormType] = useState<'login' | 'signup'>('login');
+    const [formType, setFormType] = useState<'login' | 'signup' | 'forgot-password'>('login');
 
     return (
         <section style={{
@@ -41,7 +42,7 @@ const Hero = () => {
                             <span>The Next-Gen Real Estate CRM</span>
                         </div>
 
-                        <h1 style={{ fontSize: 'clamp(2.25rem, 6vw, 3.5rem)', lineHeight: 1.1, marginBottom: '1.5rem', color: 'var(--color-text)' }}>
+                        <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', lineHeight: 1.1, marginBottom: '1.5rem', color: 'var(--color-text)' }}>
                             Close More Deals with <span style={{ color: 'var(--color-primary)' }}>Intelligence.</span>
                         </h1>
 
@@ -86,9 +87,12 @@ const Hero = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         transition={{ duration: 0.3 }}
                                     >
-                                        <LoginForm onSwitchToSignup={() => setFormType('signup')} />
+                                        <LoginForm 
+                                            onSwitchToSignup={() => setFormType('signup')} 
+                                            onForgotPassword={() => setFormType('forgot-password')}
+                                        />
                                     </motion.div>
-                                ) : (
+                                ) : formType === 'signup' ? (
                                     <motion.div
                                         key="signup"
                                         initial={{ opacity: 0, y: 20 }}
@@ -97,6 +101,18 @@ const Hero = () => {
                                         transition={{ duration: 0.3 }}
                                     >
                                         <SignupForm onSwitchToLogin={() => setFormType('login')} />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="forgot"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <Suspense fallback={null}>
+                                            <ForgotPasswordForm onBackToLogin={() => setFormType('login')} />
+                                        </Suspense>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

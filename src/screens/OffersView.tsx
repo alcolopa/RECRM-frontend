@@ -16,14 +16,18 @@ import Button from '../components/Button';
 import OfferCard from '../components/OfferCard';
 import OfferForm from '../components/OfferForm';
 import { useNavigation } from '../contexts/NavigationContext';
+import { usePermissions } from '../utils/permissions';
+import { Permission } from '../api/users';
 
 interface OffersViewProps {
   organizationId: string;
+  user: UserProfile;
 }
 
 type QuickFilterType = 'all' | 'active' | 'inactive';
 
-const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
+const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
+  const permissions = usePermissions(user);
   const { navigationState, clearNavigationState } = useNavigation();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,13 +165,15 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: isMobile ? '1.375rem' : '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Offers & Negotiations</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: isMobile ? '0.8125rem' : undefined }}>Track property offers and negotiation history.</p>
         </div>
-        <Button
-          onClick={() => setView('form')}
-          leftIcon={<Plus size={20} />}
-          style={isMobile ? { width: '100%' } : undefined}
-        >
-          Create Offer
-        </Button>
+        {permissions.can(Permission.DEALS_CREATE) && (
+          <Button
+            onClick={() => setView('form')}
+            leftIcon={<Plus size={20} />}
+            style={isMobile ? { width: '100%' } : undefined}
+          >
+            Create Offer
+          </Button>
+        )}
       </header>
 
       {/* Stats Cards */}

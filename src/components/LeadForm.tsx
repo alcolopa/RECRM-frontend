@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -46,6 +46,14 @@ const LeadForm: React.FC<LeadFormProps> = ({
     propertyType: lead?.propertyType || undefined,
     assignedUserId: lead?.assignedUserId || ''
   });
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +119,12 @@ const LeadForm: React.FC<LeadFormProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <header style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '1rem',
+        marginBottom: isMobile ? '0.5rem' : '1rem'
+      }}>
         <button 
           type="button" 
           onClick={onCancel}
@@ -126,16 +139,17 @@ const LeadForm: React.FC<LeadFormProps> = ({
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             cursor: 'pointer',
-            color: 'var(--color-text)'
+            color: 'var(--color-text)',
+            flexShrink: 0
           }}
         >
           <ChevronLeft size={24} />
         </button>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+          <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 1.875rem)', fontWeight: 700, marginBottom: '0.25rem' }}>
             {lead ? 'Edit Lead' : 'Add New Lead'}
           </h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>Fill in the details for your potential client.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Fill in the details for your potential client.</p>
         </div>
       </header>
 
@@ -215,6 +229,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
             />
             <PhoneInput 
               id="phone" 
+              label="Phone Number"
               value={formData.phone} 
               onChange={handlePhoneChange}
               error={errors.phone}
@@ -297,7 +312,14 @@ const LeadForm: React.FC<LeadFormProps> = ({
             placeholder="Add any specific requirements or details..."
           />
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: '0.75rem', 
+            marginTop: '1.5rem', 
+            borderTop: '1px solid var(--color-border)', 
+            paddingTop: '1.5rem' 
+          }}>
             <Button 
               type="button" 
               variant="outline" 
@@ -309,7 +331,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
             <Button 
               type="submit" 
               isLoading={isLoading} 
-              style={{ flex: 2 }}
+              style={{ flex: isMobile ? 1 : 2 }}
               leftIcon={<Save size={20} />}
             >
               {lead ? 'Update Lead' : 'Save Lead'}

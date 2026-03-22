@@ -7,21 +7,31 @@ import {
   ChevronLeft, 
   ChevronRight,
   X,
-  HandCoins
+  HandCoins,
+  Building
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigation, type NavigationTab } from '../contexts/NavigationContext';
+import { getImageUrl } from '../utils/url';
+import { usePermissions } from '../utils/permissions';
+import { Permission } from '../api/users';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   isMobile: boolean;
   isTablet?: boolean;
+  user: any;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, user }) => {
   const { activeTab, setActiveTab } = useNavigation();
   const [isCollapsed, setIsCollapsed] = useState(isTablet || false);
+  const { can } = usePermissions(user);
+
+  // Derive active organization from memberships
+  const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
+  const activeOrg = activeMembership?.organization || user?.organization;
 
   useEffect(() => {
     if (isMobile) {
@@ -34,26 +44,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
   }, [isMobile, isTablet]);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'leads', label: 'Leads', icon: UserSquare2 },
-    { id: 'contacts', label: 'Contacts', icon: Users },
-    { id: 'properties', label: 'Properties', icon: Building2 },
-    { id: 'offers', label: 'Offers', icon: HandCoins },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: Permission.DASHBOARD_VIEW },
+    { id: 'leads', label: 'Leads', icon: UserSquare2, permission: Permission.LEADS_VIEW },
+    { id: 'contacts', label: 'Contacts', icon: Users, permission: Permission.CONTACTS_VIEW },
+    { id: 'properties', label: 'Properties', icon: Building2, permission: Permission.PROPERTIES_VIEW },
+    { id: 'offers', label: 'Offers', icon: HandCoins, permission: Permission.DEALS_VIEW },
     { id: 'profile', label: 'Profile', icon: UserSquare2 },
   ];
+
+  const filteredMenuItems = menuItems.filter(item => !item.permission || can(item.permission));
 
   const sidebarVariants: any = {
     open: { 
       x: 0, 
-      width: isCollapsed ? '5rem' : '16rem',
+      width: isCollapsed ? '6rem' : '16rem',
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
     closed: { 
       x: isMobile ? '-100%' : 0, 
-      width: isMobile ? '16rem' : (isCollapsed ? '5rem' : '16rem'),
+      width: isMobile ? '16rem' : (isCollapsed ? '6rem' : '16rem'),
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     }
   };
+
+  const showFullBranding = !isCollapsed || isMobile;
 
   return (
     <motion.aside
@@ -69,27 +83,72 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
         position: isMobile ? 'fixed' : 'sticky',
         left: 0,
         top: 0,
-        zIndex: 50,
-        flexShrink: 0
+        zIndex: 1100, // Higher than TopBar (1000)
+        flexShrink: 0,
+        overflow: 'visible' // Ensure button isn't clipped
       }}
     >
-      {/* Sidebar Header - Minimalist */}
+      {/* Sidebar Header - Organization Branding */}
       <div style={{ 
-        padding: '0 1.5rem', 
+        padding: isCollapsed && !isMobile ? '0 0.75rem' : '0 1rem', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: (isCollapsed && !isMobile) ? 'center' : 'space-between',
         height: '4.5rem',
         borderBottom: '1px solid var(--color-border)',
+        position: 'relative',
+        overflow: 'visible' // Ensure button isn't clipped
       }}>
-        {(!isCollapsed || isMobile) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Menu
-            </span>
+        {/* ... (branding content) */}
+        <div 
+          onClick={() => {
+            setActiveTab('organization');
+            if (isMobile) onClose();
+          }}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem',
+            cursor: 'pointer',
+            flex: 1,
+            minWidth: 0,
+            justifyContent: (isCollapsed && !isMobile) ? 'center' : 'flex-start'
+          }}
+        >
+          <div style={{
+            width: '2.5rem',
+            height: '2.5rem',
+            borderRadius: 'var(--radius)',
+            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+            backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-primary)',
+            fontWeight: 700,
+            fontSize: '1rem',
+            border: activeOrg?.logo ? '1px solid var(--color-border)' : 'none',
+            flexShrink: 0
+          }}>
+            {!activeOrg?.logo && <Building size={20} />}
           </div>
-        )}
+          {showFullBranding && (
+            <span style={{ 
+              fontSize: '1rem', 
+              fontWeight: 800, 
+              color: 'var(--color-text)', 
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {activeOrg?.name || 'EstateHub'}
+            </span>
+          )}
+        </div>
         
         {!isMobile && (
           <button 
@@ -97,14 +156,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             style={{
               ...iconButtonStyle,
-              background: 'rgba(var(--color-primary-rgb), 0.05)',
+              background: 'var(--color-surface)', // Solid background
               color: 'var(--color-primary)',
-              borderRadius: '0.5rem',
-              width: '2rem',
-              height: '2rem'
+              borderRadius: '50%', // Circle looks better for floating
+              width: '1.75rem',
+              height: '1.75rem',
+              position: 'absolute',
+              right: '-0.875rem', // Center on border
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 1200, // Higher than Sidebar (1100)
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--color-border)',
+              display: 'flex'
             }}
           >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
         )}
 
@@ -117,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet }
 
       {/* Navigation Links */}
       <nav style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const showLabel = !isCollapsed || isMobile;

@@ -1,8 +1,61 @@
 import api from './client';
 
+export const Permission = {
+  // Leads
+  LEADS_VIEW: 'LEADS_VIEW',
+  LEADS_CREATE: 'LEADS_CREATE',
+  LEADS_EDIT: 'LEADS_EDIT',
+  LEADS_DELETE: 'LEADS_DELETE',
+  LEADS_EXPORT: 'LEADS_EXPORT',
+
+  // Contacts
+  CONTACTS_VIEW: 'CONTACTS_VIEW',
+  CONTACTS_CREATE: 'CONTACTS_CREATE',
+  CONTACTS_EDIT: 'CONTACTS_EDIT',
+  CONTACTS_DELETE: 'CONTACTS_DELETE',
+  CONTACTS_EXPORT: 'CONTACTS_EXPORT',
+
+  // Properties
+  PROPERTIES_VIEW: 'PROPERTIES_VIEW',
+  PROPERTIES_CREATE: 'PROPERTIES_CREATE',
+  PROPERTIES_EDIT: 'PROPERTIES_EDIT',
+  PROPERTIES_DELETE: 'PROPERTIES_DELETE',
+
+  // Deals
+  DEALS_VIEW: 'DEALS_VIEW',
+  DEALS_CREATE: 'DEALS_CREATE',
+  DEALS_EDIT: 'DEALS_EDIT',
+  DEALS_DELETE: 'DEALS_DELETE',
+
+  // Team
+  TEAM_VIEW: 'TEAM_VIEW',
+  TEAM_INVITE: 'TEAM_INVITE',
+  TEAM_EDIT_ROLES: 'TEAM_EDIT_ROLES',
+  TEAM_REMOVE_MEMBER: 'TEAM_REMOVE_MEMBER',
+
+  // Organization
+  ORG_SETTINGS_EDIT: 'ORG_SETTINGS_EDIT',
+  ORG_BILLING_VIEW: 'ORG_BILLING_VIEW',
+
+  // Dashboard
+  DASHBOARD_VIEW: 'DASHBOARD_VIEW',
+} as const;
+
+export type Permission = keyof typeof Permission;
+
+export interface CustomRole {
+  id: string;
+  name: string;
+  description?: string;
+  permissions: Permission[];
+  isSystem: boolean;
+}
+
 export interface Membership {
   id: string;
   role: string;
+  customRoleId?: string;
+  customRole?: CustomRole;
   organizationId: string;
   organization: {
     id: string;
@@ -46,4 +99,7 @@ export const userService = {
   },
   completeTutorial: (tutorialId: string) => api.post<UserProfile>(`/users/me/tutorials/${tutorialId}`),
   skipAllTutorials: () => api.post<UserProfile>('/users/me/tutorials/skip-all'),
+  verifyInvitation: (token: string) => api.get(`/auth/invite/verify/${token}`),
+  acceptInvitation: (token: string) => api.post('/auth/invite/accept', { token }),
+  registerInvitation: (data: any) => api.post('/auth/invite/register', data),
 };

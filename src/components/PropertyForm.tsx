@@ -35,7 +35,7 @@ interface PropertyFormProps {
   property?: Property;
   onSave: (data: Partial<Property>) => Promise<Property | void>;
   onCancel: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (property?: Property) => void;
   organizationId: string;
 }
 
@@ -440,7 +440,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       // Parent handleSave already handles redirection if it finishes successfully
       // We will now handle navigation here after images are fully uploaded
       clearNavigationState();
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(savedProperty as Property);
       else onCancel();
     } catch (err: any) {
       console.error('Failed to submit form', err);

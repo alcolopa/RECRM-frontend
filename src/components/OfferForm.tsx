@@ -3,22 +3,23 @@ import {
   ChevronLeft, 
   HandCoins, 
   DollarSign, 
-  Calendar, 
   FileText,
   Building2,
   User,
-  Check,
   AlertCircle,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { type Property, propertyService } from '../api/properties';
+import { type Property } from '../api/properties';
 import { type Contact } from '../api/contacts';
 import { offersService, FinancingType, OfferStatus, OffererType } from '../api/offers';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
 import ContactSelector from './ContactSelector';
+import PropertySelector from './PropertySelector';
+import DateSelector from './DateSelector';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface OfferFormProps {
   onCancel: () => void;
@@ -35,7 +36,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
   initialProperty,
   initialContactId
 }) => {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const { navigationState, navigate, clearNavigationState } = useNavigation();
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(initialProperty || null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -49,9 +51,9 @@ const OfferForm: React.FC<OfferFormProps> = ({
     contactId: initialContactId || '',
     price: '',
     deposit: '',
-    financingType: FinancingType.MORTGAGE,
-    closingDate: '',
-    expirationDate: '',
+    financingType: FinancingType.CASH,
+    closingDate: null as string | null,
+    expirationDate: null as string | null,
     notes: '',
     offerer: OffererType.BUYER,
     status: OfferStatus.SUBMITTED
@@ -62,62 +64,107 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await propertyService.getAll(organizationId);
-        setProperties(response.data);
-      } catch (err) {
-        console.error('Failed to fetch properties', err);
-      }
-    };
 
-    fetchProperties();
-  }, [organizationId]);
 
   useEffect(() => {
-    if (initialContactId) {
+    if (formData.contactId) {
       const fetchContact = async () => {
         try {
           const { contactService } = await import('../api/contacts');
-          const response = await contactService.getById(initialContactId, organizationId);
+          const response = await contactService.getById(formData.contactId, organizationId);
           setSelectedContact(response.data);
         } catch (err) {
-          console.error('Failed to fetch prefill contact', err);
+          console.error('Failed to fetch contact details', err);
         }
       };
       fetchContact();
+    } else {
+      setSelectedContact(null);
     }
-  }, [initialContactId, organizationId]);
+  }, [formData.contactId, organizationId]);
+
+  useEffect(() => {
+    if (formData.propertyId) {
+      const fetchProperty = async () => {
+        try {
+          const { propertyService } = await import('../api/properties');
+          const response = await propertyService.getOne(formData.propertyId, organizationId);
+          setSelectedProperty(response.data);
+        } catch (err) {
+          console.error('Failed to fetch property details', err);
+        }
+      };
+      fetchProperty();
+    } else {
+      setSelectedProperty(initialProperty || null);
+    }
+  }, [formData.propertyId, organizationId]);
+
+  // Restore draft state and handle prefilled IDs from navigation
+  useEffect(() => {
+    if (navigationState.draftData) {
+      setFormData(prev => ({ ...prev, ...navigationState.draftData }));
+    }
+    
+    if (navigationState.prefillData?.contactId) {
+      setFormData(prev => ({ ...prev, contactId: navigationState.prefillData.contactId }));
+    }
+    
+    if (navigationState.prefillData?.propertyId) {
+      setFormData(prev => ({ ...prev, propertyId: navigationState.prefillData.propertyId }));
+    }
+
+    // Clear navigation state after restoration to prevent loops
+    if (navigationState.draftData || navigationState.prefillData) {
+      // Small timeout to ensure everything is set before clearing
+      setTimeout(clearNavigationState, 100);
+    }
+  }, []);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.propertyId) newErrors.propertyId = 'Property is required';
-    if (!formData.contactId) newErrors.contactId = 'Contact is required';
+    if (!formData.propertyId) newErrors.propertyId = 'Please select a property';
+    if (!formData.contactId) newErrors.contactId = 'Please select a contact';
     
     if (!formData.price) {
       newErrors.price = 'Price is required';
-    } else if (Number(formData.price) <= 0) {
-      newErrors.price = 'Price must be greater than 0';
+    } else {
+      const priceNum = Number(formData.price);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        newErrors.price = 'Price must be greater than 0';
+      }
     }
 
-    if (formData.deposit && Number(formData.deposit) < 0) {
-      newErrors.deposit = 'Deposit cannot be negative';
-    }
-
-    if (formData.closingDate && formData.expirationDate) {
-      const closing = new Date(formData.closingDate);
-      const expiration = new Date(formData.expirationDate);
-      if (expiration > closing) {
-        newErrors.expirationDate = 'Offer must expire before the closing date';
+    if (formData.deposit) {
+      const depositNum = Number(formData.deposit);
+      if (isNaN(depositNum) || depositNum < 0) {
+        newErrors.deposit = 'Deposit cannot be negative';
       }
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    if (formData.expirationDate && new Date(formData.expirationDate) < today) {
-      newErrors.expirationDate = 'Expiration date cannot be in the past';
+
+    if (formData.closingDate) {
+      const closing = new Date(formData.closingDate);
+      if (!isNaN(closing.getTime()) && closing < today) {
+        newErrors.closingDate = 'Cannot be in the past';
+      }
+    }
+
+    if (formData.expirationDate) {
+      const expiry = new Date(formData.expirationDate);
+      if (!isNaN(expiry.getTime()) && expiry < today) {
+        newErrors.expirationDate = 'Cannot be in the past';
+      }
+    }
+
+    if (formData.closingDate && formData.expirationDate) {
+      const closing = new Date(formData.closingDate);
+      const expiration = new Date(formData.expirationDate);
+      if (!isNaN(closing.getTime()) && !isNaN(expiration.getTime()) && expiration <= closing) {
+        newErrors.expirationDate = 'Must be further in time than closing';
+      }
     }
 
     setErrors(newErrors);
@@ -135,28 +182,51 @@ const OfferForm: React.FC<OfferFormProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const handleNewContactRequested = () => {
+    navigate('contacts', {
+      returnTo: 'offers',
+      draftData: formData,
+      context: 'creating-buyer'
+    });
+  };
+
+  const handleNewPropertyRequested = () => {
+    navigate('properties', {
+      returnTo: 'offers',
+      draftData: formData,
+      context: 'creating-property'
+    });
+  };
+
+  const handleSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+    setError(null);
+    
+    const isValid = validate();
+    if (!isValid) {
+      // Don't show a general error alert if we have specific field errors
+      return;
+    }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       await offersService.create({
         ...formData,
         price: Number(formData.price),
         deposit: formData.deposit ? Number(formData.deposit) : undefined,
-        closingDate: formData.closingDate || null,
-        expirationDate: formData.expirationDate || null
+        // Dates are already handled by DateSelector (either ISO string or null)
       }, organizationId);
       onSuccess();
     } catch (err: any) {
       console.error('Failed to create offer', err);
-      setError(getErrorMessage(err, 'Failed to create offer. Please try again.'));
+      
       const backendErrors = mapBackendErrors(err);
       if (Object.keys(backendErrors).length > 0) {
         setErrors(backendErrors);
+        setError('Please correct the highlighted errors.');
+      } else {
+        setError(getErrorMessage(err, 'Failed to create offer. Please try again.'));
       }
     } finally {
       setIsSubmitting(false);
@@ -173,7 +243,16 @@ const OfferForm: React.FC<OfferFormProps> = ({
     }
   };
 
-  const selectedProperty = properties.find(p => p.id === formData.propertyId);
+  const handlePropertySelect = (_propertyId: string, property?: Property) => {
+    if (property) {
+      setSelectedProperty(property);
+      setFormData(prev => ({ ...prev, propertyId: property.id }));
+    } else {
+      setSelectedProperty(null);
+      setFormData(prev => ({ ...prev, propertyId: '' }));
+    }
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '850px', margin: '0 auto' }}>
@@ -237,12 +316,18 @@ const OfferForm: React.FC<OfferFormProps> = ({
         )}
       </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="card" style={{ padding: isMobile ? '1rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <form onSubmit={handleSubmit} className="card" style={{ 
+        maxWidth: '800px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: isMobile ? '1.25rem' : '2rem',
+        padding: isMobile ? '1.25rem' : '2rem'
+      }}>
         {/* Section 1: Property & Buyer */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '1.25rem' : '2.5rem' }}>
           {/* Property Section */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
                 <Building2 size={14} /> Property
               </h3>
@@ -252,27 +337,20 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 </span>
               )}
             </div>
-            <Select
-              id="propertyId"
-              name="propertyId"
-              value={formData.propertyId}
-              onChange={(e) => handleFieldChange('propertyId', e.target.value)}
-              searchable
-              icon={Building2}
-              options={[
-                { value: '', label: 'Choose a property...' },
-                ...properties.map(p => ({ value: p.id, label: `${p.title} (${p.address})` }))
-              ]}
-              required
-              disabled={!!initialProperty}
+            <PropertySelector
+              organizationId={organizationId}
+              selectedPropertyId={formData.propertyId}
+              onSelect={handlePropertySelect}
+              onNewPropertyRequested={handleNewPropertyRequested}
               error={errors.propertyId}
-              placeholder="Search properties..."
+              disabled={!!initialProperty}
+              label=""
             />
-          </section>
+          </div>
 
           {/* Buyer Section */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
                 <User size={14} /> Buyer
               </h3>
@@ -282,40 +360,20 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 </span>
               )}
             </div>
-            {!selectedContact ? (
-              <ContactSelector 
-                organizationId={organizationId} 
-                onSelect={handleContactSelect} 
-                error={errors.contactId}
-                label=""
-              />
-            ) : (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                padding: '0 0.875rem', 
-                backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)', 
-                borderRadius: 'var(--radius)',
-                border: '1px solid var(--color-primary)',
-                height: '2.75rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
-                  <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)', flexShrink: 0 }}>
-                    <User size={12} />
-                  </div>
-                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>{selectedContact.firstName} {selectedContact.lastName}</span>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)} style={{ padding: '0.25rem 0.5rem', height: 'auto', fontSize: '0.7rem', flexShrink: 0 }}>Change</Button>
-              </div>
-            )}
-          </section>
+            <ContactSelector 
+              organizationId={organizationId} 
+              onSelect={handleContactSelect} 
+              onNewContactRequested={handleNewContactRequested}
+              selectedContactId={formData.contactId}
+              error={errors.contactId}
+              label=""
+              disabled={isSubmitting}
+            />
+          </div>
         </div>
 
         {/* Section 2: Offer Terms */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
           <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', margin: 0 }}>
             <HandCoins size={14} /> Offer Details
           </h3>
@@ -342,6 +400,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
               value={formData.deposit}
               onChange={(e) => handleFieldChange('deposit', e.target.value)}
               icon={DollarSign}
+              error={errors.deposit}
             />
           </div>
 
@@ -358,24 +417,21 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 { value: FinancingType.PRIVATE_FINANCING, label: 'Private' },
                 { value: FinancingType.OTHER, label: 'Other' },
               ]}
+              error={errors.financingType}
             />
-            <Input
+            <DateSelector
               id="closingDate"
-              name="closingDate"
               label="Closing Date"
-              type="date"
               value={formData.closingDate}
-              onChange={(e) => handleFieldChange('closingDate', e.target.value)}
-              icon={Calendar}
+              onChange={(val) => handleFieldChange('closingDate', val)}
+              error={errors.closingDate}
             />
-            <Input
+            <DateSelector
               id="expirationDate"
-              name="expirationDate"
               label="Expiry Date"
-              type="date"
               value={formData.expirationDate}
-              onChange={(e) => handleFieldChange('expirationDate', e.target.value)}
-              icon={Calendar}
+              onChange={(val) => handleFieldChange('expirationDate', val)}
+              error={errors.expirationDate}
             />
             <Select
               id="offerer"
@@ -389,6 +445,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 { value: OffererType.AGENCY, label: 'Agency' },
               ]}
               required
+              error={errors.offerer}
             />
           </div>
 
@@ -401,22 +458,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             icon={FileText}
             rows={3}
+            error={errors.notes}
           />
-        </section>
-
-        {/* Action Bar */}
-        <div style={{ display: 'flex', justifyContent: isMobile ? 'stretch' : 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
-          <Button type="button" variant="outline" onClick={onCancel} style={{ flex: isMobile ? 1 : 'none', minWidth: '100px' }}>
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            isLoading={isSubmitting}
-            leftIcon={!isSubmitting && <Check size={18} />}
-            style={{ flex: isMobile ? 2 : 'none', minWidth: '150px' }}
-          >
-            Submit Offer
-          </Button>
         </div>
       </form>
     </div>

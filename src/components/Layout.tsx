@@ -2,9 +2,11 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { useNavigation } from '../contexts/NavigationContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 import TutorialGuide from './TutorialGuide';
 import { tutorials } from '../data/tutorials';
+import { usePermissions } from '../utils/permissions';
+import { Permission } from '../api/users';
 
 // Lazy load views for code splitting
 const Dashboard = lazy(() => import('../screens/Dashboard'));
@@ -34,9 +36,10 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
+  const { can } = usePermissions(user);
 
   // Derive active organization and role from memberships
-  const activeMembership = user?.memberships?.[0];
+  const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
   const activeOrgId = activeMembership?.organizationId || user?.organizationId;
   const activeRole = activeMembership?.role || user?.role;
 
@@ -63,7 +66,29 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  const tabPermissions: Record<string, string> = {
+    'dashboard': Permission.DASHBOARD_VIEW,
+    'leads': Permission.LEADS_VIEW,
+    'contacts': Permission.CONTACTS_VIEW,
+    'properties': Permission.PROPERTIES_VIEW,
+    'offers': Permission.DEALS_VIEW,
+    'organization': Permission.ORG_SETTINGS_EDIT,
+  };
+
   const renderContent = () => {
+    const requiredPermission = tabPermissions[activeTab];
+    if (requiredPermission && !can(requiredPermission)) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', gap: '1rem' }}>
+          <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'rgba(220, 38, 38, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-error)' }}>
+            <ShieldAlert size={32} />
+          </div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Access Denied</h2>
+          <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px' }}>You do not have the required permissions to view this module. Please contact your organization owner.</p>
+        </div>
+      );
+    }
+
     return (
       <Suspense fallback={<LoadingView />}>
         {(() => {
@@ -71,15 +96,15 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
             case 'dashboard':
               return <Dashboard organizationId={activeOrgId} user={user} onUserUpdate={onUserUpdate} />;
             case 'contacts':
-              return <ContactsView organizationId={activeOrgId} />;
+              return <ContactsView organizationId={activeOrgId} user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             case 'properties':
-              return <PropertiesView organizationId={activeOrgId} />;
+              return <PropertiesView organizationId={activeOrgId} user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             case 'offers':
-              return <OffersView organizationId={activeOrgId} />;
+              return <OffersView organizationId={activeOrgId} user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             case 'offer-details':
-              return <OfferDetailsView organizationId={activeOrgId} />;
+              return <OfferDetailsView organizationId={activeOrgId} user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             case 'leads':
-              return <LeadsView organizationId={activeOrgId} />;
+              return <LeadsView organizationId={activeOrgId} user={{ ...user, role: activeRole, organizationId: activeOrgId }} />;
             case 'profile':
               return <ProfileView user={{ ...user, role: activeRole, organizationId: activeOrgId }} onUserUpdate={onUserUpdate} />;
             case 'organization':
@@ -104,13 +129,14 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       width: '100%', 
       backgroundColor: 'var(--color-bg)', 
       position: 'relative', 
-      overflow: 'hidden' 
+      overflow: 'visible' // Allow sidebar toggle button to show
     }}>
       <Sidebar 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isMobile={isMobile}
         isTablet={isTablet}
+        user={user}
       />
       
       {isMobile && isSidebarOpen && (
@@ -133,13 +159,14 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         height: '100vh',
         width: '100%',
         minWidth: 0,
-        overflow: 'hidden'
+        overflow: 'visible' // Allow sidebar toggle button to show
       }}>
         <TopBar 
           onLogout={onLogout} 
           onToggleSidebar={toggleSidebar} 
           isMobile={isMobile} 
           user={user} 
+          onUserUpdate={onUserUpdate}
           onProfileClick={() => setActiveTab('profile')}
           onOrganizationClick={() => setActiveTab('organization')}
         />

@@ -20,9 +20,11 @@ interface ContactCardProps {
   onEdit: (contact: Contact) => void;
   onDelete: (id: string) => void;
   onView: (contact: Contact) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, onView }) => {
+const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, onView, canEdit = true, canDelete = true }) => {
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -141,22 +143,26 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
                   minWidth: '140px'
                 }}
               >
-                <Button 
-                  variant="ghost"
-                  onClick={() => { setShowOptions(false); onEdit(contact); }}
-                  style={{ ...optionButtonStyle, textAlign: 'left', justifyContent: 'flex-start' }}
-                  leftIcon={<Edit2 size={16} />}
-                >
-                  Edit Contact
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => { setShowOptions(false); onDelete(contact.id); }}
-                  style={{ ...optionButtonStyle, color: 'var(--color-error)', textAlign: 'left', justifyContent: 'flex-start' }}
-                  leftIcon={<Trash2 size={16} />}
-                >
-                  Delete
-                </Button>
+                {canEdit && (
+                  <Button 
+                    variant="ghost"
+                    onClick={() => { setShowOptions(false); onEdit(contact); }}
+                    style={{ ...optionButtonStyle, textAlign: 'left', justifyContent: 'flex-start' }}
+                    leftIcon={<Edit2 size={16} />}
+                  >
+                    Edit Contact
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button 
+                    variant="ghost"
+                    onClick={() => { setShowOptions(false); onDelete(contact.id); }}
+                    style={{ ...optionButtonStyle, color: 'var(--color-error)', textAlign: 'left', justifyContent: 'flex-start' }}
+                    leftIcon={<Trash2 size={16} />}
+                  >
+                    Delete
+                  </Button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

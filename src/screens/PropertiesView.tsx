@@ -9,13 +9,17 @@ import PropertyDetails from '../components/PropertyDetails';
 import Button from '../components/Button';
 import ConfirmModal from '../components/ConfirmModal';
 import { useNavigation } from '../contexts/NavigationContext';
+import { usePermissions } from '../utils/permissions';
+import { Permission } from '../api/users';
 
 interface PropertiesViewProps {
   organizationId: string;
+  user: UserProfile;
 }
 
-const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
-  const { navigationState } = useNavigation();
+const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user }) => {
+  const permissions = usePermissions(user);
+  const { navigationState, navigate } = useNavigation();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
@@ -59,12 +63,14 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
   }, [organizationId]);
 
   useEffect(() => {
-    // Detect returning from seller creation
-    if (navigationState.context === 'creating-seller' && navigationState.draftData) {
+    // Detect returning from creation contexts
+    if ((navigationState.context === 'creating-seller' || navigationState.context === 'creating-property') && navigationState.draftData) {
       setView('form');
       if (navigationState.draftData.id) {
         setEditingProperty(navigationState.draftData);
       }
+    } else if (navigationState.context === 'creating-property') {
+      setView('form');
     }
   }, [navigationState.context, navigationState.draftData]);
 
@@ -139,13 +145,27 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
         property={editingProperty}
         onSave={handleSave}
         onCancel={() => {
-          setView('list');
-          setEditingProperty(undefined);
+          if (navigationState.returnTo === 'offers') {
+            navigate('offers', navigationState);
+          } else {
+            setView('list');
+            setEditingProperty(undefined);
+          }
         }}
-        onSuccess={() => {
-          setView('list');
-          setEditingProperty(undefined);
-          fetchProperties();
+        onSuccess={(savedProperty) => {
+          if (navigationState.returnTo === 'offers' && savedProperty) {
+            navigate('offers', {
+              ...navigationState,
+              prefillData: { 
+                ...navigationState.prefillData,
+                propertyId: savedProperty.id 
+              }
+            });
+          } else {
+            setView('list');
+            setEditingProperty(undefined);
+            fetchProperties();
+          }
         }}
         organizationId={organizationId}
       />
@@ -176,12 +196,14 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Properties</h1>
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your listings and property details.</p>
         </div>
-        <Button
-          onClick={() => setView('form')}
-          leftIcon={<Plus size={20} />}
-        >
-          Add Property
-        </Button>
+        {permissions.can(Permission.PROPERTIES_CREATE) && (
+          <Button
+            onClick={() => setView('form')}
+            leftIcon={<Plus size={20} />}
+          >
+            Add Property
+          </Button>
+        )}
       </header>
 
       {/* Filters & Search */}
@@ -239,6 +261,8 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId }) => {
                 setView('form');
               }}
               onDelete={handleDelete}
+              canEdit={permissions.can(Permission.PROPERTIES_EDIT)}
+              canDelete={permissions.can(Permission.PROPERTIES_DELETE)}
             />
           ))}
         </div>

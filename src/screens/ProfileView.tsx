@@ -9,12 +9,17 @@ import {
   CheckCircle2,
   ShieldCheck,
   Building,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
 import { Input } from '../components/Input';
+import Button from '../components/Button';
 import PhoneInput from '../components/PhoneInput';
+import PasswordStrength from '../components/PasswordStrength';
+import { isPasswordStrong } from '../utils/validation';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface ProfileViewProps {
@@ -23,6 +28,10 @@ interface ProfileViewProps {
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
+  const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
+  const activeRoleName = activeMembership?.customRole?.name || activeMembership?.role || user.role;
+  const activeOrgName = activeMembership?.organization?.name || 'No Organization';
+
   const [formData, setFormData] = useState({
     firstName: user.firstName || '',
     lastName: user.lastName || '',
@@ -52,6 +61,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -126,8 +137,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'New passwords do not match';
       }
-      if (formData.password.length < 8) {
-        newErrors.password = 'New password must be at least 8 characters';
+      if (!isPasswordStrong(formData.password)) {
+        newErrors.password = 'Password must meet all requirements';
       }
     }
 
@@ -156,10 +167,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
 
       const response = await userService.updateMe(updatePayload);
       onUserUpdate(response.data);
-      if (updatePayload.unitPreference) {
-        // Option to trigger a local refresh if needed, 
-        // but App.tsx handleUserUpdate -> UnitProvider user={user} should handle it.
-      }
       setSuccess(true);
       setHasChanges(false);
       setFormData(prev => ({ ...prev, password: '', oldPassword: '', confirmPassword: '' }));
@@ -253,11 +260,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={badgeStyle}>
                 <ShieldCheck size={16} />
-                <span>Role: {user.role}</span>
+                <span>Role: {activeRoleName}</span>
               </div>
               <div style={badgeStyle}>
                 <Building size={16} />
-                <span>Org: {user.memberships?.[0]?.organization?.name || 'No Organization'}</span>
+                <span>Org: {activeOrgName}</span>
               </div>
             </div>
           </div>
@@ -338,17 +345,15 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               error={errors.email}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Phone Number</label>
-              <PhoneInput
-                id="phone"
-                value={formData.phone}
-                onChange={(val) => {
-                  setFormData(prev => ({ ...prev, phone: val }));
-                  setHasChanges(true);
-                }}
-              />
-            </div>
+            <PhoneInput
+              id="phone"
+              label="Phone Number"
+              value={formData.phone}
+              onChange={(val) => {
+                setFormData(prev => ({ ...prev, phone: val }));
+                setHasChanges(true);
+              }}
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -398,7 +403,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               label="Current Password"
               id="oldPassword"
               name="oldPassword"
-              type="password"
+              type={showOldPassword ? "text" : "password"}
               value={formData.oldPassword}
               onChange={(e) => {
                 handleChange(e);
@@ -408,23 +413,56 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
               icon={Lock}
               helperText="Required only if you are changing your password."
               error={errors.oldPassword}
+              rightElement={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  disabled={isLoading}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px'
+                  }}
+                  leftIcon={showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                />
+              }
             />
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
-              <Input
-                label="New Password"
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => {
-                  handleChange(e);
-                  if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                }}
-                placeholder="New password"
-                icon={Lock}
-                error={errors.password}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <Input
+                  label="New Password"
+                  id="password"
+                  name="password"
+                  type={showNewPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                  }}
+                  placeholder="New password"
+                  icon={Lock}
+                  error={errors.password}
+                  rightElement={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      disabled={isLoading}
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px'
+                      }}
+                      leftIcon={showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    />
+                  }
+                />
+                <PasswordStrength password={formData.password || ''} />
+              </div>
               <Input
                 label="Confirm New Password"
                 id="confirmPassword"

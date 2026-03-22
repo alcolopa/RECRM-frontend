@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   HandCoins, 
   DollarSign, 
-  Calendar, 
   FileText,
   User
 } from 'lucide-react';
+import DateSelector from './DateSelector';
 import { type Offer, offersService, FinancingType, OffererType } from '../api/offers';
 import Modal from './Modal';
 import Button from './Button';
@@ -37,10 +37,10 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
     price: originalOffer.price,
     deposit: originalOffer.deposit || 0,
     financingType: originalOffer.financingType,
-    closingDate: originalOffer.closingDate ? new Date(originalOffer.closingDate).toISOString().split('T')[0] : '',
-    expirationDate: '',
+    closingDate: originalOffer.closingDate || null as string | null,
+    expirationDate: null as string | null,
     notes: '',
-    offerer: OffererType.AGENCY
+    offerer: OffererType.AGENCY,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +51,32 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
     if (!formData.price || Number(formData.price) <= 0) {
       newErrors.price = 'Counter price must be greater than 0';
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (formData.closingDate) {
+      const closing = new Date(formData.closingDate);
+      if (!isNaN(closing.getTime()) && closing < today) {
+        newErrors.closingDate = 'Cannot be in the past';
+      }
+    }
+
+    if (formData.expirationDate) {
+      const expiry = new Date(formData.expirationDate);
+      if (!isNaN(expiry.getTime()) && expiry < today) {
+        newErrors.expirationDate = 'Cannot be in the past';
+      }
+    }
+
+    if (formData.closingDate && formData.expirationDate) {
+      const closing = new Date(formData.closingDate);
+      const expiration = new Date(formData.expirationDate);
+      if (!isNaN(closing.getTime()) && !isNaN(expiration.getTime()) && expiration <= closing) {
+        newErrors.expirationDate = 'Must be further in time than closing';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,6 +93,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
         ...formData,
         price: Number(formData.price),
         deposit: formData.deposit ? Number(formData.deposit) : undefined,
+        // Dates are already handled (either ISO string or null)
       }, originalOffer.organizationId);
       onSuccess();
     } catch (err: any) {
@@ -156,29 +183,23 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({
               { value: FinancingType.OTHER, label: 'Other' },
             ]}
           />
-          <Input
+          <DateSelector
             id="closingDate"
-            name="closingDate"
             label="Proposed Closing Date"
-            type="date"
             value={formData.closingDate}
-            onChange={(e) => setFormData({ ...formData, closingDate: e.target.value })}
-            icon={Calendar}
+            onChange={(val) => setFormData({ ...formData, closingDate: val })}
           />
         </div>
 
         <div className="grid grid-2" style={{ gap: '1.25rem' }}>
-          <Input
+          <DateSelector
             id="expirationDate"
-            name="expirationDate"
             label="Offer Expiration"
-            type="date"
             value={formData.expirationDate}
-            onChange={(e) => {
-              setFormData({ ...formData, expirationDate: e.target.value });
+            onChange={(val) => {
+              setFormData({ ...formData, expirationDate: val });
               if (errors.expirationDate) setErrors(prev => { const n = { ...prev }; delete n.expirationDate; return n; });
             }}
-            icon={Calendar}
             error={errors.expirationDate}
           />
           <Select

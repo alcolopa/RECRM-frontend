@@ -23,12 +23,16 @@ import NegotiationTimeline from '../components/NegotiationTimeline';
 import { getImageUrl } from '../utils/url';
 import { useNavigation } from '../contexts/NavigationContext';
 import { Textarea } from '../components/Input';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface OfferDetailsViewProps {
   organizationId: string;
+  user: UserProfile;
 }
 
-const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) => {
+const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId, user }) => {
+  const permissions = usePermissions(user);
   const { navigationState, navigate } = useNavigation();
   const offerId = navigationState.prefillData?.offerId;
   
@@ -197,7 +201,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
           justifyContent: isMobile ? 'flex-start' : 'flex-end',
           paddingLeft: isMobile ? '3.5rem' : '0'
         }}>
-          {canAction && (
+          {canAction && permissions.can(Permission.DEALS_EDIT) && (
             <>
                <Button 
                 variant="outline" 
@@ -306,15 +310,17 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
                   <FileText size={14} /> Additional Terms & Notes
                 </div>
-                {!isEditingNote ? (
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditingNote(true)} style={{ height: 'auto', padding: '0.25rem 0.5rem' }}>
-                    {offer.notes ? 'Edit' : 'Add Note'}
-                  </Button>
-                ) : (
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditingNote(false)} style={{ height: 'auto', padding: '0.25rem 0.5rem' }}>Cancel</Button>
-                    <Button variant="primary" size="sm" onClick={handleSaveNote} isLoading={isSavingNote} leftIcon={<Save size={14} />} style={{ height: 'auto', padding: '0.25rem 0.75rem' }}>Save</Button>
-                  </div>
+                {permissions.can(Permission.DEALS_EDIT) && (
+                  !isEditingNote ? (
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditingNote(true)} style={{ height: 'auto', padding: '0.25rem 0.5rem' }}>
+                      {offer.notes ? 'Edit' : 'Add Note'}
+                    </Button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingNote(false)} style={{ height: 'auto', padding: '0.25rem 0.5rem' }}>Cancel</Button>
+                      <Button variant="primary" size="sm" onClick={handleSaveNote} isLoading={isSavingNote} leftIcon={<Save size={14} />} style={{ height: 'auto', padding: '0.25rem 0.75rem' }}>Save</Button>
+                    </div>
+                  )
                 )}
               </div>
               
@@ -389,7 +395,9 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
             </div>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: '0 0 0.5rem' }}>{offer.negotiation?.property?.title}</h3>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: '0 0 1rem' }}>{offer.negotiation?.property?.address}</p>
-            <Button variant="outline" fullWidth onClick={() => navigate('properties')}>View Property</Button>
+            {permissions.can(Permission.PROPERTIES_VIEW) && (
+              <Button variant="outline" fullWidth onClick={() => navigate('properties')}>View Property</Button>
+            )}
           </div>
 
           {/* Contact Card */}
@@ -407,7 +415,9 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{offer.negotiation?.contact?.email}</div>
               </div>
             </div>
-            <Button variant="outline" fullWidth onClick={() => navigate('contacts')}>View Contact</Button>
+            {permissions.can(Permission.CONTACTS_VIEW) && (
+              <Button variant="outline" fullWidth onClick={() => navigate('contacts')}>View Contact</Button>
+            )}
           </div>
 
           {/* Agent Info */}

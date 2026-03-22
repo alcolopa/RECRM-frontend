@@ -13,6 +13,9 @@ const Features = lazy(() => import('./components/Features'));
 const Pricing = lazy(() => import('./components/Pricing'));
 const LoginForm = lazy(() => import('./components/LoginForm'));
 const SignupForm = lazy(() => import('./components/SignupForm'));
+const ForgotPasswordForm = lazy(() => import('./components/ForgotPasswordForm'));
+const ResetPasswordForm = lazy(() => import('./components/ResetPasswordForm'));
+const InviteAcceptView = lazy(() => import('./screens/InviteAcceptView'));
 const Layout = lazy(() => import('./components/Layout'));
 const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
 
@@ -31,34 +34,106 @@ const LoadingFallback = () => (
 );
 
 const AppContent = () => {
-  const { setTheme, setAccentColor } = useTheme();
+  const { setTheme, setAccentColor, resetToDefault } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'share'>('landing');
+  const [view, setViewState] = useState<'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'invite' | 'dashboard' | 'share'>('landing');
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [sharedPropertyId, setSharedPropertyId] = useState<string | null>(null);
   const [sharedProperty, setSharedProperty] = useState<any>(null);
   const [isSharedLoading, setIsSharedLoading] = useState(false);
 
+  const setView = (newView: typeof view, path?: string) => {
+    setViewState(newView);
+    const targetPath = path || (newView === 'landing' ? '/' : `/${newView}`);
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/') setViewState('landing');
+      else if (path === '/login') setViewState('login');
+      else if (path === '/signup') setViewState('signup');
+      else if (path === '/forgot-password') setViewState('forgot-password');
+      else if (path === '/reset-password') setViewState('reset-password');
+      else if (path === '/dashboard') setViewState('dashboard');
+      // Other paths are handled by the initial useEffect or specialized logic
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
+    const query = new URLSearchParams(window.location.search);
+    const tokenFromQuery = query.get('token');
+
+    if ((path === '/signup' || path === '/accept-invite') && tokenFromQuery) {
+      window.history.replaceState({}, '', `/invite/${tokenFromQuery}`);
+      setInviteToken(tokenFromQuery);
+      setViewState('invite');
+      resetToDefault();
+      return;
+    }
 
     if (path.startsWith('/share/')) {
       const id = path.split('/')[2];
       if (id) {
         setSharedPropertyId(id);
-        setView('share');
+        setViewState('share');
         fetchPublicProperty(id);
         return;
       }
     }
 
-    if (token) {
-      fetchProfile();
-    } else if (path === '/login') {
-      setView('login');
+    if (path.startsWith('/invite/')) {
+      const token = path.split('/')[2];
+      if (token) {
+        setInviteToken(token);
+        setViewState('invite');
+        resetToDefault();
+        return;
+      }
+    }
+
+    // Public auth routes should be accessible regardless of token
+    if (path === '/reset-password') {
+      setViewState('reset-password');
+      resetToDefault();
+      return;
+    }
+
+    if (path === '/login') {
+      setViewState('login');
+      if (!token) resetToDefault();
     } else if (path === '/signup') {
-      setView('signup');
+      setViewState('signup');
+      if (!token) resetToDefault();
+    } else if (path === '/forgot-password') {
+      setViewState('forgot-password');
+      if (!token) resetToDefault();
+    }
+
+    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details'];
+    const isDashboardPath = dashboardTabs.some(tab => path === `/${tab}`);
+
+    if (token) {
+      if (isDashboardPath || path === '/') {
+        setViewState('dashboard');
+      }
+      fetchProfile();
+    } else if (path === '/') {
+      setViewState('landing');
+      resetToDefault();
+    } else if (isDashboardPath) {
+      // Redirect to / and show login
+      window.history.replaceState({}, '', '/');
+      setViewState('login');
+      resetToDefault();
     }
   }, []);
 
@@ -80,11 +155,37 @@ const AppContent = () => {
       }
       
       setIsAuthenticated(true);
-      setView('dashboard');
+      // Only redirect to dashboard if we are not on a special shared or reset page
+      const path = window.location.pathname;
+      if (path === '/' || path === '/login' || path === '/signup' || path === '/dashboard' || path === '') {
+        setViewState('dashboard');
+        if (window.location.pathname !== '/dashboard') {
+           window.history.replaceState({}, '', '/dashboard');
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch profile', err);
       localStorage.removeItem('token');
-      setView('landing');
+      setIsAuthenticated(false);
+      setUser(null);
+      
+      const path = window.location.pathname;
+      if (path === '/reset-password') {
+        setViewState('reset-password');
+      } else if (path === '/login') {
+        setViewState('login');
+      } else if (path === '/signup') {
+        setViewState('signup');
+      } else if (path === '/forgot-password') {
+        setViewState('forgot-password');
+      } else {
+        // Redirect to / and show login for any other failed auth state
+        if (window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
+        setViewState('login');
+      }
+      resetToDefault();
     }
   };
 
@@ -93,6 +194,7 @@ const AppContent = () => {
     setIsAuthenticated(false);
     setUser(null);
     setView('landing');
+    resetToDefault();
   };
 
   const handleUserUpdate = (updatedUser: any) => {
@@ -109,9 +211,32 @@ const AppContent = () => {
     }
   };
 
-  const handleSignupSuccess = (token: string) => {
+  const handleSignupSuccess = (token: string, userData?: any) => {
     localStorage.setItem('token', token);
-    fetchProfile();
+    
+    if (userData) {
+      setUser(userData);
+      setIsAuthenticated(true);
+      
+      // Sync accent color from user's organization
+      const activeOrg = userData.memberships?.[0]?.organization;
+      if (activeOrg?.accentColor) {
+        setAccentColor(activeOrg.accentColor as any);
+      }
+      
+      // Sync theme preference from user
+      if (userData.preferredTheme) {
+        setTheme(userData.preferredTheme.toLowerCase() as any);
+      }
+      
+      // Trigger a profile fetch in the background to ensure everything is perfectly in sync
+      fetchProfile();
+    } else {
+      fetchProfile();
+    }
+    
+    // fetchProfile already handles the redirect, but let's be explicit
+    setView('dashboard');
   };
 
   const fetchPublicProperty = async (id: string) => {
@@ -171,17 +296,26 @@ const AppContent = () => {
 
   // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {
+    // Derive active values for initial load/sync
+    const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
+    const activeOrgId = activeMembership?.organizationId || user?.organizationId;
+    const activeRole = activeMembership?.role || user?.role;
+
     return (
       <Suspense fallback={<LoadingFallback />}>
         <UnitProvider user={user}>
-          <Layout onLogout={handleLogout} user={user} onUserUpdate={handleUserUpdate} />
+          <Layout 
+            onLogout={handleLogout} 
+            user={{ ...user, organizationId: activeOrgId, role: activeRole }} 
+            onUserUpdate={handleUserUpdate} 
+          />
         </UnitProvider>
       </Suspense>
     );
   }
 
-  // Auth pages (Login/Signup)
-  if (view === 'login' || view === 'signup') {
+  // Auth pages (Login/Signup/Forgot Password/Reset Password)
+  if (view === 'login' || view === 'signup' || view === 'forgot-password' || view === 'reset-password' || view === 'invite') {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -226,12 +360,25 @@ const AppContent = () => {
         <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6rem 1.5rem 2rem' }}>
           <Suspense fallback={<LoadingFallback />}>
             {view === 'login' ? (
-              <LoginForm onSwitchToSignup={() => setView('signup')} />
-            ) : (
+              <LoginForm 
+                onSwitchToSignup={() => inviteToken ? setView('invite') : setView('signup')} 
+                onForgotPassword={() => setView('forgot-password')}
+              />
+            ) : view === 'signup' ? (
               <SignupForm 
                 onSwitchToLogin={() => setView('login')} 
                 onSignupSuccess={handleSignupSuccess}
               />
+            ) : view === 'forgot-password' ? (
+              <ForgotPasswordForm onBackToLogin={() => setView('login')} />
+            ) : view === 'invite' && inviteToken ? (
+              <InviteAcceptView 
+                token={inviteToken} 
+                onSuccess={handleSignupSuccess} 
+                onBackToLogin={() => setView('login')} 
+              />
+            ) : (
+              <ResetPasswordForm onBackToLogin={() => setView('login')} />
             )}
           </Suspense>
         </main>

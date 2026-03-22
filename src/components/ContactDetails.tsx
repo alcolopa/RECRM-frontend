@@ -266,6 +266,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
                           {contact.buyerProfile.propertyTypes?.length > 0 ? 
                             contact.buyerProfile.propertyTypes.map(formatEnum).join(', ') : 'Any'}
                           {contact.buyerProfile.minBedrooms && ` • ${contact.buyerProfile.minBedrooms}+ beds`}
+                          {(contact.buyerProfile.minArea || contact.buyerProfile.maxArea) && 
+                            ` • ${contact.buyerProfile.minArea || 0}-${contact.buyerProfile.maxArea || '∞'} sqft`}
                         </div>
                       </div>
                     </div>

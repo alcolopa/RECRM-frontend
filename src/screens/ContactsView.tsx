@@ -8,12 +8,16 @@ import ContactDetails from '../components/ContactDetails';
 import Button from '../components/Button';
 import ConfirmModal from '../components/ConfirmModal';
 import { useNavigation } from '../contexts/NavigationContext';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface ContactsViewProps {
   organizationId: string;
+  user: UserProfile;
 }
 
-const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
+const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => {
+  const permissions = usePermissions(user);
   const { navigationState, navigate } = useNavigation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,9 +47,13 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
     fetchContacts();
     
     // Handle prefill from navigation state
-    if (navigationState.context === 'creating-seller') {
+    if (navigationState.context === 'creating-seller' || navigationState.context === 'creating-buyer') {
       setView('form');
-      setFilterType(ContactType.SELLER);
+      if (navigationState.context === 'creating-seller') {
+        setFilterType(ContactType.SELLER);
+      } else {
+        setFilterType(ContactType.BUYER);
+      }
     }
   }, [organizationId, navigationState.context]);
 
@@ -61,7 +69,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
       }
 
       if (navigationState.returnTo === 'properties' && navigationState.context === 'creating-seller') {
-        // Ensure we have the sellerProfile ID. Sometimes the create/update might not return the expanded profile
+        // Ensure we have the sellerProfile ID
         let sellerProfileId = savedContact.sellerProfile?.id;
         
         if (!sellerProfileId) {
@@ -73,7 +81,6 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           }
         }
 
-        // Return to properties with the new seller profile ID
         navigate('properties', {
           ...navigationState,
           prefillData: { 
@@ -81,19 +88,18 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
             newSellerProfileId: sellerProfileId 
           }
         });
-      } else {
-        // If we were viewing details, update the viewing contact
-        if (viewingContact && savedContact.id === viewingContact.id) {
-          // Re-fetch full contact to get relations
-          try {
-            const fullContact = await contactService.getById(savedContact.id, organizationId);
-            setViewingContact(fullContact.data);
-          } catch (err) {
-            console.error('Failed to refresh viewing contact', err);
+      } else if (navigationState.returnTo === 'offers') {
+        navigate('offers', {
+          ...navigationState,
+          prefillData: { 
+            ...navigationState.prefillData,
+            contactId: savedContact.id 
           }
-        }
-        
-        setView(viewingContact ? 'details' : 'list');
+        });
+      } else {
+        // Redirect to detail page for the newly created/updated contact
+        setViewingContact(savedContact);
+        setView('details');
         setEditingContact(undefined);
         setInitialStep(1);
         setIsIsolatedProfile(false);
@@ -187,20 +193,21 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Contacts</h1>
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your buyers and sellers in one place.</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingContact(undefined);
-            setInitialStep(1);
-            setIsIsolatedProfile(false);
-            setView('form');
-          }}
-          leftIcon={<UserPlus size={20} />}
-        >
-          Add Contact
-        </Button>
+        {permissions.can(Permission.CONTACTS_CREATE) && (
+          <Button
+            onClick={() => {
+              setEditingContact(undefined);
+              setInitialStep(1);
+              setIsIsolatedProfile(false);
+              setView('form');
+            }}
+            leftIcon={<UserPlus size={20} />}
+          >
+            Add Contact
+          </Button>
+        )}
       </header>
 
-      {/* Filters & Search */}
       <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '250px' }}>
           <Input
@@ -261,6 +268,8 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId }) => {
                 setView('form');
               }}
               onDelete={handleDelete}
+              canEdit={permissions.can(Permission.CONTACTS_EDIT)}
+              canDelete={permissions.can(Permission.CONTACTS_DELETE)}
             />
           ))}
         </div>

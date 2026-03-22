@@ -28,18 +28,39 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [isSkippingAll, setIsSkippingAll] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  const completedTutorialsStr = JSON.stringify(user.completedTutorials || []);
 
   useEffect(() => {
-    // Check if user has already seen this tutorial or skipped all
-    const hasSeen = user.completedTutorials?.includes(tutorialId);
-    const hasSkippedAll = user.completedTutorials?.includes('ALL');
+    // If user has dismissed this tutorial in the current session/tab, don't show it again
+    if (isDismissed) return;
 
-    if (!hasSeen && !hasSkippedAll) {
+    // Check if user has already seen this tutorial or skipped all
+    const completedTutorials = user.completedTutorials || [];
+    const hasSeen = completedTutorials.includes(tutorialId);
+    const hasSkippedAll = completedTutorials.includes('ALL') || completedTutorials.includes('skip-all');
+
+    if (hasSeen || hasSkippedAll) {
+      if (isVisible) setIsVisible(false);
+      return;
+    }
+
+    if (!isVisible) {
       // Delay visibility slightly for a better UX
-      const timer = setTimeout(() => setIsVisible(true), 1000);
+      const timer = setTimeout(() => {
+        // Re-check just in case state changed during the timeout
+        const currentCompleted = user.completedTutorials || [];
+        if (!currentCompleted.includes(tutorialId) && 
+            !currentCompleted.includes('ALL') && 
+            !currentCompleted.includes('skip-all') && 
+            !isDismissed) {
+          setIsVisible(true);
+        }
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [user, tutorialId]);
+  }, [completedTutorialsStr, tutorialId, isDismissed, isVisible]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -57,6 +78,7 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
 
   const handleComplete = async () => {
     setIsVisible(false);
+    setIsDismissed(true);
     try {
       const response = await userService.completeTutorial(tutorialId);
       if (onUserUpdate) onUserUpdate(response.data);
@@ -70,16 +92,21 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
     setIsSkippingAll(true);
     try {
       const response = await userService.skipAllTutorials();
+      console.log('Skip all response user:', response.data);
       if (onUserUpdate) onUserUpdate(response.data);
       setIsVisible(false);
+      setIsDismissed(true);
     } catch (err) {
       console.error('Failed to skip all tutorials', err);
+      // Even if it fails, hide it for the current session to avoid annoying the user
+      setIsVisible(false);
+      setIsDismissed(true);
     } finally {
       setIsSkippingAll(false);
     }
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || isDismissed) return null;
 
   return (
     <AnimatePresence>
@@ -121,7 +148,10 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
               </span>
             </div>
             <button 
-              onClick={() => setIsVisible(false)}
+              onClick={() => {
+                setIsVisible(false);
+                setIsDismissed(true);
+              }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
             >
               <X size={20} />

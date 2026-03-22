@@ -1,25 +1,40 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type AccentColor = 'EMERALD' | 'BLUE' | 'INDIGO' | 'VIOLET' | 'ROSE' | 'AMBER';
+export const ACCENTS = {
+  EMERALD: '#059669',
+  BLUE: '#2563eb',
+  INDIGO: '#4f46e5',
+  VIOLET: '#7c3aed',
+  ROSE: '#e11d48',
+  AMBER: '#d97706',
+};
 
-export const ACCENTS: Record<AccentColor, { primary: string; hover: string; rgb: string }> = {
-  EMERALD: { primary: '#059669', hover: '#047857', rgb: '5, 150, 105' },
-  BLUE: { primary: '#2563eb', hover: '#1d4ed8', rgb: '37, 99, 235' },
-  INDIGO: { primary: '#4f46e5', hover: '#4338ca', rgb: '79, 70, 229' },
-  VIOLET: { primary: '#7c3aed', hover: '#6d28d9', rgb: '124, 58, 237' },
-  ROSE: { primary: '#e11d48', hover: '#be123c', rgb: '225, 29, 72' },
-  AMBER: { primary: '#d97706', hover: '#b45309', rgb: '217, 119, 6' },
+// Helper to convert hex to RGB
+export const hexToRgb = (hex: string): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r}, ${g}, ${b}`;
+};
+
+// Helper to darken a color for hover state
+export const darkenColor = (hex: string, amount: number = 20): string => {
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 };
 
 type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
-  displayTheme: 'light' | 'dark'; // The actual theme being displayed (resolved from system if theme is 'system')
-  accentColor: AccentColor;
+  displayTheme: 'light' | 'dark';
+  accentColor: string;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-  setAccentColor: (accent: AccentColor) => void;
+  setAccentColor: (accent: string) => void;
+  resetToDefault: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -35,12 +50,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [displayTheme, setDisplayTheme] = useState<'light' | 'dark'>('light');
 
-  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
-    const savedAccent = localStorage.getItem('accentColor') as AccentColor;
-    return (ACCENTS[savedAccent] ? savedAccent : 'EMERALD') as AccentColor;
+  const [accentColor, setAccentColorState] = useState<string>(() => {
+    const savedAccent = localStorage.getItem('accentColor');
+    // If it's a preset key, map it to its hex, otherwise use the hex directly or default to EMERALD hex
+    if (savedAccent && (ACCENTS as any)[savedAccent]) {
+      return (ACCENTS as any)[savedAccent];
+    }
+    return savedAccent || ACCENTS.EMERALD;
   });
 
-  // Resolve display theme based on theme and system preference
   useEffect(() => {
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -62,11 +80,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [theme, displayTheme]);
 
   useEffect(() => {
-    const accent = ACCENTS[accentColor];
+    // If it's a legacy preset key, we convert it to hex for the root styles
+    const hex = (ACCENTS as any)[accentColor] || (accentColor.startsWith('#') ? accentColor : ACCENTS.EMERALD);
+    
     const root = document.documentElement;
-    root.style.setProperty('--color-primary', accent.primary);
-    root.style.setProperty('--color-primary-hover', accent.hover);
-    root.style.setProperty('--color-primary-rgb', accent.rgb);
+    root.style.setProperty('--color-primary', hex);
+    root.style.setProperty('--color-primary-hover', darkenColor(hex));
+    root.style.setProperty('--color-primary-rgb', hexToRgb(hex));
     localStorage.setItem('accentColor', accentColor);
   }, [accentColor]);
 
@@ -82,12 +102,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const setAccentColor = (accent: AccentColor) => {
+  const setAccentColor = (accent: string) => {
     setAccentColorState(accent);
   };
 
+  const resetToDefault = () => {
+    setThemeState('system');
+    setAccentColorState(ACCENTS.EMERALD);
+    localStorage.removeItem('theme');
+    localStorage.removeItem('accentColor');
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, displayTheme, accentColor, setTheme, toggleTheme, setAccentColor }}>
+    <ThemeContext.Provider value={{ theme, displayTheme, accentColor, setTheme, toggleTheme, setAccentColor, resetToDefault }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -28,7 +28,7 @@ const Pricing = () => {
         <section id="pricing">
             <div className="container">
                 <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                    <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Simple, transparent pricing</h2>
+                    <h2 style={{ fontSize: 'clamp(2rem, 5vw, 2.5rem)', marginBottom: '1rem' }}>Simple, transparent pricing</h2>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '1.125rem', maxWidth: '700px', margin: '0 auto' }}>
                         Choose the plan that fits your business stage. No hidden fees, cancel anytime.
                     </p>

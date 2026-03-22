@@ -8,9 +8,10 @@ import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
 interface LoginFormProps {
     onSwitchToSignup?: () => void;
+    onForgotPassword?: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onForgotPassword }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { access_token } = response.data;
+            const { access_token, user } = response.data;
 
-            localStorage.setItem('token', access_token);
-            setSuccess(true);
+            // Handle both top-level and nested access_token (per user report)
+            const token = access_token || user?.access_token || user?.token;
 
-            window.location.href = '/';
+            if (token) {
+                localStorage.setItem('token', token);
+                setSuccess(true);
+                window.location.href = '/';
+            } else {
+                setError('Authentication failed. No token received.');
+            }
         } catch (err: unknown) {
             console.error('Login failed', err);
             setError(getErrorMessage(err, 'Login failed. Please check your credentials.'));
@@ -140,51 +147,54 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                 />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <label htmlFor="password" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Password</label>
-                        {errors.password && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 500 }}>{errors.password}</span>
-                        )}
-                    </div>
-                    <div style={{ position: 'relative' }}>
-                        <Input
-                            id="password"
-                            name="password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            required
-                            value={password}
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                            }}
-                            icon={Lock}
-                            style={{ 
-                                paddingRight: '2.5rem',
-                                borderColor: errors.password ? 'var(--color-error)' : undefined,
-                                boxShadow: errors.password ? '0 0 0 1px var(--color-error)' : undefined
-                            }}
-                        />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setShowPassword(!showPassword)}
-                            style={{
-                                position: 'absolute',
-                                right: '0.25rem',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                zIndex: 1,
-                                padding: '0.5rem',
-                                borderRadius: '50%',
-                                width: '32px',
-                                height: '32px'
-                            }}
-                            leftIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        />
-                    </div>
+                    <Input
+                        label="Password"
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        required
+                        value={password}
+                        onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                        }}
+                        disabled={isLoading}
+                        icon={Lock}
+                        error={errors.password}
+                        rightElement={
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setShowPassword(!showPassword)}
+                                disabled={isLoading}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px'
+                                }}
+                                leftIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            />
+                        }
+                    />
                     <div style={{ textAlign: 'right' }}>
-                        <a href="#" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>Forgot?</a>
+                        <button 
+                            type="button" 
+                            onClick={onForgotPassword}
+                            disabled={isLoading}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                fontSize: '0.875rem', 
+                                color: 'var(--color-primary)', 
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                padding: 0,
+                                opacity: isLoading ? 0.5 : 1
+                            }}
+                        >
+                            Forgot?
+                        </button>
                     </div>
                 </div>
 
@@ -199,7 +209,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
                 </Button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                    Don't have an account? <Button type="button" variant="ghost" onClick={onSwitchToSignup} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Get Started</Button>
+                    Don't have an account? <Button type="button" variant="ghost" onClick={onSwitchToSignup} disabled={isLoading} style={{ padding: 0, height: 'auto', fontWeight: 600, color: 'var(--color-primary)' }}>Get Started</Button>
                 </p>
             </form>
         </motion.div>

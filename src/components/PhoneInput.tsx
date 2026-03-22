@@ -7,11 +7,13 @@ interface PhoneInputProps {
   value: string;
   onChange: (value: string) => void;
   id: string;
+  label?: string;
   error?: string | null;
 }
 
-const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: externalError }) => {
+const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, label, error: externalError }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [search, setSearch] = useState('');
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -92,10 +94,12 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
     alignItems: 'center',
     width: '100%',
     borderRadius: 'var(--radius)',
-    border: `1px solid ${externalError ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
+    border: `1px solid ${externalError ? 'var(--color-error)' : (isOpen || isFocused ? 'var(--color-primary)' : 'var(--color-border)')}`,
     background: 'var(--color-surface)',
     transition: 'all 0.2s ease',
-    boxShadow: externalError ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none'),
+    boxShadow: externalError 
+      ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' 
+      : (isOpen || isFocused ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none'),
     overflow: 'hidden',
     height: '2.75rem'
   };
@@ -103,6 +107,21 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.375rem' }} ref={dropdownRef}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {label && (
+          <label
+            htmlFor={id}
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 700,
+              color: 'var(--color-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.025em',
+              display: 'block'
+            }}
+          >
+            {label}
+          </label>
+        )}
         {externalError && (
           <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 600 }}>
             {externalError}
@@ -121,15 +140,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem',
-            padding: '0 0.75rem',
+            padding: '0 0.875rem',
             border: 'none',
-            background: 'var(--color-bg)',
+            background: 'var(--color-bg-hover)',
             color: 'var(--color-text)',
             cursor: 'pointer',
             height: '100%',
-            fontSize: '0.9rem',
+            fontSize: '0.875rem',
             borderRight: '1px solid var(--color-border)',
-            minWidth: '95px'
+            minWidth: '95px',
+            fontFamily: 'var(--font-sans)',
+            transition: 'background-color 0.2s'
           }}
         >
           <span style={{ fontSize: '1.1rem' }}>{selectedCountry.flag}</span>
@@ -145,17 +166,20 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
             type="tel"
             value={formattedDisplay}
             onChange={handleNumberChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder={selectedCountry.format?.replace(/#/g, '0') || '000 000 0000'}
             style={{
               width: '100%',
-              padding: '0 2.5rem 0 0.75rem',
+              padding: '0 2.5rem 0 0.875rem',
               border: 'none',
-              fontSize: '0.95rem',
+              fontSize: '0.9375rem',
               outline: 'none',
               background: 'transparent',
               color: 'var(--color-text)',
               height: '100%',
-              fontFamily: 'inherit'
+              fontFamily: 'var(--font-sans)',
+              lineHeight: 1.5
             }}
           />
           <div style={{ position: 'absolute', right: '0.75rem', display: 'flex', alignItems: 'center' }}>
@@ -167,14 +191,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, id, error: ext
 
       {/* Validation Message */}
       <AnimatePresence>
-        {(isValid === false || externalError) && (
+        {isValid === false && !externalError && (
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.25rem', fontWeight: 500 }}
           >
-            {externalError || `Format should be: ${selectedCountry.format}`}
+            Format should be: {selectedCountry.format}
           </motion.p>
         )}
       </AnimatePresence>

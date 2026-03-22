@@ -10,11 +10,16 @@ import LeadConvertModal from '../components/LeadConvertModal';
 import Button from '../components/Button';
 import ConfirmModal from '../components/ConfirmModal';
 
+import { type UserProfile, Permission } from '../api/users';
+import { usePermissions } from '../utils/permissions';
+
 interface LeadsViewProps {
   organizationId: string;
+  user: UserProfile;
 }
 
-const LeadsView: React.FC<LeadsViewProps> = ({ organizationId }) => {
+const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
+  const permissions = usePermissions(user);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
@@ -143,15 +148,17 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId }) => {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Leads</h1>
           <p style={{ color: 'var(--color-text-muted)' }}>Track and nurture your potential properties and clients.</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingLead(undefined);
-            setView('form');
-          }}
-          leftIcon={<UserPlus size={20} />}
-        >
-          Add Lead
-        </Button>
+        {permissions.can(Permission.LEADS_CREATE) && (
+          <Button
+            onClick={() => {
+              setEditingLead(undefined);
+              setView('form');
+            }}
+            leftIcon={<UserPlus size={20} />}
+          >
+            Add Lead
+          </Button>
+        )}
       </header>
 
       {/* Filters & Search */}
@@ -210,6 +217,8 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId }) => {
               }}
               onDelete={(id) => setDeletingLeadId(id)}
               onConvert={(l) => setConvertingLead(l)}
+              canEdit={permissions.can(Permission.LEADS_EDIT)}
+              canDelete={permissions.can(Permission.LEADS_DELETE)}
             />
           ))}
         </div>

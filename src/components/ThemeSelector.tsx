@@ -3,15 +3,18 @@ import { Sun, Moon, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import Button from './Button';
+import { userService } from '../api/users';
 
 interface ThemeSelectorProps {
   variant?: 'ghost' | 'outline';
   showLabel?: boolean;
+  onUserUpdate?: (updatedUser: any) => void;
 }
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ 
   variant = 'ghost',
-  showLabel = false 
+  showLabel = false,
+  onUserUpdate
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +30,22 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    setIsOpen(false);
+    
+    try {
+      const response = await userService.updateMe({
+        preferredTheme: newTheme.toUpperCase() as any
+      });
+      if (onUserUpdate) {
+        onUserUpdate(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to update theme preference in database', err);
+    }
+  };
 
   const dropdownItemStyle: React.CSSProperties = {
     display: 'flex',
@@ -96,11 +115,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               border: '1px solid var(--color-border)',
               overflow: 'hidden',
               padding: '0.4rem',
-              zIndex: 1100
+              zIndex: 2500
             }}
           >
             <button 
-              onClick={() => { setTheme('light'); setIsOpen(false); }} 
+              onClick={() => handleThemeChange('light')} 
               style={{ ...dropdownItemStyle, color: theme === 'light' ? 'var(--color-primary)' : 'var(--color-text)' }}
               className="theme-dropdown-item"
             >
@@ -109,7 +128,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               {theme === 'light' && <div style={dotStyle} />}
             </button>
             <button 
-              onClick={() => { setTheme('dark'); setIsOpen(false); }} 
+              onClick={() => handleThemeChange('dark')} 
               style={{ ...dropdownItemStyle, color: theme === 'dark' ? 'var(--color-primary)' : 'var(--color-text)' }}
               className="theme-dropdown-item"
             >
@@ -118,7 +137,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               {theme === 'dark' && <div style={dotStyle} />}
             </button>
             <button 
-              onClick={() => { setTheme('system'); setIsOpen(false); }} 
+              onClick={() => handleThemeChange('system')} 
               style={{ ...dropdownItemStyle, color: theme === 'system' ? 'var(--color-primary)' : 'var(--color-text)' }}
               className="theme-dropdown-item"
             >

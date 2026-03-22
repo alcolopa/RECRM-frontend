@@ -21,9 +21,11 @@ interface LeadCardProps {
   onDelete: (id: string) => void;
   onView: (lead: Lead) => void;
   onConvert: (lead: Lead) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onConvert }) => {
+const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onConvert, canEdit = true, canDelete = true }) => {
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -148,23 +150,29 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
                     Convert to Contact
                   </Button>
                 )}
-                <Button 
-                  variant="ghost"
-                  onClick={() => { setShowOptions(false); onEdit(lead); }}
-                  style={optionButtonStyle}
-                  leftIcon={<Edit2 size={16} />}
-                >
-                  Edit Lead
-                </Button>
-                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
-                <Button 
-                  variant="ghost"
-                  onClick={() => { setShowOptions(false); onDelete(lead.id); }}
-                  style={{ ...optionButtonStyle, color: 'var(--color-error)' }}
-                  leftIcon={<Trash2 size={16} />}
-                >
-                  Delete
-                </Button>
+                {canEdit && (
+                  <Button 
+                    variant="ghost"
+                    onClick={() => { setShowOptions(false); onEdit(lead); }}
+                    style={optionButtonStyle}
+                    leftIcon={<Edit2 size={16} />}
+                  >
+                    Edit Lead
+                  </Button>
+                )}
+                {canDelete && (
+                  <>
+                    <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
+                    <Button 
+                      variant="ghost"
+                      onClick={() => { setShowOptions(false); onDelete(lead.id); }}
+                      style={{ ...optionButtonStyle, color: 'var(--color-error)' }}
+                      leftIcon={<Trash2 size={16} />}
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

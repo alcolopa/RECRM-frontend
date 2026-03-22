@@ -20,11 +20,34 @@ interface NavigationContextType {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTabState] = useState<NavigationTab>('dashboard');
+  // Initialize from URL if possible
+  const getTabFromUrl = (): NavigationTab => {
+    const path = window.location.pathname.replace(/^\//, '');
+    const validTabs: NavigationTab[] = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details'];
+    return (validTabs.find(t => t === path) || 'dashboard') as NavigationTab;
+  };
+
+  const [activeTab, setActiveTabState] = useState<NavigationTab>(getTabFromUrl);
   const [navigationState, setNavigationState] = useState<NavigationState>({});
+
+  // Sync with browser back/forward buttons
+  React.useEffect(() => {
+    const handlePopState = () => {
+      setActiveTabState(getTabFromUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const updateUrl = (tab: NavigationTab) => {
+    if (window.location.pathname !== `/${tab}`) {
+      window.history.pushState({}, '', `/${tab}`);
+    }
+  };
 
   const navigate = (tab: NavigationTab, state?: NavigationState) => {
     setActiveTabState(tab);
+    updateUrl(tab);
     if (state) {
       setNavigationState(state);
     }
@@ -36,6 +59,7 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const setActiveTab = (tab: NavigationTab) => {
     setActiveTabState(tab);
+    updateUrl(tab);
   };
 
   return (

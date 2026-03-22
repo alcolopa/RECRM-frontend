@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -51,6 +51,13 @@ const ContactForm: React.FC<ContactFormProps> = ({
   isIsolatedProfile = false
 }) => {
   const [step, setStep] = useState(initialStep);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Multi-role state
   const [isBuyer, setIsBuyer] = useState(
@@ -254,7 +261,9 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const nextStep = () => {
     if (!validate()) return;
     
-    if (isIsolatedProfile) {
+    // If it's a new contact, just save immediately after Step 1
+    // or if we are in an isolated profile edit mode.
+    if (isIsolatedProfile || !contact) {
       handleSubmit();
       return;
     }
@@ -321,24 +330,15 @@ const ContactForm: React.FC<ContactFormProps> = ({
           </h1>
           <p style={{ color: 'var(--color-text-muted)' }}>
             {isIsolatedProfile ? (step === 2 ? 'Update Buyer Search Criteria' : 'Update Seller Property Info') : 
-             (step === 1 ? 'Step 1: Identity & Communication' : 
-              step === 2 ? 'Step 2: Buyer Search Criteria' : 
-              'Step 3: Seller Property Info')}
+             (!contact ? 'Provide basic contact information to get started' : 
+              (step === 1 ? 'Identity & Communication' : 
+               step === 2 ? 'Buyer Search Criteria' : 
+               'Seller Property Info'))}
           </p>
         </div>
       </header>
 
-      {/* Progress Bar */}
-      {!isIsolatedProfile && (
-        <div style={{ width: '100%', maxWidth: '800px', height: '4px', backgroundColor: 'var(--color-border)', borderRadius: '2px', position: 'relative' }}>
-          <motion.div
-            animate={{ 
-              width: step === 1 ? '33%' : (step === 2 ? (isSeller ? '66%' : '100%') : '100%') 
-            }}
-            style={{ height: '100%', backgroundColor: 'var(--color-primary)', borderRadius: '2px' }}
-          />
-        </div>
-      )}
+      {/* Progress Bar removed as per user request */}
 
       <AnimatePresence>
         {error && (
@@ -381,13 +381,13 @@ const ContactForm: React.FC<ContactFormProps> = ({
           >
             <div className="grid grid-2">
               <div style={inputGroupStyle}>
-                <label style={labelStyle}>Contact Roles</label>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <label style={labelStyle}>Contact Roles*</label>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     type="button"
                     onClick={() => setIsBuyer(!isBuyer)}
                     className={`btn ${isBuyer ? 'btn-primary' : 'btn-outline'}`}
-                    style={{ flex: 1, gap: '0.5rem' }}
+                    style={{ flex: 1, gap: '0.5rem', height: '2.75rem', padding: '0 1rem' }}
                     disabled={!!fixedType && fixedType === ContactType.SELLER}
                   >
                     <Target size={18} /> Buyer
@@ -396,7 +396,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                     type="button"
                     onClick={() => setIsSeller(!isSeller)}
                     className={`btn ${isSeller ? 'btn-primary' : 'btn-outline'}`}
-                    style={{ flex: 1, gap: '0.5rem' }}
+                    style={{ flex: 1, gap: '0.5rem', height: '2.75rem', padding: '0 1rem' }}
                     disabled={!!fixedType && fixedType === ContactType.BUYER}
                   >
                     <Home size={18} /> Seller
@@ -454,6 +454,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
 
             <PhoneInput 
               id="phone" 
+              label="Phone Number"
               value={baseData.phone} 
               onChange={handlePhoneChange}
               error={errors.phone}
@@ -490,23 +491,31 @@ const ContactForm: React.FC<ContactFormProps> = ({
               />
             </div>
 
-            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div className="action-bar-mobile" style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '0.75rem', 
+              marginTop: '1.5rem', 
+              borderTop: '1px solid var(--color-border)', 
+              paddingTop: '1.5rem' 
+            }}>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={onCancel} 
-                style={{ flex: 1, minWidth: '120px' }}
+                style={{ flex: 1 }}
               >
                 Cancel
               </Button>
               <Button 
                 type="button" 
                 onClick={nextStep} 
-                style={{ flex: 2, minWidth: '200px' }}
+                isLoading={isLoading}
+                style={{ flex: isMobile ? 1 : 2 }}
                 disabled={!isBuyer && !isSeller}
-                rightIcon={!(isBuyer || isSeller) ? undefined : <ArrowRight size={18} />}
+                rightIcon={(!isBuyer && !isSeller) ? undefined : (!contact ? <Save size={20} /> : <ArrowRight size={18} />)}
               >
-                {!isBuyer && !isSeller ? 'Select a Role' : 'Continue to Profile'}
+                {!isBuyer && !isSeller ? 'Select a Role' : (!contact ? 'Save Contact' : 'Continue to Profile')}
               </Button>
             </div>
           </motion.div>
@@ -592,15 +601,47 @@ const ContactForm: React.FC<ContactFormProps> = ({
               />
             </div>
 
-            <Input
-              label="Location Preferences"
-              id="preferredCities"
-              name="preferredCities"
-              placeholder="Cities (comma separated)"
-              value={buyerProfile.preferredCities.join(', ')}
-              onChange={(e) => handleBuyerChange('preferredCities', e.target.value.split(',').map(s => s.trim()))}
-              icon={MapPin}
-            />
+            <div className="grid grid-2">
+              <Input
+                label="Preferred Property Types"
+                id="propertyTypes"
+                name="propertyTypes"
+                placeholder="Apartment, House, etc."
+                value={buyerProfile.propertyTypes.join(', ')}
+                onChange={(e) => handleBuyerChange('propertyTypes', e.target.value.split(',').map(s => s.trim().toUpperCase()).filter(s => !!s))}
+                icon={Home}
+              />
+              <Input
+                label="Location Preferences"
+                id="preferredCities"
+                name="preferredCities"
+                placeholder="Cities (comma separated)"
+                value={buyerProfile.preferredCities.join(', ')}
+                onChange={(e) => handleBuyerChange('preferredCities', e.target.value.split(',').map(s => s.trim()))}
+                icon={MapPin}
+              />
+            </div>
+
+            <div className="grid grid-2">
+              <Input
+                label="Min Area (sqft)"
+                id="minArea"
+                name="minArea"
+                type="number"
+                value={buyerProfile.minArea || ''}
+                onChange={(e) => handleBuyerChange('minArea', e.target.value)}
+                placeholder="Min Area"
+              />
+              <Input
+                label="Max Area (sqft)"
+                id="maxArea"
+                name="maxArea"
+                type="number"
+                value={buyerProfile.maxArea || ''}
+                onChange={(e) => handleBuyerChange('maxArea', e.target.value)}
+                placeholder="Max Area"
+              />
+            </div>
 
             <div className="grid grid-2" style={{ gap: '1rem' }}>
               <Checkbox
@@ -617,22 +658,29 @@ const ContactForm: React.FC<ContactFormProps> = ({
               />
             </div>
 
-            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div className="action-bar-mobile" style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '0.75rem', 
+              marginTop: '1.5rem', 
+              borderTop: '1px solid var(--color-border)', 
+              paddingTop: '1.5rem' 
+            }}>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={prevStep} 
-                style={{ flex: 1, minWidth: '100px' }}
+                style={{ flex: 1 }}
                 leftIcon={isIsolatedProfile ? undefined : <ArrowLeft size={18} />}
               >
                 {isIsolatedProfile ? 'Cancel' : 'Back'}
               </Button>
-              {!isIsolatedProfile && (
+              {!isIsolatedProfile && !isMobile && (
                 <Button 
                   type="button" 
                   variant="ghost" 
                   onClick={onCancel} 
-                  style={{ flex: 1, minWidth: '100px' }}
+                  style={{ flex: 1 }}
                 >
                   Cancel
                 </Button>
@@ -641,7 +689,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 type="button"
                 onClick={nextStep}
                 isLoading={isLoading} 
-                style={{ flex: 2, minWidth: '200px' }}
+                style={{ flex: isMobile ? 1 : 2 }}
                 rightIcon={(!isIsolatedProfile && isSeller) ? <ArrowRight size={18} /> : <Save size={20} />}
               >
                 {isIsolatedProfile ? 'Update Profile' : (isSeller ? 'Continue to Seller Profile' : 'Save Contact')}
@@ -660,7 +708,17 @@ const ContactForm: React.FC<ContactFormProps> = ({
               <Home size={20} /> Seller Property Info
             </h3>
 
-            <div className="grid grid-2">
+            <div className="grid grid-3">
+              <Input
+                label="Min Price Expected"
+                id="minimumPrice"
+                name="minimumPrice"
+                type="number"
+                value={sellerProfile.minimumPrice || ''}
+                onChange={(e) => handleSellerChange('minimumPrice', e.target.value)}
+                placeholder="e.g. 500000"
+                icon={DollarSign}
+              />
               <Select
                 label="Listing Type"
                 id="listingType"
@@ -700,22 +758,29 @@ const ContactForm: React.FC<ContactFormProps> = ({
               />
             </div>
 
-            <div className="action-bar-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div className="action-bar-mobile" style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '0.75rem', 
+              marginTop: '1.5rem', 
+              borderTop: '1px solid var(--color-border)', 
+              paddingTop: '1.5rem' 
+            }}>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={prevStep} 
-                style={{ flex: 1, minWidth: '100px' }}
+                style={{ flex: 1 }}
                 leftIcon={isIsolatedProfile ? undefined : <ArrowLeft size={18} />}
               >
                 {isIsolatedProfile ? 'Cancel' : 'Back'}
               </Button>
-              {!isIsolatedProfile && (
+              {!isIsolatedProfile && !isMobile && (
                 <Button 
                   type="button" 
                   variant="ghost" 
                   onClick={onCancel} 
-                  style={{ flex: 1, minWidth: '100px' }}
+                  style={{ flex: 1 }}
                 >
                   Cancel
                 </Button>
@@ -724,7 +789,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 type="button"
                 onClick={nextStep}
                 isLoading={isLoading} 
-                style={{ flex: 2, minWidth: '200px' }}
+                style={{ flex: isMobile ? 1 : 2 }}
                 leftIcon={<Save size={20} />}
               >
                 {isIsolatedProfile ? 'Update Profile' : 'Save Contact'}
@@ -740,13 +805,16 @@ const ContactForm: React.FC<ContactFormProps> = ({
 const inputGroupStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.5rem'
+  gap: '0.375rem'
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.875rem',
-  fontWeight: 600,
-  color: 'var(--color-text)'
+  fontSize: '0.8125rem',
+  fontWeight: 700,
+  color: 'var(--color-text-muted)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.025em',
+  display: 'block'
 };
 
 export default ContactForm;
