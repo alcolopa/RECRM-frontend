@@ -407,9 +407,9 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
                         {property.assignedUser ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
-                              {property.assignedUser.firstName[0]}
+                              {(property.assignedUser.firstName || property.assignedUser.email || '?')[0]}
                             </div>
-                            <span style={{ fontSize: '0.8125rem' }}>{property.assignedUser.firstName}</span>
+                            <span style={{ fontSize: '0.8125rem' }}>{property.assignedUser.firstName || property.assignedUser.email || 'Unknown'}</span>
                           </div>
                         ) : (
                           <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Unassigned</span>

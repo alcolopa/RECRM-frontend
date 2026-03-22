@@ -49,10 +49,11 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
       setIsLoading(true);
       try {
         const response = await contactService.getAll(organizationId, restrictType);
-        setContacts(response.data);
+        const fetchedContacts = response.data.items || [];
+        setContacts(fetchedContacts);
 
         if (selectedContactId) {
-          const contact = response.data.find(c => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId);
+          const contact = fetchedContacts.find((c: Contact) => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId);
           if (contact) setSelectedContact(contact);
         } else {
           setSelectedContact(null);

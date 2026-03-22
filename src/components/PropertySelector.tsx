@@ -47,7 +47,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
       setIsLoading(true);
       try {
         const response = await propertyService.getAll(organizationId);
-        setProperties(response.data);
+        setProperties(response.data.items || []);
       } catch (err) {
         console.error('Failed to fetch properties', err);
       } finally {

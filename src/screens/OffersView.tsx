@@ -10,7 +10,6 @@ import {
   XCircle,
   LayoutGrid,
   List,
-  Edit2,
   ExternalLink,
   ChevronUp,
   ChevronDown
@@ -401,9 +400,9 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
                         {offer.createdBy ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
-                              {offer.createdBy.firstName[0]}
+                              {(offer.createdBy.firstName || offer.createdBy.email || '?')[0]}
                             </div>
-                            <span style={{ fontSize: '0.8125rem' }}>{offer.createdBy.firstName}</span>
+                            <span style={{ fontSize: '0.8125rem' }}>{offer.createdBy.firstName || offer.createdBy.email || 'Unknown'}</span>
                           </div>
                         ) : '-'}
                       </td>
