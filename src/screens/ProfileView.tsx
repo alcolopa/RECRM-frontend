@@ -28,7 +28,7 @@ interface ProfileViewProps {
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
-  const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
+  const activeMembership = (Array.isArray(user?.memberships) ? user.memberships : []).find((m: any) => m.organizationId === user.organizationId) || (Array.isArray(user?.memberships) ? user.memberships : [])[0];
   const activeRoleName = activeMembership?.customRole?.name || activeMembership?.role || user.role;
   const activeOrgName = activeMembership?.organization?.name || 'No Organization';
 

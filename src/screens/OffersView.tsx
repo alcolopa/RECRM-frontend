@@ -54,6 +54,8 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const [prefillContactId, setPrefillContactId] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const activeStatuses = [OfferStatus.SUBMITTED, OfferStatus.UNDER_REVIEW, OfferStatus.COUNTERED];
+
   const getStatusBadge = (status: OfferStatus) => {
     const styles: Record<OfferStatus, { bg: string, color: string }> = {
       DRAFT: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' },
@@ -83,8 +85,8 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
     setIsLoading(true);
     try {
       const response = await offersService.getAll(organizationId, pageNum, limit, sort, order);
-      setOffers(response.data.items);
-      setTotalCount(response.data.total);
+      setOffers(Array.isArray(response.data.items) ? response.data.items : []);
+      setTotalCount(response.data.total || 0);
     } catch (err) {
       console.error('Failed to fetch offers', err);
     } finally {
@@ -105,7 +107,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const fetchAgents = async () => {
     try {
       const response = await userService.getAll(organizationId);
-      setAgents(response.data);
+      setAgents(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Failed to fetch agents', err);
     }
@@ -145,9 +147,13 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
     }
   }, [navigationState]);
 
-  const activeStatuses = [OfferStatus.SUBMITTED, OfferStatus.UNDER_REVIEW, OfferStatus.COUNTERED];
+  const stats = {
+    total: (Array.isArray(offers) ? offers : []).length,
+    active: (Array.isArray(offers) ? offers : []).filter(o => activeStatuses.includes(o.status)).length,
+    inactive: (Array.isArray(offers) ? offers : []).filter(o => !activeStatuses.includes(o.status)).length,
+  };
 
-  const filteredOffers = offers.filter(offer => {
+  const filteredOffers = (Array.isArray(offers) ? offers : []).filter(offer => {
     const propertyTitle = offer.negotiation?.property?.title || '';
     const contactName = `${offer.negotiation?.contact?.firstName} ${offer.negotiation?.contact?.lastName}`.toLowerCase();
     
@@ -168,12 +174,6 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
     
     return matchesSearch && matchesStatus && matchesAgent && matchesQuickFilter;
   });
-
-  const stats = {
-    total: offers.length,
-    active: offers.filter(o => activeStatuses.includes(o.status)).length,
-    inactive: offers.filter(o => !activeStatuses.includes(o.status)).length,
-  };
 
   if (view === 'form') {
     return (
@@ -311,7 +311,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
               icon={User}
               options={[
                 { value: 'all', label: 'All Agents' },
-                ...agents.map(a => ({ 
+                ...(Array.isArray(agents) ? agents : []).map(a => ({ 
                   value: a.id, 
                   label: `${a.firstName} ${a.lastName}` 
                 }))
@@ -346,11 +346,11 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
           <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
-      ) : filteredOffers.length > 0 ? (
+      ) : (Array.isArray(filteredOffers) ? filteredOffers : []).length > 0 ? (
         <>
           {viewMode === 'grid' || isMobile ? (
             <div className="grid grid-3" style={{ gap: isMobile ? '1rem' : '1.5rem' }}>
-              {filteredOffers.map((offer) => (
+              {(Array.isArray(filteredOffers) ? filteredOffers : []).map((offer) => (
                 <OfferCard
                   key={offer.id}
                   offer={offer}
@@ -384,7 +384,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOffers.map(offer => (
+                  {(Array.isArray(filteredOffers) ? filteredOffers : []).map(offer => (
                     <tr key={offer.id}>
                       <td>
                         <div>

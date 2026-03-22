@@ -362,7 +362,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId, use
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <History size={20} /> Negotiation Timeline
             </h2>
-            <NegotiationTimeline offers={offer.negotiation?.offers || [offer]} />
+            <NegotiationTimeline offers={Array.isArray(offer.negotiation?.offers) ? offer.negotiation.offers : [offer]} />
           </section>
         </div>
 

@@ -188,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
         dashboardService.getRecentActivities(organizationId),
       ]);
       
-      const statsWithIcons = statsRes.data.map(stat => {
+      const statsWithIcons = (Array.isArray(statsRes.data) ? statsRes.data : []).map(stat => {
         if (stat.label === 'Total Leads') return { ...stat, icon: Users, color: 'var(--color-primary)' };
         if (stat.label === 'Properties') return { ...stat, icon: Building2, color: 'var(--color-success)' };
         if (stat.label === 'Active Offers') return { ...stat, icon: HandCoins, color: 'var(--color-warning)' };
@@ -197,9 +197,9 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
       });
 
       setStats(statsWithIcons);
-      setRecentLeads(leadsRes.data);
-      setUpcomingTasks(tasksRes.data);
-      setRecentActivities(activitiesRes.data.slice(0, 5));
+      setRecentLeads(Array.isArray(leadsRes.data) ? leadsRes.data : []);
+      setUpcomingTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
+      setRecentActivities(Array.isArray(activitiesRes.data) ? activitiesRes.data.slice(0, 5) : []);
     } catch (err) {
       // Error handled by UI or silent
     } finally {
@@ -243,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
     // Update all breakpoints that were provided
     Object.keys(allLayouts).forEach(bp => {
       const bpLayout = allLayouts[bp];
-      const existingWidgets = nextDashboardLayouts[bp as keyof DashboardLayouts];
+      const existingWidgets = (Array.isArray(nextDashboardLayouts[bp as keyof DashboardLayouts]) ? nextDashboardLayouts[bp as keyof DashboardLayouts] : []);
       
       const updatedWidgets = existingWidgets.map(w => {
         const match = bpLayout.find((l: any) => l.i === w.id);
@@ -274,9 +274,12 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
     const nextLayouts = { ...layouts };
     
     Object.keys(nextLayouts).forEach(bp => {
-      nextLayouts[bp as keyof DashboardLayouts] = nextLayouts[bp as keyof DashboardLayouts].map(w => 
-        w.id === id ? { ...w, size, w: dimensions.w, h: dimensions.h } : w
-      );
+      const widgets = nextLayouts[bp as keyof DashboardLayouts];
+      if (Array.isArray(widgets)) {
+        nextLayouts[bp as keyof DashboardLayouts] = widgets.map(w => 
+          w.id === id ? { ...w, size, w: dimensions.w, h: dimensions.h } : w
+        );
+      }
     });
     
     setLayouts(nextLayouts);
@@ -285,19 +288,22 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
   const removeWidget = (id: string) => {
     const nextLayouts = { ...layouts };
     Object.keys(nextLayouts).forEach(bp => {
-      nextLayouts[bp as keyof DashboardLayouts] = nextLayouts[bp as keyof DashboardLayouts].filter(w => w.id !== id);
+      const widgets = nextLayouts[bp as keyof DashboardLayouts];
+      if (Array.isArray(widgets)) {
+        nextLayouts[bp as keyof DashboardLayouts] = widgets.filter(w => w.id !== id);
+      }
     });
     setLayouts(nextLayouts);
   };
 
   const addWidget = (type: WidgetType) => {
-    if (activeWidgets.find(l => l.type === type)) return;
+    if ((Array.isArray(activeWidgets) ? activeWidgets : []).find(l => l.type === type)) return;
     const size = isStatWidget(type) ? 'small' : 'medium';
     const dimensions = SIZE_MAP[size];
     
     const nextLayouts = { ...layouts };
     Object.keys(nextLayouts).forEach(bp => {
-      const bpWidgets = nextLayouts[bp as keyof DashboardLayouts];
+      const bpWidgets = (Array.isArray(nextLayouts[bp as keyof DashboardLayouts]) ? nextLayouts[bp as keyof DashboardLayouts] : []);
       const newWidget: WidgetConfig = {
         id: type,
         type,
@@ -318,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
     ['totalLeads', 'totalProperties', 'activeOffers', 'totalRevenue'].includes(type);
 
   const renderStatWidget = (label: string, isEdit: boolean) => {
-    const stat = stats.find(s => s.label === label);
+    const stat = (Array.isArray(stats) ? stats : []).find(s => s.label === label);
     if (!stat) return <div className="card" style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={16} /></div>;
 
     return (
@@ -383,7 +389,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
           }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Recent Leads</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {recentLeads.length > 0 ? recentLeads.map((lead, i) => (
+              {(Array.isArray(recentLeads) ? recentLeads : []).length > 0 ? (Array.isArray(recentLeads) ? recentLeads : []).map((lead, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.25rem 0' }}>
                   <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 600, flexShrink: 0 }}>{lead.name[0]}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -409,7 +415,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
           }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Upcoming Tasks</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {upcomingTasks.length > 0 ? upcomingTasks.map((task, i) => (
+              {(Array.isArray(upcomingTasks) ? upcomingTasks : []).length > 0 ? (Array.isArray(upcomingTasks) ? upcomingTasks : []).map((task, i) => (
                 <div key={i} style={{ display: 'flex', gap: '0.75rem' }}>
                   <Calendar size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
                   <div style={{ minWidth: 0 }}>
@@ -435,7 +441,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
           }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Recent Activity</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {recentActivities.length > 0 ? recentActivities.map((activity, i) => (
+              {(Array.isArray(recentActivities) ? recentActivities : []).length > 0 ? (Array.isArray(recentActivities) ? recentActivities : []).map((activity, i) => (
                 <div key={i} style={{ display: 'flex', gap: '0.75rem' }}>
                   <Activity size={14} color="var(--color-primary)" style={{ flexShrink: 0 }} />
                   <div style={{ minWidth: 0 }}>
@@ -454,7 +460,8 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
   const gridLayouts = useMemo(() => {
     const rglLayouts: any = {};
     Object.keys(layouts).forEach(bp => {
-      rglLayouts[bp] = layouts[bp as keyof DashboardLayouts].map(l => ({ 
+      const widgets = (Array.isArray(layouts[bp as keyof DashboardLayouts]) ? layouts[bp as keyof DashboardLayouts] : []);
+      rglLayouts[bp] = widgets.map(l => ({ 
         i: l.id, x: l.x, y: l.y, w: l.w, h: l.h 
       }));
     });
@@ -463,7 +470,8 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
 
   const disabledWidgetList = useMemo(() => {
     const allTypes: WidgetType[] = ['totalLeads', 'totalProperties', 'activeOffers', 'totalRevenue', 'recentLeads', 'upcomingTasks', 'recentActivities'];
-    return allTypes.filter(t => !activeWidgets.find(l => l.type === t));
+    const widgets = (Array.isArray(activeWidgets) ? activeWidgets : []);
+    return allTypes.filter(t => !widgets.find(l => l.type === t));
   }, [activeWidgets]);
 
   const handleCancel = () => {
@@ -548,7 +556,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
             </div>
           }
         >
-          {activeWidgets.map((widget) => (
+          {(Array.isArray(activeWidgets) ? activeWidgets : []).map((widget) => (
             <div key={widget.id} style={{ 
               position: 'relative', 
               userSelect: isEditMode ? 'none' : 'auto',
@@ -635,7 +643,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
       </div>
 
       <AnimatePresence>
-        {isEditMode && disabledWidgetList.length > 0 && (
+        {isEditMode && (Array.isArray(disabledWidgetList) ? disabledWidgetList : []).length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -651,7 +659,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
               gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
               gap: isMobile ? '0.75rem' : '1rem' 
             }}>
-              {disabledWidgetList.map(type => (
+              {(Array.isArray(disabledWidgetList) ? disabledWidgetList : []).map(type => (
                 <div 
                   key={type}
                   onClick={() => addWidget(type)}

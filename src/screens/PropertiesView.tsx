@@ -62,11 +62,11 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
         sortOrder: order
       };
       const response = await propertyService.getAll(organizationId, pageNum, limit, filters);
-      setProperties(response.data.items);
-      setTotalCount(response.data.total);
+      setProperties(Array.isArray(response.data.items) ? response.data.items : []);
+      setTotalCount(response.data.total || 0);
 
       // Update selected property if we are in details view
-      if (selectedProperty) {
+      if (selectedProperty && Array.isArray(response.data.items)) {
         const updated = response.data.items.find(p => p.id === selectedProperty.id);
         if (updated) setSelectedProperty(updated);
       }
@@ -90,7 +90,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   const fetchAgents = async () => {
     try {
       const response = await userService.getAll(organizationId);
-      setAgents(response.data);
+      setAgents(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Failed to fetch agents', err);
     }
@@ -177,7 +177,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
     }
   };
 
-  const filteredProperties = properties.filter(p => {
+  const filteredProperties = (Array.isArray(properties) ? properties : []).filter(p => {
     const matchesSearch = !searchQuery || 
       p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -276,7 +276,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
             icon={User}
             options={[
               { value: 'all', label: 'All Agents' },
-              ...agents.map(a => ({ 
+              ...(Array.isArray(agents) ? agents : []).map(a => ({ 
                 value: a.id, 
                 label: `${a.firstName} ${a.lastName}` 
               }))
@@ -375,7 +375,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
                             backgroundColor: 'var(--color-bg)',
                             overflow: 'hidden'
                           }}>
-                            {property.propertyImages?.[0] ? (
+                            {Array.isArray(property.propertyImages) && property.propertyImages[0] ? (
                               <img 
                                 src={property.propertyImages[0].url} 
                                 alt={property.title}

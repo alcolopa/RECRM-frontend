@@ -64,8 +64,8 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     try {
       const apiStatus = status === 'ALL' ? undefined : status;
       const response = await leadService.getAll(organizationId, pageNum, limit, apiStatus, sort, order);
-      setLeads(response.data.items);
-      setTotalCount(response.data.total);
+      setLeads(Array.isArray(response.data.items) ? response.data.items : []);
+      setTotalCount(response.data.total || 0);
     } catch (err) {
       console.error('Failed to fetch leads', err);
     } finally {
@@ -142,7 +142,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     }
   };
 
-  const filteredLeads = leads.filter(l => {
+  const filteredLeads = (Array.isArray(leads) ? leads : []).filter(l => {
     const matchesSearch =
       l.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       l.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -225,7 +225,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
           >
             All
           </Button>
-          {Object.values(LeadStatus).map(status => (
+          {(Array.isArray(Object.values(LeadStatus)) ? Object.values(LeadStatus) : []).map(status => (
             <Button
               key={status}
               variant={filterStatus === status ? 'primary' : 'outline'}

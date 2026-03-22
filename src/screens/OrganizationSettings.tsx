@@ -92,11 +92,12 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       const response = await organizationService.getRoles(user.organizationId);
-      setRoles(response.data);
-      if (response.data.length > 0 && !inviteCustomRoleId) {
-        const agentRole = response.data.find((r: any) => r.name === 'Agent');
+      const rolesData = Array.isArray(response.data) ? response.data : [];
+      setRoles(rolesData);
+      if (rolesData.length > 0 && !inviteCustomRoleId) {
+        const agentRole = rolesData.find((r: any) => r.name === 'Agent');
         if (agentRole) setInviteCustomRoleId(agentRole.id);
-        else setInviteCustomRoleId(response.data[0].id);
+        else setInviteCustomRoleId(rolesData[0].id);
       }
     } catch (err) {
       console.error('Failed to fetch roles', err);
@@ -117,7 +118,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       const response = await organizationService.getInvitations(user.organizationId);
-      setInvitations(response.data);
+      setInvitations(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Failed to fetch invitations', err);
     }
@@ -148,7 +149,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       await organizationService.cancelInvitation(user.organizationId, id);
-      setInvitations(prev => prev.filter(inv => inv.id !== id));
+      setInvitations(prev => (Array.isArray(prev) ? prev : []).filter(inv => inv.id !== id));
     } catch (err) {
       console.error('Failed to cancel invitation', err);
     }
@@ -225,7 +226,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       // Update global user state if possible
       if (onUserUpdate) {
         const updatedUser = { ...user };
-        if (updatedUser.memberships?.[0]?.organization) {
+        if (Array.isArray(updatedUser.memberships) && updatedUser.memberships?.[0]?.organization) {
           updatedUser.memberships[0].organization.logo = newLogoUrl;
           onUserUpdate(updatedUser);
         }
@@ -281,7 +282,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       // Update global user state
       if (onUserUpdate) {
         const updatedUser = { ...user };
-        if (updatedUser.memberships?.[0]) {
+        if (Array.isArray(updatedUser.memberships) && updatedUser.memberships?.[0]) {
           updatedUser.memberships[0].organization = {
             ...updatedUser.memberships[0].organization,
             ...updatedOrg
@@ -474,7 +475,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Choose your organization's primary accent color.</p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                {(Object.entries(ACCENTS)).map(([key, hex]) => (
+                {(Array.isArray(Object.entries(ACCENTS)) ? Object.entries(ACCENTS) : []).map(([key, hex]) => (
                   <button
                     key={key}
                     type="button"
@@ -697,12 +698,12 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 fontWeight: 700,
                 border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
               }}>
-                {org?.memberships?.length || 0}
+                {(Array.isArray(org?.memberships) ? org.memberships : []).length}
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {org?.memberships?.map((membership: any) => (
+              {(Array.isArray(org?.memberships) ? org.memberships : []).map((membership: any) => (
                 <div key={membership.id} style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -747,7 +748,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                           label="Role"
                           value={membership.customRoleId || ''}
                           onChange={(val) => handleUpdateMemberRole(membership.id, val as string)}
-                          options={roles.map(r => ({ value: r.id, label: r.name }))}
+                          options={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id, label: r.name }))}
                           style={{ minHeight: '2.5rem' }}
                         />
                       </div>
@@ -797,7 +798,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                     label="Initial Role"
                     value={inviteCustomRoleId}
                     onChange={(val) => setInviteCustomRoleId(val as string)}
-                    options={roles.map(r => ({ value: r.id, label: r.name }))}
+                    options={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id, label: r.name }))}
                     placeholder="Select a role"
                   />
                 </div>
@@ -827,10 +828,10 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
 
               <div>
                 <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Clock size={16} className="text-primary" /> Pending Invitations ({invitations.length})
+                  <Clock size={16} className="text-primary" /> Pending Invitations ({(Array.isArray(invitations) ? invitations : []).length})
                 </h4>
 
-                {invitations.length === 0 ? (
+                {(Array.isArray(invitations) ? invitations : []).length === 0 ? (
                   <div style={{
                     padding: '3rem 2rem',
                     textAlign: 'center',
@@ -842,7 +843,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {invitations.map((inv) => (
+                    {(Array.isArray(invitations) ? invitations : []).map((inv) => (
                       <div key={inv.id} style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -913,7 +914,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       )}
 
       {activeTab === 'roles' && (
-        <RolesManagement roles={roles} organizationId={org?.id || ''} onUpdate={fetchRoles} isMobileOrTablet={isMobileOrTablet} />
+        <RolesManagement roles={Array.isArray(roles) ? roles : []} organizationId={org?.id || ''} onUpdate={fetchRoles} isMobileOrTablet={isMobileOrTablet} />
       )}
     </div>
   );
@@ -947,7 +948,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
     setRoleForm({
       name: role.name,
       description: role.description || '',
-      permissions: role.permissions
+      permissions: Array.isArray(role.permissions) ? role.permissions : []
     });
     setIsEditing(true);
   };
@@ -967,9 +968,9 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
   const togglePermission = (perm: string) => {
     setRoleForm(prev => ({
       ...prev,
-      permissions: prev.permissions.includes(perm)
+      permissions: (Array.isArray(prev.permissions) ? prev.permissions : []).includes(perm)
         ? prev.permissions.filter(p => p !== perm)
-        : [...prev.permissions, perm]
+        : [...(Array.isArray(prev.permissions) ? prev.permissions : []), perm]
     }));
   };
 
@@ -1023,7 +1024,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-        {roles.map(role => (
+        {(Array.isArray(roles) ? roles : []).map(role => (
           <div key={role.id} className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', border: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
               <div style={{ flex: 1 }}>
@@ -1052,11 +1053,11 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <Shield size={14} className="text-primary" />
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.025em' }}>
-                  {role.permissions.length} Permissions
+                  {(Array.isArray(role.permissions) ? role.permissions : []).length} Permissions
                 </span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
-                {role.permissions.slice(0, 6).map((p: string) => {
+                {(Array.isArray(role.permissions) ? role.permissions : []).slice(0, 6).map((p: string) => {
                   const label = p.split('_').join(' ').toLowerCase();
                   return (
                     <span key={p} style={{ fontSize: '0.6875rem', fontWeight: 500, backgroundColor: 'var(--color-bg)', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
@@ -1064,9 +1065,9 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                     </span>
                   );
                 })}
-                {role.permissions.length > 6 && (
+                {(Array.isArray(role.permissions) ? role.permissions : []).length > 6 && (
                   <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)', padding: '0.25rem 0.625rem', borderRadius: '0.375rem' }}>
-                    +{role.permissions.length - 6} More
+                    {(Array.isArray(role.permissions) ? role.permissions : []).length - 6} More
                   </span>
                 )}
               </div>
@@ -1169,10 +1170,10 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                                 gap: '0.75rem', 
                                 fontSize: '0.8125rem', 
                                 cursor: selectedRole?.isSystem ? 'default' : 'pointer',
-                                color: roleForm.permissions.includes(perm) ? 'var(--color-text)' : 'var(--color-text-muted)',
+                                color: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-text)' : 'var(--color-text-muted)',
                                 padding: '0.5rem',
                                 borderRadius: '0.5rem',
-                                backgroundColor: roleForm.permissions.includes(perm) ? 'rgba(var(--color-primary-rgb), 0.03)' : 'transparent',
+                                backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'rgba(var(--color-primary-rgb), 0.03)' : 'transparent',
                                 transition: 'all 0.2s ease'
                               }}
                             >
@@ -1181,8 +1182,8 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                                   width: '20px',
                                   height: '20px',
                                   borderRadius: '6px',
-                                  border: `2px solid ${roleForm.permissions.includes(perm) ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                  backgroundColor: roleForm.permissions.includes(perm) ? 'var(--color-primary)' : 'transparent',
+                                  border: `2px solid ${(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                  backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'transparent',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -1190,9 +1191,9 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                                   flexShrink: 0
                                 }}
                               >
-                                {roleForm.permissions.includes(perm) && <Check size={14} color="white" strokeWidth={3} />}
+                                {(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) && <Check size={14} color="white" strokeWidth={3} />}
                               </div>
-                              <span style={{ fontWeight: roleForm.permissions.includes(perm) ? 600 : 400 }}>
+                              <span style={{ fontWeight: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 600 : 400 }}>
                                 {formatPermLabel(perm, group.name)}
                               </span>
                             </div>

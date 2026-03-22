@@ -59,8 +59,8 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
     try {
       const apiType = type === 'ALL' ? undefined : type;
       const response = await contactService.getAll(organizationId, apiType, pageNum, limit, sort, order);
-      setContacts(response.data.items);
-      setTotalCount(response.data.total);
+      setContacts(Array.isArray(response.data.items) ? response.data.items : []);
+      setTotalCount(response.data.total || 0);
     } catch (err) {
       console.error('Failed to fetch contacts', err);
     } finally {
@@ -178,7 +178,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
     }
   };
 
-  const filteredContacts = contacts.filter(c => {
+  const filteredContacts = (Array.isArray(contacts) ? contacts : []).filter(c => {
     const matchesSearch =
       c.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -314,11 +314,11 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
           <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
-      ) : filteredContacts.length > 0 ? (
+      ) : (Array.isArray(filteredContacts) ? filteredContacts : []).length > 0 ? (
         <>
           {viewMode === 'grid' || window.innerWidth < 768 ? (
             <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
-              {filteredContacts.map((contact) => (
+              {(Array.isArray(filteredContacts) ? filteredContacts : []).map((contact) => (
                 <ContactCard
                   key={contact.id}
                   contact={contact}
@@ -364,7 +364,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredContacts.map(contact => (
+                  {(Array.isArray(filteredContacts) ? filteredContacts : []).map(contact => (
                     <tr key={contact.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
