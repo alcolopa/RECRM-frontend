@@ -1,4 +1,4 @@
-import api from './client';
+import api, { type PaginatedResponse } from './client';
 import { PropertyType, ContactType } from './contacts';
 
 export type LeadStatus = 
@@ -58,8 +58,17 @@ export interface ConvertLeadData {
 }
 
 export const leadService = {
-  getAll: (orgId: string) => 
-    api.get<Lead[]>(`/leads?organizationId=${orgId}`),
+  getAll: (orgId: string, page = 1, limit = 20, status?: LeadStatus, sortBy?: string, sortOrder?: 'asc' | 'desc') => 
+    api.get<PaginatedResponse<Lead>>(`/leads`, {
+      params: {
+        organizationId: orgId,
+        page,
+        limit,
+        status,
+        sortBy,
+        sortOrder
+      }
+    }),
   getById: (id: string, orgId: string) => 
     api.get<Lead>(`/leads/${id}?organizationId=${orgId}`),
   create: (data: Partial<Lead> & { organizationId: string }) => 

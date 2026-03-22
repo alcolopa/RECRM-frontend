@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Loader2, Home, User } from 'lucide-react';
+import { Plus, Search, Filter, Loader2, Home, User, LayoutGrid, List, Edit2, Trash2, ExternalLink, ChevronUp, ChevronDown } from 'lucide-react';
 import { type Property, propertyService } from '../api/properties';
 import { type UserProfile, userService } from '../api/users';
 import { Input, Select } from '../components/Input';
@@ -21,6 +21,9 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   const permissions = usePermissions(user);
   const { navigationState, navigate } = useNavigation();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
@@ -30,15 +33,41 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   const [agents, setAgents] = useState<UserProfile[]>([]);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const fetchProperties = async () => {
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, { bg: string, color: string }> = {
+      AVAILABLE: { bg: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' },
+      UNDER_CONTRACT: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+      SOLD: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
+      RENTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
+      OFF_MARKET: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' }
+    };
+    const style = styles[status] || styles.AVAILABLE;
+    return (
+      <span className="badge" style={{ backgroundColor: style.bg, color: style.color }}>
+        {status.replace('_', ' ')}
+      </span>
+    );
+  };
+
+  const fetchProperties = async (pageNum = page, agentId = selectedAgentId, sort = sortBy, order = sortOrder) => {
     setIsLoading(true);
     try {
-      const response = await propertyService.getAll(organizationId);
-      setProperties(response.data);
+      const filters = {
+        assignedUserId: agentId === 'all' ? undefined : agentId,
+        sortBy: sort,
+        sortOrder: order
+      };
+      const response = await propertyService.getAll(organizationId, pageNum, limit, filters);
+      setProperties(response.data.items);
+      setTotalCount(response.data.total);
+
       // Update selected property if we are in details view
       if (selectedProperty) {
-        const updated = response.data.find(p => p.id === selectedProperty.id);
+        const updated = response.data.items.find(p => p.id === selectedProperty.id);
         if (updated) setSelectedProperty(updated);
       }
     } catch (err) {
@@ -46,6 +75,16 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
   };
 
   const fetchAgents = async () => {
@@ -58,10 +97,20 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   };
 
   useEffect(() => {
-    fetchProperties();
+    fetchProperties(page, selectedAgentId, sortBy, sortOrder);
+  }, [page, selectedAgentId, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      fetchProperties(1, selectedAgentId, sortBy, sortOrder);
+    }
+  }, [organizationId, selectedAgentId]);
+
+  useEffect(() => {
     fetchAgents();
   }, [organizationId]);
-
   useEffect(() => {
     // Detect returning from creation contexts
     if ((navigationState.context === 'creating-seller' || navigationState.context === 'creating-property') && navigationState.draftData) {
@@ -134,9 +183,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
       p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.city?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesAgent = selectedAgentId === 'all' || p.assignedUserId === selectedAgentId;
-    
-    return matchesSearch && matchesAgent;
+    return matchesSearch;
   });
 
   if (view === 'form') {
@@ -240,6 +287,24 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
         <Button variant="outline" leftIcon={<Filter size={18} />} style={{ padding: '0.625rem 1rem' }}>
           Filters
         </Button>
+
+        {/* View Switcher - Only on Desktop */}
+        <div className="view-toggle hidden-mobile" style={{ marginLeft: 'auto' }}>
+          <div 
+            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+            title="Grid View"
+          >
+            <LayoutGrid size={18} />
+          </div>
+          <div 
+            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+            title="List View"
+          >
+            <List size={18} />
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -247,25 +312,179 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
           <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredProperties.length > 0 ? (
-        <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
-          {filteredProperties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onClick={() => {
-                setSelectedProperty(property);
-                setView('details');
-              }}
-              onEdit={(p) => {
-                setEditingProperty(p);
-                setView('form');
-              }}
-              onDelete={handleDelete}
-              canEdit={permissions.can(Permission.PROPERTIES_EDIT)}
-              canDelete={permissions.can(Permission.PROPERTIES_DELETE)}
-            />
-          ))}
-        </div>
+        <>
+          {viewMode === 'grid' || window.innerWidth < 768 ? (
+            <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
+              {filteredProperties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  onClick={() => {
+                    setSelectedProperty(property);
+                    setView('details');
+                  }}
+                  onEdit={(p) => {
+                    setEditingProperty(p);
+                    setView('form');
+                  }}
+                  onDelete={handleDelete}
+                  canEdit={permissions.can(Permission.PROPERTIES_EDIT)}
+                  canDelete={permissions.can(Permission.PROPERTIES_DELETE)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('title')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Property {sortBy === 'title' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Status {sortBy === 'status' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('type')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Type {sortBy === 'type' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Price {sortBy === 'price' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th>Location</th>
+                    <th>Agent</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProperties.map(property => (
+                    <tr key={property.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ 
+                            width: '3.5rem', 
+                            height: '2.5rem', 
+                            borderRadius: '0.375rem', 
+                            backgroundColor: 'var(--color-bg)',
+                            overflow: 'hidden'
+                          }}>
+                            {property.propertyImages?.[0] ? (
+                              <img 
+                                src={property.propertyImages[0].url} 
+                                alt={property.title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+                                <Home size={16} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{property.title}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{property.address}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{getStatusBadge(property.status)}</td>
+                      <td>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                          {property.type.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600 }}>
+                        {property.price ? `$${property.price.toLocaleString()}` : 'Price on Request'}
+                      </td>
+                      <td>{property.city}, {property.country}</td>
+                      <td>
+                        {property.assignedUser ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
+                              {property.assignedUser.firstName[0]}
+                            </div>
+                            <span style={{ fontSize: '0.8125rem' }}>{property.assignedUser.firstName}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Unassigned</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                          <button 
+                            className="table-action-btn"
+                            onClick={() => { setSelectedProperty(property); setView('details'); }}
+                            title="View Details"
+                          >
+                            <ExternalLink size={16} />
+                          </button>
+                          {permissions.can(Permission.PROPERTIES_EDIT) && (
+                            <button 
+                              className="table-action-btn"
+                              onClick={() => { setEditingProperty(property); setView('form'); }}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {permissions.can(Permission.PROPERTIES_DELETE) && (
+                            <button 
+                              className="table-action-btn"
+                              style={{ color: 'var(--color-error)' }}
+                              onClick={() => handleDelete(property.id)}
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalCount > limit && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '1rem',
+              marginTop: '2rem',
+              padding: '1rem',
+              background: 'var(--color-surface)',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--color-border)'
+            }}>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Page {page} of {Math.ceil(totalCount / limit)}
+              </span>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= Math.ceil(totalCount / limit) || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>

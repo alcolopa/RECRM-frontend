@@ -1,4 +1,4 @@
-import api from './client';
+import api, { type PaginatedResponse } from './client';
 import { type SellerProfile, type Contact } from './contacts';
 import { type UserProfile } from './users';
 
@@ -61,8 +61,15 @@ export interface Property {
 }
 
 export const propertyService = {
-  getAll: (orgId: string) => 
-    api.get<Property[]>('/properties', { params: { organizationId: orgId } }),
+  getAll: (orgId: string, page = 1, limit = 20, filters?: { assignedUserId?: string, status?: string, sortBy?: string, sortOrder?: 'asc' | 'desc' }) => 
+    api.get<PaginatedResponse<Property>>('/properties', { 
+      params: { 
+        organizationId: orgId,
+        page,
+        limit,
+        ...filters
+      } 
+    }),
   
   getOne: (id: string, orgId: string) => 
     api.get<Property>(`/properties/${id}`, { params: { organizationId: orgId } }),

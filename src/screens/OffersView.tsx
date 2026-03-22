@@ -7,7 +7,13 @@ import {
   HandCoins, 
   Clock,
   User,
-  XCircle
+  XCircle,
+  LayoutGrid,
+  List,
+  Edit2,
+  ExternalLink,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { type Offer, offersService, OfferStatus } from '../api/offers';
 import { type UserProfile, userService } from '../api/users';
@@ -30,6 +36,9 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const permissions = usePermissions(user);
   const { navigationState, clearNavigationState } = useNavigation();
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,10 +46,32 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const [agents, setAgents] = useState<UserProfile[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<string>('updatedAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   const [prefillProperty, setPrefillProperty] = useState<any>(null);
   const [prefillContactId, setPrefillContactId] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const getStatusBadge = (status: OfferStatus) => {
+    const styles: Record<OfferStatus, { bg: string, color: string }> = {
+      DRAFT: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' },
+      SUBMITTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
+      UNDER_REVIEW: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+      COUNTERED: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' },
+      ACCEPTED: { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-primary)' },
+      REJECTED: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
+      WITHDRAWN: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' },
+      EXPIRED: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }
+    };
+    const style = styles[status] || styles.DRAFT;
+    return (
+      <span className="badge" style={{ backgroundColor: style.bg, color: style.color }}>
+        {status.replace(/_/g, ' ')}
+      </span>
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -48,16 +79,27 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const fetchOffers = async () => {
+  const fetchOffers = async (pageNum = page, sort = sortBy, order = sortOrder) => {
     setIsLoading(true);
     try {
-      const response = await offersService.getAll(organizationId);
-      setOffers(response.data);
+      const response = await offersService.getAll(organizationId, pageNum, limit, sort, order);
+      setOffers(response.data.items);
+      setTotalCount(response.data.total);
     } catch (err) {
       console.error('Failed to fetch offers', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
   };
 
   const fetchAgents = async () => {
@@ -70,7 +112,15 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   };
 
   useEffect(() => {
-    fetchOffers();
+    fetchOffers(page, sortBy, sortOrder);
+  }, [page, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      fetchOffers(1, sortBy, sortOrder);
+    }
     fetchAgents();
   }, [organizationId]);
 
@@ -270,6 +320,26 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
             />
           </div>
         </div>
+
+        {/* View Switcher - Only on Desktop */}
+        {!isMobile && (
+          <div className="view-toggle" style={{ marginLeft: 'auto' }}>
+            <div 
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid View"
+            >
+              <LayoutGrid size={18} />
+            </div>
+            <div 
+              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <List size={18} />
+            </div>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -277,15 +347,117 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
           <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredOffers.length > 0 ? (
-        <div className="grid grid-3" style={{ gap: isMobile ? '1rem' : '1.5rem' }}>
-          {filteredOffers.map((offer) => (
-            <OfferCard
-              key={offer.id}
-              offer={offer}
-              onRefresh={fetchOffers}
-            />
-          ))}
-        </div>
+        <>
+          {viewMode === 'grid' || isMobile ? (
+            <div className="grid grid-3" style={{ gap: isMobile ? '1rem' : '1.5rem' }}>
+              {filteredOffers.map((offer) => (
+                <OfferCard
+                  key={offer.id}
+                  offer={offer}
+                  onRefresh={fetchOffers}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Buyer</th>
+                    <th onClick={() => handleSort('updatedAt')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Property {sortBy === 'updatedAt' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Status {sortBy === 'status' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Price {sortBy === 'price' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th>Agent</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOffers.map(offer => (
+                    <tr key={offer.id}>
+                      <td>
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{offer.negotiation?.contact?.firstName} {offer.negotiation?.contact?.lastName}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{offer.offerer}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 500, fontSize: '0.8125rem' }}>{offer.negotiation?.property?.title}</div>
+                      </td>
+                      <td>{getStatusBadge(offer.status)}</td>
+                      <td style={{ fontWeight: 600 }}>${offer.price.toLocaleString()}</td>
+                      <td>
+                        {offer.createdBy ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
+                              {offer.createdBy.firstName[0]}
+                            </div>
+                            <span style={{ fontSize: '0.8125rem' }}>{offer.createdBy.firstName}</span>
+                          </div>
+                        ) : '-'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                          <button 
+                            className="table-action-btn"
+                            onClick={() => { /* Navigate to details */ }}
+                            title="View Details"
+                          >
+                            <ExternalLink size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalCount > limit && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '1rem',
+              marginTop: '2rem',
+              padding: '1rem',
+              background: 'var(--color-surface)',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--color-border)'
+            }}>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Page {page} of {Math.ceil(totalCount / limit)}
+              </span>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= Math.ceil(totalCount / limit) || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       ) : (        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
             <HandCoins size={32} />

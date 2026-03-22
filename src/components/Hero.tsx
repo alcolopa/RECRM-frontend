@@ -5,7 +5,11 @@ const ForgotPasswordForm = lazy(() => import('./ForgotPasswordForm'));
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Zap } from 'lucide-react';
 
-const Hero = () => {
+interface HeroProps {
+    onSignupSuccess?: (token: string, user: any) => void;
+}
+
+const Hero: React.FC<HeroProps> = ({ onSignupSuccess }) => {
     const [formType, setFormType] = useState<'login' | 'signup' | 'forgot-password'>('login');
 
     return (
@@ -100,7 +104,10 @@ const Hero = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         transition={{ duration: 0.3 }}
                                     >
-                                        <SignupForm onSwitchToLogin={() => setFormType('login')} />
+                                        <SignupForm 
+                                            onSwitchToLogin={() => setFormType('login')} 
+                                            onSignupSuccess={onSignupSuccess}
+                                        />
                                     </motion.div>
                                 ) : (
                                     <motion.div

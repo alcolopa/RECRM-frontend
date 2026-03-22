@@ -151,21 +151,25 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
             if (token) {
                 // Store token and notify parent for auto-login
                 localStorage.setItem('token', token);
+                
                 if (onSignupSuccess) {
                     onSignupSuccess(token, user);
                 }
+                
+                // Redirect to dashboard to ensure fresh state (same as LoginForm)
+                window.location.href = '/dashboard';
                 return;
             }
             
-            // Fallback for when no token is returned (though now it should always be)
+            // Fallback for when no token is returned
             setSuccess(true);
             setTimeout(() => {
-                    if (onSwitchToLogin) {
-                        onSwitchToLogin();
-                    } else {
-                        window.location.href = '/login';
-                    }
-                }, 2000);
+                if (onSwitchToLogin) {
+                    onSwitchToLogin();
+                } else {
+                    window.location.href = '/login';
+                }
+            }, 2000);
         } catch (err: unknown) {
             console.error('Registration failed', err);
             setError(getErrorMessage(err, 'Registration failed. Please try again.'));

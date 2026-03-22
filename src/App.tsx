@@ -437,7 +437,7 @@ const AppContent = () => {
       {/* Main Content */}
       <main style={{ paddingTop: '4rem' }}>
         <Suspense fallback={<LoadingFallback />}>
-          <Hero />
+          <Hero onSignupSuccess={handleSignupSuccess} />
           <Features />
           <Pricing />
         </Suspense>

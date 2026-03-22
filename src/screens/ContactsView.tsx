@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, Users, UserPlus } from 'lucide-react';
-import { type Contact, ContactType, contactService } from '../api/contacts';
+import { Search, Loader2, Users, UserPlus, LayoutGrid, List, Edit2, Trash2, ExternalLink, ChevronUp, ChevronDown } from 'lucide-react';
+import { type Contact, ContactType, contactService, ContactStatus } from '../api/contacts';
 import { Input } from '../components/Input';
 import ContactCard from '../components/ContactCard';
 import ContactForm from '../components/ContactForm';
@@ -20,6 +20,9 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
   const permissions = usePermissions(user);
   const { navigationState, navigate } = useNavigation();
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'list' | 'form' | 'details'>('list');
   const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
@@ -28,14 +31,36 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
   const [isIsolatedProfile, setIsIsolatedProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | ContactType>('ALL');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchContacts = async () => {
+  const getStatusBadge = (status: ContactStatus) => {
+    const styles: Record<ContactStatus, { bg: string, color: string }> = {
+      NEW: { bg: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' },
+      CONTACTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
+      QUALIFIED: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' },
+      ACTIVE: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
+      INACTIVE: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' },
+      LOST: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }
+    };
+    const style = styles[status] || styles.NEW;
+    return (
+      <span className="badge" style={{ backgroundColor: style.bg, color: style.color }}>
+        {status.replace('_', ' ')}
+      </span>
+    );
+  };
+
+  const fetchContacts = async (pageNum = page, type = filterType, sort = sortBy, order = sortOrder) => {
     setIsLoading(true);
     try {
-      const response = await contactService.getAll(organizationId);
-      setContacts(response.data);
+      const apiType = type === 'ALL' ? undefined : type;
+      const response = await contactService.getAll(organizationId, apiType, pageNum, limit, sort, order);
+      setContacts(response.data.items);
+      setTotalCount(response.data.total);
     } catch (err) {
       console.error('Failed to fetch contacts', err);
     } finally {
@@ -43,9 +68,29 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
     }
   };
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
   useEffect(() => {
-    fetchContacts();
-    
+    fetchContacts(page, filterType, sortBy, sortOrder);
+  }, [page, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      fetchContacts(1, filterType, sortBy, sortOrder);
+    }
+  }, [organizationId, filterType]);
+
+  useEffect(() => {
     // Handle prefill from navigation state
     if (navigationState.context === 'creating-seller' || navigationState.context === 'creating-buyer') {
       setView('form');
@@ -55,7 +100,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
         setFilterType(ContactType.BUYER);
       }
     }
-  }, [organizationId, navigationState.context]);
+  }, [navigationState.context]);
 
   const handleSave = async (data: Partial<Contact>) => {
     try {
@@ -245,6 +290,24 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
             Sellers
           </Button>
         </div>
+
+        {/* View Switcher - Only on Desktop */}
+        <div className="view-toggle hidden-mobile" style={{ marginLeft: 'auto' }}>
+          <div 
+            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+            title="Grid View"
+          >
+            <LayoutGrid size={18} />
+          </div>
+          <div 
+            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+            title="List View"
+          >
+            <List size={18} />
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -252,27 +315,172 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
           <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
         </div>
       ) : filteredContacts.length > 0 ? (
-        <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
-          {filteredContacts.map((contact) => (
-            <ContactCard
-              key={contact.id}
-              contact={contact}
-              onView={(c) => {
-                setViewingContact(c);
-                setView('details');
-              }}
-              onEdit={(c) => {
-                setEditingContact(c);
-                setIsIsolatedProfile(false);
-                setInitialStep(1);
-                setView('form');
-              }}
-              onDelete={handleDelete}
-              canEdit={permissions.can(Permission.CONTACTS_EDIT)}
-              canDelete={permissions.can(Permission.CONTACTS_DELETE)}
-            />
-          ))}
-        </div>
+        <>
+          {viewMode === 'grid' || window.innerWidth < 768 ? (
+            <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
+              {filteredContacts.map((contact) => (
+                <ContactCard
+                  key={contact.id}
+                  contact={contact}
+                  onView={(c) => {
+                    setViewingContact(c);
+                    setView('details');
+                  }}
+                  onEdit={(c) => {
+                    setEditingContact(c);
+                    setIsIsolatedProfile(false);
+                    setInitialStep(1);
+                    setView('form');
+                  }}
+                  onDelete={handleDelete}
+                  canEdit={permissions.can(Permission.CONTACTS_EDIT)}
+                  canDelete={permissions.can(Permission.CONTACTS_DELETE)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('firstName')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Name {sortBy === 'firstName' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('type')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Type {sortBy === 'type' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Status {sortBy === 'status' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                      </div>
+                    </th>
+                    <th>Phone</th>
+                    <th>Assigned To</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredContacts.map(contact => (
+                    <tr key={contact.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ 
+                            width: '2.25rem', 
+                            height: '2.25rem', 
+                            borderRadius: '50%', 
+                            backgroundColor: 'var(--color-bg)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 600,
+                            color: 'var(--color-primary)',
+                            fontSize: '0.75rem'
+                          }}>
+                            {contact.firstName[0]}{contact.lastName[0]}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{contact.firstName} {contact.lastName}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{contact.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: 600,
+                          color: contact.type === 'BUYER' ? 'var(--color-primary)' : contact.type === 'SELLER' ? '#8b5cf6' : '#f59e0b'
+                        }}>
+                          {contact.type}
+                        </span>
+                      </td>
+                      <td>{getStatusBadge(contact.status)}</td>
+                      <td>{contact.phone}</td>
+                      <td>
+                        {contact.assignedAgent ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
+                              {contact.assignedAgent.firstName[0]}
+                            </div>
+                            <span style={{ fontSize: '0.8125rem' }}>{contact.assignedAgent.firstName}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Unassigned</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                          <button 
+                            className="table-action-btn"
+                            onClick={() => { setViewingContact(contact); setView('details'); }}
+                            title="View Details"
+                          >
+                            <ExternalLink size={16} />
+                          </button>
+                          {permissions.can(Permission.CONTACTS_EDIT) && (
+                            <button 
+                              className="table-action-btn"
+                              onClick={() => { setEditingContact(contact); setView('form'); }}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {permissions.can(Permission.CONTACTS_DELETE) && (
+                            <button 
+                              className="table-action-btn"
+                              style={{ color: 'var(--color-error)' }}
+                              onClick={() => handleDelete(contact.id)}
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalCount > limit && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '1rem',
+              marginTop: '2rem',
+              padding: '1rem',
+              background: 'var(--color-surface)',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--color-border)'
+            }}>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Page {page} of {Math.ceil(totalCount / limit)}
+              </span>
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= Math.ceil(totalCount / limit) || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>

@@ -1,4 +1,4 @@
-import api from './client';
+import api, { type PaginatedResponse } from './client';
 import { type Property } from './properties';
 import { type Contact } from './contacts';
 import { type UserProfile } from './users';
@@ -87,8 +87,16 @@ export interface OfferHistory {
 }
 
 export const offersService = {
-  getAll: (orgId: string) => 
-    api.get<Offer[]>('/offers', { params: { organizationId: orgId } }),
+  getAll: (orgId: string, page = 1, limit = 20, sortBy?: string, sortOrder?: 'asc' | 'desc') => 
+    api.get<PaginatedResponse<Offer>>('/offers', { 
+      params: { 
+        organizationId: orgId,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      } 
+    }),
   
   getOne: (id: string, orgId: string) => 
     api.get<Offer>(`/offers/${id}`, { params: { organizationId: orgId } }),

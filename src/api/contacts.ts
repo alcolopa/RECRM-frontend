@@ -1,4 +1,4 @@
-import api from './client';
+import api, { type PaginatedResponse } from './client';
 
 // Replace enums with union types + const objects for erasableSyntaxOnly compatibility
 export type ContactType = 'BUYER' | 'SELLER' | 'BOTH';
@@ -169,12 +169,22 @@ export interface Contact {
     firstName: string;
     lastName: string;
     email: string;
+    avatar?: string;
   };
 }
 
 export const contactService = {
-  getAll: (orgId: string, type?: ContactType) => 
-    api.get<Contact[]>(`/contacts?organizationId=${orgId}${type ? `&type=${type}` : ''}`),
+  getAll: (orgId: string, type?: ContactType, page = 1, limit = 20, sortBy?: string, sortOrder?: 'asc' | 'desc') => 
+    api.get<PaginatedResponse<Contact>>(`/contacts`, {
+      params: {
+        organizationId: orgId,
+        type,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      }
+    }),
   getById: (id: string, orgId: string) => api.get<Contact>(`/contacts/${id}?organizationId=${orgId}`),
   create: (data: Partial<Contact> & { organizationId: string }) => api.post<Contact>(`/contacts?organizationId=${data.organizationId}`, data),
   update: (id: string, data: Partial<Contact>, orgId: string) => api.patch<Contact>(`/contacts/${id}?organizationId=${orgId}`, data),

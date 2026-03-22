@@ -65,8 +65,17 @@ const InviteAcceptView: React.FC<InviteAcceptViewProps> = ({ token, onSuccess, o
       setIsLoading(true);
       setError(null);
       const response = await userService.acceptInvitation(token);
-      localStorage.setItem('token', response.data.access_token);
-      onSuccess(response.data.access_token, response.data.user);
+      const { access_token, user } = response.data;
+      const finalToken = access_token || user?.access_token || user?.token;
+      
+      if (finalToken) {
+        localStorage.setItem('token', finalToken);
+        onSuccess(finalToken, user);
+        // Redirect to dashboard to ensure fresh state
+        window.location.href = '/dashboard';
+      } else {
+        setError('Failed to receive authentication token.');
+      }
     } catch (err: any) {
       setError(getErrorMessage(err, 'Failed to accept invitation.'));
     } finally {
@@ -89,8 +98,17 @@ const InviteAcceptView: React.FC<InviteAcceptViewProps> = ({ token, onSuccess, o
         token,
         userData: { password, firstName, lastName, phone }
       });
-      localStorage.setItem('token', response.data.access_token);
-      onSuccess(response.data.access_token, response.data.user);
+      const { access_token, user } = response.data;
+      const finalToken = access_token || user?.access_token || user?.token;
+      
+      if (finalToken) {
+        localStorage.setItem('token', finalToken);
+        onSuccess(finalToken, user);
+        // Redirect to dashboard to ensure fresh state
+        window.location.href = '/dashboard';
+      } else {
+        setError('Failed to receive authentication token.');
+      }
     } catch (err: any) {
       setError(getErrorMessage(err, 'Failed to create account.'));
     } finally {
