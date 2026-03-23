@@ -223,6 +223,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
     return (
       <PropertyDetails
         property={selectedProperty}
+        user={user}
         onBack={() => {
           setView('list');
           setSelectedProperty(undefined);

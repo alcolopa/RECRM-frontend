@@ -169,6 +169,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     return (
       <LeadDetails
         lead={viewingLead}
+        user={user}
         onBack={() => {
           setView('list');
           setViewingLead(undefined);
@@ -269,6 +270,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
                 <LeadCard
                   key={lead.id}
                   lead={lead}
+                  user={user}
                   onView={(l) => {
                     setViewingLead(l);
                     setView('details');
@@ -344,14 +346,16 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
                           >
                             <ExternalLink size={16} />
                           </button>
-                          <button 
-                            className="table-action-btn"
-                            style={{ color: 'var(--color-primary)' }}
-                            onClick={() => setConvertingLead(lead)}
-                            title="Convert to Contact"
-                          >
-                            <RefreshCw size={16} />
-                          </button>
+                          {permissions.can(Permission.LEADS_EDIT) && (
+                            <button 
+                              className="table-action-btn"
+                              style={{ color: 'var(--color-primary)' }}
+                              onClick={() => setConvertingLead(lead)}
+                              title="Convert to Contact"
+                            >
+                              <RefreshCw size={16} />
+                            </button>
+                          )}
                           {permissions.can(Permission.LEADS_EDIT) && (
                             <button 
                               className="table-action-btn"

@@ -301,7 +301,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button 
           type="button" 
@@ -356,7 +356,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              maxWidth: '800px',
+              width: '100%',
               border: '1px solid var(--color-error)'
             }}
           >
@@ -371,7 +371,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
         )}
       </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="card" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <form onSubmit={handleSubmit} className="card" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
         {step === 1 && (
           <motion.div
@@ -509,13 +509,13 @@ const ContactForm: React.FC<ContactFormProps> = ({
               </Button>
               <Button 
                 type="button" 
-                onClick={nextStep} 
+                onClick={handleSubmit} 
                 isLoading={isLoading}
                 style={{ flex: isMobile ? 1 : 2 }}
                 disabled={!isBuyer && !isSeller}
-                rightIcon={(!isBuyer && !isSeller) ? undefined : (!contact ? <Save size={20} /> : <ArrowRight size={18} />)}
+                leftIcon={(!isBuyer && !isSeller) ? undefined : <Save size={20} />}
               >
-                {!isBuyer && !isSeller ? 'Select a Role' : (!contact ? 'Save Contact' : 'Continue to Profile')}
+                {!isBuyer && !isSeller ? 'Select a Role' : (contact ? 'Save Changes' : 'Save Contact')}
               </Button>
             </div>
           </motion.div>

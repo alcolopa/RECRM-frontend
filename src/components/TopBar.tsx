@@ -10,6 +10,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../utils/url';
 import ThemeSelector from './ThemeSelector';
+import { usePermissions } from '../utils/permissions';
+import { Permission } from '../api/users';
 
 interface TopBarProps {
   onLogout: () => void;
@@ -24,6 +26,7 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, user, onUserUpdate, onProfileClick, onOrganizationClick }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { can } = usePermissions(user);
 
   // Derive active organization and role from memberships
   const activeMembership = user?.memberships?.[0];
@@ -187,10 +190,12 @@ const TopBar: React.FC<TopBarProps> = ({ onLogout, onToggleSidebar, isMobile, us
                   <UserIcon size={16} />
                   <span>My Profile</span>
                 </button>
-                <button onClick={handleOrganizationClick} style={dropdownItemStyle}>
-                  <Building size={16} />
-                  <span>Organization Settings</span>
-                </button>
+                {can(Permission.ORG_SETTINGS_EDIT) && (
+                  <button onClick={handleOrganizationClick} style={dropdownItemStyle}>
+                    <Building size={16} />
+                    <span>Organization Settings</span>
+                  </button>
+                )}
                 
                 <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.5rem 0' }}></div>
                 

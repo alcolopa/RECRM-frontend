@@ -26,9 +26,12 @@ import Button from './Button';
 import { useUnits } from '../contexts/UnitContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { getImageUrl } from '../utils/url';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface PropertyDetailsProps {
   property: Property;
+  user?: UserProfile;
   onBack: () => void;
   onEdit?: (property: Property) => void;
   onDelete?: (id: string) => void;
@@ -37,6 +40,7 @@ interface PropertyDetailsProps {
 
 const PropertyDetails: React.FC<PropertyDetailsProps> = ({ 
   property, 
+  user,
   onBack, 
   onEdit, 
   onDelete,
@@ -44,6 +48,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 }) => {
   const { formatAreaDisplay } = useUnits();
   const { navigate } = useNavigation();
+  const permissions = usePermissions(user || null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
@@ -533,30 +538,36 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
         {/* Action Buttons */}
         {!isPublic && (
           <div style={footerActionsStyle}>
-            <Button
-              variant="primary"
-              onClick={() => navigate('offers', { prefillData: { propertyId: property.id } })}
-              style={{ flex: 1.5 }}
-              leftIcon={<HandCoins size={18} />}
-            >
-              Make Offer
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => onEdit && onEdit(property)}
-              style={{ flex: 1 }}
-              leftIcon={<Edit2 size={18} />}
-            >
-              Edit
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => onDelete && onDelete(property.id)}
-              style={{ flex: 1 }}
-              leftIcon={<Trash2 size={18} />}
-            >
-              Delete
-            </Button>
+            {permissions.can(Permission.DEALS_CREATE) && (
+              <Button
+                variant="primary"
+                onClick={() => navigate('offers', { prefillData: { propertyId: property.id } })}
+                style={{ flex: 1.5 }}
+                leftIcon={<HandCoins size={18} />}
+              >
+                Make Offer
+              </Button>
+            )}
+            {onEdit && permissions.can(Permission.PROPERTIES_EDIT) && (
+              <Button
+                variant="secondary"
+                onClick={() => onEdit(property)}
+                style={{ flex: 1 }}
+                leftIcon={<Edit2 size={18} />}
+              >
+                Edit
+              </Button>
+            )}
+            {onDelete && permissions.can(Permission.PROPERTIES_DELETE) && (
+              <Button
+                variant="danger"
+                onClick={() => onDelete(property.id)}
+                style={{ flex: 1 }}
+                leftIcon={<Trash2 size={18} />}
+              >
+                Delete
+              </Button>
+            )}
           </div>
         )}
 

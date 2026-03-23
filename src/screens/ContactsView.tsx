@@ -216,6 +216,7 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
     return (
       <ContactDetails
         contact={viewingContact}
+        user={user}
         onBack={() => {
           setView('list');
           setViewingContact(undefined);

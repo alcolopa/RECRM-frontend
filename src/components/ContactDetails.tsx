@@ -18,16 +18,20 @@ import {
 import { type Contact, ContactType, ContactStatus } from '../api/contacts';
 import Button from './Button';
 import { useNavigation } from '../contexts/NavigationContext';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface ContactDetailsProps {
   contact: Contact;
+  user: UserProfile;
   onBack: () => void;
   onEdit: (contact: Contact, initialStep?: number, isIsolatedProfile?: boolean) => void;
   onDelete: (id: string) => void;
 }
 
-const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit, onDelete }) => {
+const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, user, onBack, onEdit, onDelete }) => {
   const { navigate } = useNavigation();
+  const permissions = usePermissions(user);
   const initials = `${contact.firstName?.[0] || ''}${contact.lastName?.[0] || ''}`;
   const fullName = `${contact.firstName} ${contact.lastName}`;
 
@@ -84,7 +88,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
           <span className="btn-label">Back to Contacts</span>
         </Button>
         <div className="details-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {isBuyer && (
+          {isBuyer && permissions.can(Permission.DEALS_CREATE) && (
             <Button 
               variant="primary"
               size="sm"
@@ -95,26 +99,30 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
             </Button>
           )}
           
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(contact, 1, false)}
-            leftIcon={<Edit2 size={16} />}
-          >
-            Edit Info
-          </Button>
+          {permissions.can(Permission.CONTACTS_EDIT) && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(contact, 1, false)}
+              leftIcon={<Edit2 size={16} />}
+            >
+              Edit Info
+            </Button>
+          )}
 
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(contact.id)}
-            aria-label="Delete contact"
-            leftIcon={<Trash2 size={16} />}
-            style={{ color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
-            title="Delete contact"
-          >
-            Delete
-          </Button>
+          {permissions.can(Permission.CONTACTS_DELETE) && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(contact.id)}
+              aria-label="Delete contact"
+              leftIcon={<Trash2 size={16} />}
+              style={{ color: 'var(--color-error)', borderColor: 'rgba(220, 38, 38, 0.1)' }}
+              title="Delete contact"
+            >
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 
@@ -222,15 +230,17 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
                     <Target size={18} color="var(--color-primary)" /> Buyer Profile
                   </h3>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => onEdit(contact, 2, true)}
-                    leftIcon={<Edit2 size={14} />}
-                    style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                  >
-                    Edit Profile
-                  </Button>
+                  {permissions.can(Permission.CONTACTS_EDIT) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onEdit(contact, 2, true)}
+                      leftIcon={<Edit2 size={14} />}
+                      style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                    >
+                      Edit Profile
+                    </Button>
+                  )}
                 </div>
                 
                 {contact.buyerProfile ? (
@@ -287,15 +297,17 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, onBack, onEdit
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
                     <Home size={18} color="var(--color-warning)" /> Seller Profile
                   </h3>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => onEdit(contact, 3, true)}
-                    leftIcon={<Edit2 size={14} />}
-                    style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                  >
-                    Edit Profile
-                  </Button>
+                  {permissions.can(Permission.CONTACTS_EDIT) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onEdit(contact, 3, true)}
+                      leftIcon={<Edit2 size={14} />}
+                      style={{ height: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                    >
+                      Edit Profile
+                    </Button>
+                  )}
                 </div>
                 
                 {contact.sellerProfile ? (

@@ -14,6 +14,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Lead, LeadStatus } from '../api/leads';
 import Button from './Button';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface LeadCardProps {
   lead: Lead;
@@ -23,9 +25,11 @@ interface LeadCardProps {
   onConvert: (lead: Lead) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  user?: UserProfile;
 }
 
-const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onConvert, canEdit = true, canDelete = true }) => {
+const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onConvert, canEdit = true, canDelete = true, user }) => {
+  const permissions = usePermissions(user || null);
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -227,18 +231,20 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
       )}
 
       {!lead.convertedAt ? (
-        <Button 
-          variant="primary" 
-          fullWidth
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onConvert(lead);
-          }}
-          leftIcon={<TrendingUp size={16} />}
-        >
-          Convert to Contact
-        </Button>
+        permissions.can(Permission.LEADS_EDIT) && (
+          <Button 
+            variant="primary" 
+            fullWidth
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onConvert(lead);
+            }}
+            leftIcon={<TrendingUp size={16} />}
+          >
+            Convert to Contact
+          </Button>
+        )
       ) : (
         <div style={{ 
           textAlign: 'center', 

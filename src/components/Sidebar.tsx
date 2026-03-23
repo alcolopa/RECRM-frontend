@@ -102,14 +102,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
         {/* ... (branding content) */}
         <div 
           onClick={() => {
-            setActiveTab('organization');
-            if (isMobile) onClose();
+            if (can(Permission.ORG_SETTINGS_EDIT)) {
+              setActiveTab('organization');
+              if (isMobile) onClose();
+            }
           }}
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: '0.75rem',
-            cursor: 'pointer',
+            cursor: can(Permission.ORG_SETTINGS_EDIT) ? 'pointer' : 'default',
             flex: 1,
             minWidth: 0,
             justifyContent: (isCollapsed && !isMobile) ? 'center' : 'flex-start'

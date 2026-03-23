@@ -460,6 +460,26 @@ const OfferForm: React.FC<OfferFormProps> = ({
             rows={3}
             error={errors.notes}
           />
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              style={{ flex: 1 }}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              style={{ flex: 2 }}
+              leftIcon={<Save size={20} />}
+            >
+              Create Offer
+            </Button>
+          </div>
         </div>
       </form>
     </div>

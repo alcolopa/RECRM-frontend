@@ -118,7 +118,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       <header style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -169,7 +169,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              maxWidth: '800px',
+              width: '100%',
               border: '1px solid var(--color-error)'
             }}
           >
@@ -184,7 +184,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
         )}
       </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="card" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <form onSubmit={handleSubmit} className="card" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -15,16 +15,20 @@ import {
 import { useState, useEffect } from 'react';
 import { type Lead, LeadStatus } from '../api/leads';
 import Button from './Button';
+import { usePermissions } from '../utils/permissions';
+import { type UserProfile, Permission } from '../api/users';
 
 interface LeadDetailsProps {
   lead: Lead;
+  user: UserProfile;
   onBack: () => void;
   onEdit: (lead: Lead) => void;
   onDelete: (id: string) => void;
   onConvert: (lead: Lead) => void;
 }
 
-const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelete, onConvert }) => {
+const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, user, onBack, onEdit, onDelete, onConvert }) => {
+  const permissions = usePermissions(user);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -72,17 +76,21 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelet
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Lead Details</h1>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button variant="outline" onClick={() => onEdit(lead)} leftIcon={<Edit2 size={18} />}>
-            Edit
-          </Button>
-          {!lead.convertedAt && (
+          {permissions.can(Permission.LEADS_EDIT) && (
+            <Button variant="outline" onClick={() => onEdit(lead)} leftIcon={<Edit2 size={18} />}>
+              Edit
+            </Button>
+          )}
+          {!lead.convertedAt && permissions.can(Permission.LEADS_EDIT) && (
             <Button variant="primary" onClick={() => onConvert(lead)} leftIcon={<TrendingUp size={18} />}>
               Convert to Contact
             </Button>
           )}
-          <Button variant="outline" onClick={() => onDelete(lead.id)} style={{ color: 'var(--color-error)' }} leftIcon={<Trash2 size={18} />}>
-            Delete
-          </Button>
+          {permissions.can(Permission.LEADS_DELETE) && (
+            <Button variant="outline" onClick={() => onDelete(lead.id)} style={{ color: 'var(--color-error)' }} leftIcon={<Trash2 size={18} />}>
+              Delete
+            </Button>
+          )}
         </div>
       </header>
 
@@ -185,7 +193,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit, onDelet
                   </p>
                 </div>
               </div>
-              {lead.convertedContact && (
+              {lead.convertedContact && permissions.can(Permission.CONTACTS_VIEW) && (
                 <Button variant="outline" size="sm" leftIcon={<ExternalLink size={14} />}>
                   View Contact
                 </Button>
