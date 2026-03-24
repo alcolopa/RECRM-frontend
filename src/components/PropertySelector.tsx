@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Building2, X, Loader2, ChevronDown, MapPin } from 'lucide-react';
+import { Search, Plus, Building2, X, Loader2, ChevronDown, MapPin, AlertCircle } from 'lucide-react';
 import { type Property, propertyService } from '../api/properties';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropertyForm from './PropertyForm';
-import Modal from './Modal';
-import { AlertCircle } from 'lucide-react';
 
 interface PropertySelectorProps {
   organizationId: string;
@@ -55,7 +53,9 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
       }
     };
 
-    fetchProperties();
+    if (organizationId) {
+      fetchProperties();
+    }
   }, [organizationId]);
 
   useEffect(() => {
@@ -109,9 +109,51 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
     } catch (err) {
       console.error('Failed to create property', err);
       setError('Failed to create property. Please try again.');
-      throw err; // Re-throw to let PropertyForm handle it if needed
+      throw err;
     }
   };
+
+  if (isAddingNew) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, backgroundColor: 'var(--color-bg)', padding: isMobile ? '1rem' : '2rem', overflowY: 'auto' }}>
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '0.5rem',
+                color: 'rgb(239, 68, 68)',
+                fontSize: '0.875rem',
+                marginBottom: '1rem',
+                fontWeight: 500,
+                maxWidth: '800px',
+                margin: '0 auto 1.5rem'
+              }}
+            >
+              <AlertCircle size={18} />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <PropertyForm
+          organizationId={organizationId}
+          onSave={handleCreateProperty}
+          onCancel={() => {
+            setIsAddingNew(false);
+            setError(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%', position: 'relative' }}>
@@ -121,7 +163,8 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           fontWeight: 700,
           color: 'var(--color-text-muted)',
           textTransform: 'uppercase',
-          letterSpacing: '0.025em'
+          letterSpacing: '0.025em',
+          display: 'block'
         }}>
           {label}
         </label>
@@ -385,53 +428,6 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           {externalError}
         </span>
       )}
-
-      <Modal
-        isOpen={isAddingNew}
-        onClose={() => {
-          setIsAddingNew(false);
-          setError(null);
-        }}
-        title="Add New Property"
-        maxWidth="800px"
-      >
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 1rem',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                borderRadius: '0.5rem',
-                color: 'rgb(239, 68, 68)',
-                fontSize: '0.875rem',
-                marginBottom: '1rem',
-                fontWeight: 500
-              }}
-            >
-              <AlertCircle size={18} />
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div style={{ padding: '0.5rem' }}>
-          <PropertyForm
-            organizationId={organizationId}
-            onSave={handleCreateProperty}
-            onCancel={() => {
-              setIsAddingNew(false);
-              setError(null);
-            }}
-          />
-        </div>
-      </Modal>
     </div>
   );
 };

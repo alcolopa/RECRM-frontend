@@ -5,14 +5,26 @@ import {
   User,
   Building2
 } from 'lucide-react';
-import { type Offer, OffererType } from '../api/offers';
+import { OffererType } from '../api/offers';
 import Button from './Button';
 
 interface NegotiationTimelineProps {
-  offers: Offer[];
+  negotiation: any;
+  currentOfferId?: string;
 }
 
-const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => {
+interface TimelineEvent {
+  id: string;
+  action: string;
+  offerer: OffererType;
+  price: number;
+  date: string;
+  user: any;
+  notes?: string | null;
+}
+
+const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ negotiation }) => {
+  const offers = (negotiation?.offers || []) as any[];
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showAll, setShowAll] = useState(false);
 
@@ -38,12 +50,10 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
     });
   };
 
-
-
-  const timelineEvents = offers.flatMap(offer => {
-    const events: any[] = [];
+  const timelineEvents: TimelineEvent[] = offers.flatMap(offer => {
+    const events: TimelineEvent[] = [];
     if (offer.history) {
-      offer.history.forEach(h => {
+      (offer.history as any[]).forEach(h => {
         let price = offer.price;
         try {
           if (h.action === 'COUNTER_OFFER' || h.action === 'OFFER_CREATED') {
@@ -90,7 +100,6 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
         position: 'relative',
         padding: isMobile ? '0' : '1rem 0'
       }}>
-        {/* Clean central vertical line */}
         {!isMobile && (
           <div style={{ 
             position: 'absolute', 
@@ -103,7 +112,7 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
           }} />
         )}
 
-        {visibleEvents.map((event) => {
+        {visibleEvents.map((event: TimelineEvent) => {
           const isBuyer = event.offerer === OffererType.BUYER;
           const alignment = isMobile ? 'left' : (isBuyer ? 'right' : 'left');
 
@@ -115,7 +124,6 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ offers }) => 
               position: 'relative',
               zIndex: 1
             }}>
-              {/* Event Marker */}
               {!isMobile && (
                 <div style={{ 
                   position: 'absolute', 

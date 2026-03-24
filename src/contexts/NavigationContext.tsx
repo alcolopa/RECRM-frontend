@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
-export type NavigationTab = 'dashboard' | 'properties' | 'contacts' | 'deals' | 'leads' | 'profile' | 'organization' | 'offers' | 'offer-details';
+export type NavigationTab = 
+  | 'dashboard' 
+  | 'properties' 
+  | 'contacts' 
+  | 'deals' 
+  | 'leads' 
+  | 'profile' 
+  | 'organization' 
+  | 'offers' 
+  | 'offer-details' 
+  | 'tasks' 
+  | 'calendar';
 
 interface NavigationState {
   returnTo?: NavigationTab;
@@ -23,7 +34,11 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
   // Initialize from URL if possible
   const getTabFromUrl = (): NavigationTab => {
     const path = window.location.pathname.replace(/^\//, '');
-    const validTabs: NavigationTab[] = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details'];
+    const validTabs: NavigationTab[] = [
+      'dashboard', 'properties', 'contacts', 'deals', 'leads', 
+      'profile', 'organization', 'offers', 'offer-details', 
+      'tasks', 'calendar'
+    ];
     return (validTabs.find(t => t === path) || 'dashboard') as NavigationTab;
   };
 

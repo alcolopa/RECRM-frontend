@@ -18,16 +18,18 @@ import {
   Users,
   Plus,
   Trash2,
-  Check
+  Check,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { organizationService, type Organization } from '../api/organization';
 import { type UserProfile } from '../api/users';
-import { Input } from '../components/Input';
+import { Input, Select } from '../components/Input';
 import PhoneInput from '../components/PhoneInput';
 import UserSelector from '../components/UserSelector';
 import Button from '../components/Button';
 import CustomSelect from '../components/CustomSelect';
+import Tabs from '../components/Tabs';
 import { useTheme, ACCENTS } from '../contexts/ThemeContext';
 import { getImageUrl } from '../utils/url';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
@@ -347,50 +349,16 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       )}
 
       {/* Tabs Navigation */}
-      <div style={{
-        display: 'flex',
-        gap: '2rem',
-        borderBottom: '1px solid var(--color-border)',
-        marginBottom: '1rem',
-        overflowX: 'auto',
-        paddingBottom: '2px'
-      }}>
-        <button
-          onClick={() => setActiveTab('general')}
-          style={{
-            ...tabButtonStyle,
-            color: activeTab === 'general' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            borderBottom: activeTab === 'general' ? '2px solid var(--color-primary)' : '2px solid transparent',
-          }}
-        >
-          <Settings size={18} />
-          General
-        </button>
-        <button
-          onClick={() => setActiveTab('team')}
-          style={{
-            ...tabButtonStyle,
-            color: activeTab === 'team' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            borderBottom: activeTab === 'team' ? '2px solid var(--color-primary)' : '2px solid transparent',
-          }}
-        >
-          <Users size={18} />
-          Team
-        </button>
-        {isOwner && (
-          <button
-            onClick={() => setActiveTab('roles')}
-            style={{
-              ...tabButtonStyle,
-              color: activeTab === 'roles' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-              borderBottom: activeTab === 'roles' ? '2px solid var(--color-primary)' : '2px solid transparent',
-            }}
-          >
-            <Shield size={18} />
-            Roles & Permissions
-          </button>
-        )}
-      </div>
+      <Tabs 
+        variant="underline"
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as any)}
+        options={[
+          { id: 'general', label: 'General', icon: Settings },
+          { id: 'team', label: 'Team', icon: Users },
+          ...(isOwner ? [{ id: 'roles', label: 'Roles & Permissions', icon: Shield }] : [])
+        ]}
+      />
 
       {activeTab === 'general' && (
         <div style={{
@@ -488,94 +456,115 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div className="card" style={{ padding: '1.5rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Theme & Appearance</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Choose your organization's primary accent color.</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Customize how your organization and shared listings look.</p>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                {(Array.isArray(Object.entries(ACCENTS)) ? Object.entries(ACCENTS) : []).map(([key, hex]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => {
-                      if (!isOwner) return;
-                      setFormData(prev => ({ ...prev, accentColor: hex }));
-                      setHasChanges(true);
-                    }}
-                    disabled={!isOwner}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius)',
-                      border: `2px solid ${formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                      background: formData.accentColor === hex ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
-                      cursor: isOwner ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s ease',
-                      outline: 'none',
-                      minWidth: '90px'
-                    }}
-                  >
-                    <div style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '50%',
-                      backgroundColor: hex,
-                      boxShadow: formData.accentColor === hex ? `0 0 0 2px var(--color-surface), 0 0 0 4px ${hex}` : 'none'
-                    }} />
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-text)' }}>
-                      {key.charAt(0) + key.slice(1).toLowerCase()}
-                    </span>
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em', display: 'block', marginBottom: '0.75rem' }}>
+                    Primary Accent Color
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    {(Array.isArray(Object.entries(ACCENTS)) ? Object.entries(ACCENTS) : []).map(([key, hex]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          if (!isOwner) return;
+                          setFormData(prev => ({ ...prev, accentColor: hex }));
+                          setHasChanges(true);
+                        }}
+                        disabled={!isOwner}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.75rem',
+                          borderRadius: 'var(--radius)',
+                          border: `2px solid ${formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                          background: formData.accentColor === hex ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
+                          cursor: isOwner ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.2s ease',
+                          outline: 'none',
+                          minWidth: '90px'
+                        }}
+                      >
+                        <div style={{
+                          width: '2rem',
+                          height: '2rem',
+                          borderRadius: '50%',
+                          backgroundColor: hex,
+                          boxShadow: formData.accentColor === hex ? `0 0 0 2px var(--color-surface), 0 0 0 4px ${hex}` : 'none'
+                        }} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-text)' }}>
+                          {key.charAt(0) + key.slice(1).toLowerCase()}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                {/* Custom Color Picker */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius)',
-                  border: `2px solid ${!Object.values(ACCENTS).includes(formData.accentColor) ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  background: !Object.values(ACCENTS).includes(formData.accentColor) ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
-                  cursor: isOwner ? 'pointer' : 'not-allowed',
-                  minWidth: '90px',
-                  position: 'relative'
-                }}>
-                  <div style={{ position: 'relative', width: '2rem', height: '2rem' }}>
-                    <input
-                      type="color"
-                      value={formData.accentColor.startsWith('#') ? formData.accentColor : '#059669'}
-                      onChange={(e) => {
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
+
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em', display: 'block', marginBottom: '0.75rem' }}>
+                    Default Sharing Theme
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
                         if (!isOwner) return;
-                        setFormData(prev => ({ ...prev, accentColor: e.target.value }));
+                        setFormData(prev => ({ ...prev, defaultTheme: 'LIGHT' }));
                         setHasChanges(true);
                       }}
                       disabled={!isOwner}
                       style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.75rem',
+                        padding: '1rem',
+                        borderRadius: 'var(--radius)',
+                        border: `2px solid ${formData.defaultTheme === 'LIGHT' ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        background: formData.defaultTheme === 'LIGHT' ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
                         cursor: isOwner ? 'pointer' : 'not-allowed',
-                        zIndex: 2
+                        transition: 'all 0.2s ease'
                       }}
-                    />
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '50%',
-                      backgroundColor: !Object.values(ACCENTS).includes(formData.accentColor) ? formData.accentColor : '#CBD5E1',
-                      border: '2px solid white',
-                      boxShadow: '0 0 0 1px var(--color-border)'
-                    }} />
+                    >
+                      <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '50%', border: '2px solid #CBD5E1', background: '#F8FAFC' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Light Mode</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isOwner) return;
+                        setFormData(prev => ({ ...prev, defaultTheme: 'DARK' }));
+                        setHasChanges(true);
+                      }}
+                      disabled={!isOwner}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.75rem',
+                        padding: '1rem',
+                        borderRadius: 'var(--radius)',
+                        border: `2px solid ${formData.defaultTheme === 'DARK' ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        background: formData.defaultTheme === 'DARK' ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
+                        cursor: isOwner ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '50%', border: '2px solid #334155', background: '#0F172A' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Dark Mode</span>
+                    </button>
                   </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: !Object.values(ACCENTS).includes(formData.accentColor) ? 'var(--color-primary)' : 'var(--color-text)' }}>
-                    Custom
-                  </span>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                    This theme will be applied by default when anyone views your shared properties publicly.
+                  </p>
                 </div>
               </div>
             </div>
@@ -954,6 +943,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
   const [roleForm, setRoleForm] = useState({
     name: '',
     description: '',
+    level: 1,
     permissions: [] as string[]
   });
 
@@ -962,6 +952,8 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
     { name: 'Contacts', permissions: ['CONTACTS_VIEW', 'CONTACTS_CREATE', 'CONTACTS_EDIT', 'CONTACTS_DELETE', 'CONTACTS_EXPORT'] },
     { name: 'Properties', permissions: ['PROPERTIES_VIEW', 'PROPERTIES_CREATE', 'PROPERTIES_EDIT', 'PROPERTIES_DELETE'] },
     { name: 'Deals', permissions: ['DEALS_VIEW', 'DEALS_CREATE', 'DEALS_EDIT', 'DEALS_DELETE'] },
+    { name: 'Tasks', permissions: ['TASKS_VIEW', 'TASKS_VIEW_ALL', 'TASKS_CREATE', 'TASKS_ASSIGN_ANY', 'TASKS_EDIT', 'TASKS_DELETE'] },
+    { name: 'Calendar', permissions: ['CALENDAR_VIEW', 'CALENDAR_VIEW_ALL', 'CALENDAR_EDIT'] },
     { name: 'Team', permissions: ['TEAM_VIEW', 'TEAM_INVITE', 'TEAM_EDIT_ROLES', 'TEAM_REMOVE_MEMBER'] },
     { name: 'Organization', permissions: ['ORG_SETTINGS_EDIT', 'ORG_BILLING_VIEW'] },
     { name: 'Dashboard', permissions: ['DASHBOARD_VIEW'] }
@@ -972,6 +964,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
     setRoleForm({
       name: role.name,
       description: role.description || '',
+      level: role.level || 1,
       permissions: Array.isArray(role.permissions) ? role.permissions : []
     });
     setIsEditing(true);
@@ -982,6 +975,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
     setRoleForm({
       name: '',
       description: '',
+      level: 1,
       permissions: [
         'LEADS_VIEW', 'CONTACTS_VIEW', 'PROPERTIES_VIEW', 'DEALS_VIEW', 'DASHBOARD_VIEW'
       ]
@@ -1035,6 +1029,126 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
     return label.charAt(0).toUpperCase() + label.slice(1);
   };
 
+  if (isEditing) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+      >
+        <header style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            type="button" 
+            onClick={() => setIsEditing(false)}
+            style={{ 
+              padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: 'pointer', color: 'var(--color-text)', flexShrink: 0
+            }}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.025em' }}>
+              {selectedRole?.isSystem ? 'Role Details' : selectedRole ? 'Edit Role' : 'Create New Role'}
+            </h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+              {selectedRole?.isSystem ? 'System roles have fixed permissions.' : 'Configure name and granular permissions for this role.'}
+            </p>
+          </div>
+        </header>
+
+        {error && (
+          <div style={{ ...errorAlertStyle }}>
+            <AlertCircle size={18} /> {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: isMobileOrTablet ? '1.5rem' : '2.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <Input
+              label="Role Name"
+              required
+              disabled={selectedRole?.isSystem}
+              value={roleForm.name}
+              onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}
+              placeholder="e.g. Sales Manager"
+            />
+            <Select 
+              label="Hierarchy Level"
+              id="level"
+              name="level"
+              disabled={selectedRole?.isSystem}
+              value={roleForm.level}
+              onChange={e => setRoleForm({ ...roleForm, level: parseInt(e.target.value) })}
+              options={[
+                { value: 1, label: 'Level 1 - Support / Junior' },
+                { value: 2, label: 'Level 2 - Standard Agent' },
+                { value: 3, label: 'Level 3 - Manager / Admin' },
+              ]}
+            />
+          </div>
+          <Input
+            label="Description"
+            disabled={selectedRole?.isSystem}
+            value={roleForm.description}
+            onChange={e => setRoleForm({ ...roleForm, description: e.target.value })}
+            placeholder="What can people with this role do?"
+          />
+
+          <div style={{ backgroundColor: 'var(--color-bg)', padding: isMobileOrTablet ? '1rem' : '1.5rem', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
+            <label style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text)', display: 'block', marginBottom: '1.5rem' }}>Role Permissions</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {permissionGroups.map(group => (
+                <div key={group.name}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <h5 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em' }}>{group.name}</h5>
+                    <div style={{ height: '1px', flex: 1, backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+                    {group.permissions.map(perm => (
+                      <div 
+                        key={perm} 
+                        onClick={() => !selectedRole?.isSystem && togglePermission(perm)}
+                        style={{ 
+                          display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8125rem', cursor: selectedRole?.isSystem ? 'default' : 'pointer',
+                          color: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-text)' : 'var(--color-text-muted)',
+                          padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'rgba(var(--color-primary-rgb), 0.03)' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div 
+                          style={{
+                            width: '20px', height: '20px', borderRadius: '6px', border: `2px solid ${(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                            backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease', flexShrink: 0
+                          }}
+                        >
+                          {(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) && <Check size={14} color="white" strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontWeight: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 600 : 400 }}>
+                          {formatPermLabel(perm, group.name)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {!selectedRole?.isSystem && (
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexDirection: isMobileOrTablet ? 'column' : 'row' }}>
+              <Button type="button" variant="outline" onClick={() => setIsEditing(false)} fullWidth>Cancel</Button>
+              <Button type="submit" disabled={isSaving} fullWidth isLoading={isSaving} leftIcon={<Save size={18} />}>
+                Save Role Configuration
+              </Button>
+            </div>
+          )}
+        </form>
+      </motion.div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -1054,8 +1168,11 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                   <h4 style={{ fontSize: '1.0625rem', fontWeight: 700 }}>{role.name}</h4>
+                  <span style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', padding: '0.125rem 0.5rem', borderRadius: '2rem', textTransform: 'uppercase', letterSpacing: '0.025em' }}>
+                    Lvl {role.level || 1}
+                  </span>
                   {role.isSystem && (
-                    <span style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', padding: '0.125rem 0.5rem', borderRadius: '2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--color-warning)', backgroundColor: 'rgba(217, 119, 6, 0.1)', padding: '0.125rem 0.5rem', borderRadius: '2rem', textTransform: 'uppercase', letterSpacing: '0.025em' }}>
                       System
                     </span>
                   )}
@@ -1107,140 +1224,6 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
           </div>
         ))}
       </div>
-
-      <AnimatePresence>
-        {isEditing && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem'
-          }}>
-            <motion.div 
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="card" 
-              style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: isMobileOrTablet ? '1.5rem' : '2.5rem', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.025em' }}>
-                    {selectedRole?.isSystem ? 'Role Details' : selectedRole ? 'Edit Role' : 'Create New Role'}
-                  </h3>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                    {selectedRole?.isSystem ? 'System roles have fixed permissions.' : 'Configure name and granular permissions for this role.'}
-                  </p>
-                </div>
-                <Button 
-                  variant="outline"
-                  onClick={() => setIsEditing(false)} 
-                  style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '50%' }}
-                >
-                  <X size={20} />
-                </Button>
-              </div>
-
-              {error && (
-                <div style={{ ...errorAlertStyle, marginBottom: '2rem' }}>
-                  <AlertCircle size={18} /> {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-                  <Input
-                    label="Role Name"
-                    required
-                    disabled={selectedRole?.isSystem}
-                    value={roleForm.name}
-                    onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}
-                    placeholder="e.g. Sales Manager"
-                  />
-                  <Input
-                    label="Description"
-                    disabled={selectedRole?.isSystem}
-                    value={roleForm.description}
-                    onChange={e => setRoleForm({ ...roleForm, description: e.target.value })}
-                    placeholder="What can people with this role do?"
-                  />
-                </div>
-
-                <div style={{ backgroundColor: 'var(--color-bg)', padding: isMobileOrTablet ? '1rem' : '1.5rem', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
-                  <label style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text)', display: 'block', marginBottom: '1.5rem' }}>Role Permissions</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    {permissionGroups.map(group => (
-                      <div key={group.name}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                          <h5 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em' }}>{group.name}</h5>
-                          <div style={{ height: '1px', flex: 1, backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
-                          {group.permissions.map(perm => (
-                            <div 
-                              key={perm} 
-                              onClick={() => !selectedRole?.isSystem && togglePermission(perm)}
-                              style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '0.75rem', 
-                                fontSize: '0.8125rem', 
-                                cursor: selectedRole?.isSystem ? 'default' : 'pointer',
-                                color: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-text)' : 'var(--color-text-muted)',
-                                padding: '0.5rem',
-                                borderRadius: '0.5rem',
-                                backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'rgba(var(--color-primary-rgb), 0.03)' : 'transparent',
-                                transition: 'all 0.2s ease'
-                              }}
-                            >
-                              <div 
-                                style={{
-                                  width: '20px',
-                                  height: '20px',
-                                  borderRadius: '6px',
-                                  border: `2px solid ${(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                  backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'transparent',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  transition: 'all 0.2s ease',
-                                  flexShrink: 0
-                                }}
-                              >
-                                {(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) && <Check size={14} color="white" strokeWidth={3} />}
-                              </div>
-                              <span style={{ fontWeight: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 600 : 400 }}>
-                                {formatPermLabel(perm, group.name)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {!selectedRole?.isSystem && (
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexDirection: isMobileOrTablet ? 'column' : 'row' }}>
-                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)} fullWidth>Cancel</Button>
-                    <Button type="submit" disabled={isSaving} fullWidth isLoading={isSaving}>
-                      Save Role Configuration
-                    </Button>
-                  </div>
-                )}
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -1283,20 +1266,6 @@ const errorAlertStyle: React.CSSProperties = {
   fontSize: '0.875rem',
   fontWeight: 600,
   border: '1px solid rgba(220, 38, 38, 0.2)'
-};
-
-const tabButtonStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  padding: '1rem 0.5rem',
-  fontSize: '0.9375rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.625rem',
-  transition: 'all 0.2s ease',
-  whiteSpace: 'nowrap'
 };
 
 export default OrganizationSettings;

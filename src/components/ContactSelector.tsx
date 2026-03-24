@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, User, X, Loader2, ChevronDown, Phone, Mail } from 'lucide-react';
+import { Search, Plus, User, X, Loader2, ChevronDown } from 'lucide-react';
 import { type Contact, contactService, ContactType } from '../api/contacts';
 import Button from './Button';
-import { motion, AnimatePresence } from 'framer-motion';
 import ContactForm from './ContactForm';
-import Modal from './Modal';
-import { AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ContactSelectorProps {
   organizationId: string;
   selectedContactId?: string;
-  onSelect: (contactId: string, contact?: Contact) => void;
+  onSelect: (contact: Contact | null) => void;
   label?: string;
+  placeholder?: string;
+  error?: string;
   restrictType?: ContactType;
   onNewContactRequested?: () => void;
-  error?: string;
   disabled?: boolean;
 }
 
@@ -22,27 +21,20 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   organizationId,
   selectedContactId,
   onSelect,
-  label = "Seller",
+  label = 'Contact',
+  placeholder = 'Select a contact...',
+  error,
   restrictType,
   onNewContactRequested,
-  error: externalError,
-  disabled
+  disabled = false
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isAddingNew, setIsAddingNew] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [error, setError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -65,13 +57,15 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
       }
     };
 
-    fetchContacts();
+    if (organizationId) {
+      fetchContacts();
+    }
   }, [organizationId, selectedContactId, restrictType]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
       }
     };
 
@@ -79,365 +73,228 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredContacts = contacts.filter(c => {
-    const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
-    const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || c.email?.toLowerCase().includes(query) || c.phone.includes(query);
-  });
+  const filteredContacts = contacts.filter(contact =>
+    `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSelect = (contact: Contact) => {
     setSelectedContact(contact);
-    if (contact.sellerProfile) {
-      onSelect(contact.sellerProfile.id, contact);
-    } else {
-      onSelect('', contact);
-    }
-    setIsDropdownOpen(false);
+    onSelect(contact);
+    setIsOpen(false);
     setSearchQuery('');
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedContact(null);
-    onSelect('');
+    onSelect(null);
   };
 
-  const handleCreateContact = async (data: Partial<Contact>) => {
+  const handleCreateContact = async (data: any) => {
     try {
-      setError(null);
       const response = await contactService.create({ ...data, organizationId });
       const newContact = response.data;
-      setContacts(prev => [newContact, ...prev]);
+      setContacts([newContact, ...contacts]);
       handleSelect(newContact);
       setIsAddingNew(false);
     } catch (err) {
       console.error('Failed to create contact', err);
-      setError('Failed to create contact. Please try again.');
+      throw err;
     }
   };
 
+  if (isAddingNew) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, backgroundColor: 'var(--color-bg)', padding: '2rem', overflowY: 'auto' }}>
+        <ContactForm 
+          organizationId={organizationId}
+          onSave={handleCreateContact}
+          onCancel={() => setIsAddingNew(false)}
+          fixedType={restrictType}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
       {label && (
-        <label style={{
-          fontSize: '0.8125rem',
-          fontWeight: 700,
-          color: 'var(--color-text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.025em'
+        <label style={{ 
+          fontSize: '0.8125rem', 
+          fontWeight: 700, 
+          color: 'var(--color-text-muted)', 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.025em',
+          display: 'block'
         }}>
           {label}
         </label>
       )}
-
-      {selectedContact ? (
+      
+      <div style={{ position: 'relative' }} ref={dropdownRef}>
         <div
+          onClick={() => !isLoading && !disabled && setIsOpen(!isOpen)}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.625rem 0.875rem',
             borderRadius: 'var(--radius)',
-            border: `1px solid ${externalError ? 'var(--color-error)' : 'var(--color-primary)'}`,
-            background: 'rgba(var(--color-primary-rgb), 0.05)',
-            height: '3.5rem',
-            boxShadow: externalError ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : 'none',
-            transition: 'all 0.2s ease',
-            opacity: disabled ? 0.6 : 1,
-            pointerEvents: disabled ? 'none' : 'auto'
-          }}
-        >
-          <div style={{
-            width: '1.75rem',
-            height: '1.75rem',
-            borderRadius: '50%',
-            background: 'rgba(var(--color-primary-rgb), 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-primary)',
-            flexShrink: 0
-          }}>
-            <User size={14} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {selectedContact.firstName} {selectedContact.lastName}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {selectedContact.phone ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Phone size={10} /> {selectedContact.phone}
-                </span>
-              ) : selectedContact.email ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Mail size={10} /> {selectedContact.email}
-                </span>
-              ) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
-            {!disabled && (
-              <X
-                size={16}
-                onClick={handleClear}
-                style={{ cursor: 'pointer', transition: 'color 0.2s' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-error)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted-foreground)')}
-              />
-            )}
-            <ChevronDown size={18} />
-          </div>
-        </div>
-      ) : (
-        <div
-          onClick={() => !disabled && setIsDropdownOpen(!isDropdownOpen)}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.625rem 0.875rem',
-            borderRadius: 'var(--radius)',
-            border: `1px solid ${externalError ? 'var(--color-error)' : (isDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
+            border: `1px solid ${error ? 'var(--color-error)' : (isOpen ? 'var(--color-primary)' : 'var(--color-border)')}`,
             background: 'var(--color-surface)',
             cursor: disabled ? 'not-allowed' : 'pointer',
             minHeight: '2.75rem',
             transition: 'all 0.2s ease',
-            boxShadow: externalError ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isDropdownOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none'),
-            opacity: disabled ? 0.6 : 1
+            opacity: disabled ? 0.7 : 1,
+            boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none')
           }}
         >
-          <User size={18} color="var(--muted-foreground)" />
-          <span style={{ fontSize: '0.9375rem', color: 'var(--muted-foreground)' }}>Select contact...</span>
-          <ChevronDown size={18} color="var(--muted-foreground)" style={{ marginLeft: 'auto', transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-        </div>
-      )}
+          <div style={{ 
+            width: '1.75rem', 
+            height: '1.75rem', 
+            borderRadius: '50%', 
+            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: 'var(--color-primary)',
+            flexShrink: 0
+          }}>
+            {selectedContact ? <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{selectedContact.firstName[0]}{selectedContact.lastName[0]}</span> : <User size={14} />}
+          </div>
+          
+          <div style={{ flex: 1, fontSize: '0.9375rem', color: selectedContact ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: selectedContact ? 500 : 400 }}>
+            {selectedContact ? `${selectedContact.firstName} ${selectedContact.lastName}` : placeholder}
+          </div>
 
-      <AnimatePresence>
-        {isDropdownOpen && !selectedContact && (
-          <>
-            {isMobile && (
-              <div 
-                onClick={() => setIsDropdownOpen(false)}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0,0,0,0.4)',
-                  backdropFilter: 'blur(4px)',
-                  zIndex: 999
-                }}
-              />
-            )}
+          {selectedContact && !disabled && (
+            <X 
+              size={16} 
+              color="var(--color-text-muted)" 
+              style={{ cursor: 'pointer' }} 
+              onClick={handleClear} 
+            />
+          )}
+          <ChevronDown size={18} color="var(--color-text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        </div>
+
+        <AnimatePresence>
+          {isOpen && (
             <motion.div
-              initial={{ opacity: 0, x: isMobile ? '-50%' : 0, y: isMobile ? 50 : -5 }}
-              animate={{ opacity: 1, x: isMobile ? '-50%' : 0, y: isMobile ? '-50%' : 0 }}
-              exit={{ opacity: 0, x: isMobile ? '-50%' : 0, y: isMobile ? 50 : -5 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
               style={{
-                position: isMobile ? 'fixed' : 'absolute',
-                top: isMobile ? '50%' : '100%',
-                left: isMobile ? '50%' : 0,
-                right: isMobile ? 'auto' : 0,
-                marginTop: isMobile ? 0 : '0.5rem',
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: '0.5rem',
                 backgroundColor: 'var(--color-surface)',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--color-border)',
-                boxShadow: 'var(--shadow-2xl)',
+                boxShadow: 'var(--shadow-xl)',
                 zIndex: 1000,
-                overflow: 'hidden',
-                width: isMobile ? 'calc(100vw - 2.5rem)' : '100%',
-                maxWidth: isMobile ? '400px' : 'none',
+                overflow: 'hidden'
               }}
             >
-              {isMobile && (
-                <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-bg)' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700 }}>Select Contact</h4>
-                  <button 
-                    onClick={() => setIsDropdownOpen(false)}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}
-                  >
-                    <X size={20} />
-                  </button>
+              <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                <div style={{ position: 'relative' }}>
+                  <Search size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    autoFocus
+                    placeholder="Search contacts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem 0.5rem 2.25rem',
+                      borderRadius: 'var(--radius)',
+                      border: '1px solid var(--color-border)',
+                      fontSize: '0.875rem',
+                      background: 'var(--color-surface)'
+                    }}
+                  />
                 </div>
-              )}
-            <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-              <div style={{ position: 'relative' }}>
-                <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)' }} />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Filter contacts..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem 0.5rem 2.25rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface)',
-                    outline: 'none',
-                    fontSize: '0.8125rem',
-                    color: 'var(--color-text)'
-                  }}
-                />
               </div>
-            </div>
 
-            <div style={{ maxHeight: '250px', overflowY: 'auto', padding: '0.25rem' }}>
-              {!isLoading && (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onNewContactRequested) onNewContactRequested();
-                    else setIsAddingNew(true);
-                    setIsDropdownOpen(false);
-                  }}
-                  style={{
-                    padding: '0.75rem',
-                    margin: '0.25rem',
-                    borderRadius: '0.375rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    color: 'var(--color-primary)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    background: 'rgba(var(--color-primary-rgb), 0.05)',
-                    border: '1px dashed var(--color-primary)',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.1)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)')}
-                >
-                  <div style={{
-                    width: '1.5rem',
-                    height: '1.5rem',
-                    borderRadius: '50%',
-                    background: 'var(--color-primary)',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Plus size={14} />
+              <div style={{ maxHeight: '250px', overflowY: 'auto' }} className="no-scrollbar">
+                {isLoading ? (
+                  <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    <Loader2 size={24} className="animate-spin" color="var(--color-primary)" style={{ margin: '0 auto' }} />
                   </div>
-                  New Contact
-                </div>
-              )}
-              {isLoading ? (
-                <div style={{ padding: '1.5rem', textAlign: 'center' }}>
-                  <Loader2 size={20} className="animate-spin" color="var(--color-primary)" />
-                </div>
-              ) : filteredContacts.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {filteredContacts.map(contact => (
+                ) : filteredContacts.length > 0 ? (
+                  filteredContacts.map(contact => (
                     <div
                       key={contact.id}
-                      onClick={(e) => { e.stopPropagation(); handleSelect(contact); }}
+                      onClick={() => handleSelect(contact)}
                       style={{
-                        padding: '0.625rem 0.75rem',
-                        borderRadius: '0.375rem',
+                        padding: '0.75rem 1rem',
                         cursor: 'pointer',
-                        transition: 'background 0.2s',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.125rem'
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        transition: 'background 0.2s',
+                        backgroundColor: selectedContactId === contact.id ? 'rgba(var(--color-primary-rgb), 0.05)' : 'transparent'
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = selectedContactId === contact.id ? 'rgba(var(--color-primary-rgb), 0.05)' : 'transparent'}
                     >
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{contact.firstName} {contact.lastName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                        {contact.email} {contact.email && contact.phone && '•'} {contact.phone}
+                      <div style={{ 
+                        width: '2rem', 
+                        height: '2rem', 
+                        borderRadius: '50%', 
+                        backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'var(--color-primary)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700
+                      }}>
+                        {contact.firstName[0]}{contact.lastName[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{contact.firstName} {contact.lastName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {contact.email || contact.phone}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
-                  <p>No contacts found.</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (onNewContactRequested) {
-                        onNewContactRequested();
-                      } else {
-                        setIsAddingNew(true);
-                      }
-                      setIsDropdownOpen(false);
-                    }}
-                    style={{ marginTop: '0.5rem' }}
-                  >
-                    <Plus size={16} /> Create "{searchQuery}"
-                  </Button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                  ))
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                    No contacts found matching "{searchQuery}"
+                  </div>
+                )}
+              </div>
 
-      {externalError && (
-        <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.125rem', fontWeight: 500 }}>
-          {externalError}
-        </span>
-      )}
-
-      <Modal
-        isOpen={isAddingNew}
-        onClose={() => {
-          setIsAddingNew(false);
-          setError(null);
-        }}
-        title={`Add New ${restrictType === ContactType.SELLER ? 'Seller' : 'Contact'}`}
-        maxWidth="800px"
-      >
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 1rem',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                borderRadius: '0.5rem',
-                color: 'rgb(239, 68, 68)',
-                fontSize: '0.875rem',
-                marginBottom: '1rem',
-                fontWeight: 500
-              }}
-            >
-              <AlertCircle size={18} />
-              {error}
+              <div style={{ padding: '0.75rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                <Button 
+                  fullWidth 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onNewContactRequested) {
+                      onNewContactRequested();
+                    } else {
+                      setIsAddingNew(true);
+                    }
+                    setIsOpen(false);
+                  }}
+                  leftIcon={<Plus size={16} />}
+                >
+                  Add New Contact
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div style={{ padding: '0.5rem' }}>
-          <ContactForm
-            organizationId={organizationId}
-            onSave={handleCreateContact}
-            onCancel={() => {
-              setIsAddingNew(false);
-              setError(null);
-            }}
-            fixedType={restrictType}
-          />
-        </div>
-      </Modal>
+      </div>
+      
+      {error && <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', fontWeight: 600 }}>{error}</span>}
     </div>
   );
 };

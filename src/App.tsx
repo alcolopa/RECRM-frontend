@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, createContext, useContext } from 'react';
 import { Home, LogIn, Loader2 } from 'lucide-react';
 import api from './api/client';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -6,6 +6,23 @@ import { NavigationProvider } from './contexts/NavigationContext';
 import { UnitProvider } from './contexts/UnitContext';
 import Button from './components/Button';
 import ThemeSelector from './components/ThemeSelector';
+import { type UserProfile } from './api/users';
+
+interface UserContextType {
+  user: UserProfile | null;
+  setUser: (user: UserProfile | null) => void;
+  refreshProfile: () => Promise<void>;
+  normalizeUserData: (userData: any) => UserProfile;
+  isLoading: boolean;
+}
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) throw new Error('useUser must be used within a UserProvider');
+  return context;
+};
 
 // Lazy load components
 const Hero = lazy(() => import('./components/Hero'));
@@ -29,14 +46,72 @@ const LoadingFallback = () => (
     backgroundColor: 'var(--color-bg)',
     zIndex: 9999
   }}>
-    <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+    <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+      <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+      <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Initializing your session...</span>
+    </div>
   </div>
 );
 
+const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const themeContext = useTheme();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const normalizeUserData = (userData: any): UserProfile => {
+    const activeMembership = userData.memberships?.[0];
+    return {
+      ...userData,
+      organizationId: activeMembership?.organizationId,
+      role: activeMembership?.role
+    };
+  };
+
+  const refreshProfile = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.get('/auth/profile');
+      const userData = response.data;
+      const normalizedUser = normalizeUserData(userData);
+      setUser(normalizedUser);
+
+      const activeOrg = userData.memberships?.[0]?.organization;
+      if (activeOrg?.accentColor && themeContext) {
+        themeContext.setAccentColor(activeOrg.accentColor as any);
+      }
+
+      if (userData.preferredTheme && themeContext) {
+        themeContext.setTheme(userData.preferredTheme.toLowerCase() as any);
+      }
+    } catch (err) {
+      console.error('Refresh profile failed', err);
+      localStorage.removeItem('token');
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshProfile();
+  }, []);
+
+  return (
+    <UserContext.Provider value={{ user, setUser, refreshProfile, normalizeUserData, isLoading }}>
+      {children}
+    </UserContext.Provider>
+  );
+};
+
 const AppContent = () => {
   const { setTheme, setAccentColor, resetToDefault } = useTheme();
+  const { user, setUser, refreshProfile, normalizeUserData, isLoading: isUserLoading } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<any>(null);
   const [view, setViewState] = useState<'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'invite' | 'dashboard' | 'share'>('landing');
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [sharedPropertyId, setSharedPropertyId] = useState<string | null>(null);
@@ -60,13 +135,14 @@ const AppContent = () => {
       else if (path === '/forgot-password') setViewState('forgot-password');
       else if (path === '/reset-password') setViewState('reset-password');
       else if (path === '/dashboard') setViewState('dashboard');
-      // Other paths are handled by the initial useEffect or specialized logic
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
+    if (isUserLoading) return;
+
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
     const query = new URLSearchParams(window.location.search);
@@ -100,7 +176,6 @@ const AppContent = () => {
       }
     }
 
-    // Public auth routes should be accessible regardless of token
     if (path === '/reset-password') {
       setViewState('reset-password');
       resetToDefault();
@@ -118,85 +193,23 @@ const AppContent = () => {
       if (!token) resetToDefault();
     }
 
-    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details'];
+    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details', 'tasks', 'calendar'];
     const isDashboardPath = dashboardTabs.some(tab => path === `/${tab}`);
 
-    if (token) {
+    if (token && user) {
+      setIsAuthenticated(true);
       if (isDashboardPath || path === '/') {
         setViewState('dashboard');
       }
-      fetchProfile();
     } else if (path === '/') {
       setViewState('landing');
       resetToDefault();
     } else if (isDashboardPath) {
-      // Redirect to / and show login
       window.history.replaceState({}, '', '/');
       setViewState('login');
       resetToDefault();
     }
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const response = await api.get('/auth/profile');
-      const userData = response.data;
-      
-      // Normalize user data with active organization and role
-      const activeMembership = userData.memberships?.[0];
-      const normalizedUser = {
-        ...userData,
-        organizationId: activeMembership?.organizationId,
-        role: activeMembership?.role
-      };
-      
-      setUser(normalizedUser);
-      
-      // Sync accent color from active organization
-      const activeOrg = activeMembership?.organization;
-      if (activeOrg?.accentColor) {
-        setAccentColor(activeOrg.accentColor as any);
-      }
-      
-      // Sync theme preference from user
-      if (userData.preferredTheme) {
-        setTheme(userData.preferredTheme.toLowerCase() as any);
-      }
-      
-      setIsAuthenticated(true);
-      // Only redirect to dashboard if we are not on a special shared or reset page
-      const path = window.location.pathname;
-      if (path === '/' || path === '/login' || path === '/signup' || path === '/dashboard' || path === '') {
-        setViewState('dashboard');
-        if (window.location.pathname !== '/dashboard') {
-           window.history.replaceState({}, '', '/dashboard');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch profile', err);
-      localStorage.removeItem('token');
-      setIsAuthenticated(false);
-      setUser(null);
-      
-      const path = window.location.pathname;
-      if (path === '/reset-password') {
-        setViewState('reset-password');
-      } else if (path === '/login') {
-        setViewState('login');
-      } else if (path === '/signup') {
-        setViewState('signup');
-      } else if (path === '/forgot-password') {
-        setViewState('forgot-password');
-      } else {
-        // Redirect to / and show login for any other failed auth state
-        if (window.location.pathname !== '/') {
-          window.history.replaceState({}, '', '/');
-        }
-        setViewState('login');
-      }
-      resetToDefault();
-    }
-  };
+  }, [isUserLoading, user]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -207,9 +220,9 @@ const AppContent = () => {
   };
 
   const handleUserUpdate = (updatedUser: any) => {
-    setUser(updatedUser);
-    
-    // Update accent color if organization settings changed
+    const normalizedUser = normalizeUserData(updatedUser);
+    setUser(normalizedUser);
+
     const activeOrg = updatedUser.memberships?.[0]?.organization;
     if (activeOrg?.accentColor) {
       setAccentColor(activeOrg.accentColor as any);
@@ -222,29 +235,26 @@ const AppContent = () => {
 
   const handleSignupSuccess = (token: string, userData?: any) => {
     localStorage.setItem('token', token);
-    
+
     if (userData) {
-      setUser(userData);
+      const normalizedUser = normalizeUserData(userData);
+      setUser(normalizedUser);
       setIsAuthenticated(true);
-      
-      // Sync accent color from user's organization
+
       const activeOrg = userData.memberships?.[0]?.organization;
       if (activeOrg?.accentColor) {
         setAccentColor(activeOrg.accentColor as any);
       }
-      
-      // Sync theme preference from user
+
       if (userData.preferredTheme) {
         setTheme(userData.preferredTheme.toLowerCase() as any);
       }
-      
-      // Trigger a profile fetch in the background to ensure everything is perfectly in sync
-      fetchProfile();
+
+      refreshProfile();
     } else {
-      fetchProfile();
+      refreshProfile().then(() => setIsAuthenticated(true));
     }
-    
-    // fetchProfile already handles the redirect, but let's be explicit
+
     setView('dashboard');
   };
 
@@ -256,12 +266,10 @@ const AppContent = () => {
       const propertyData = response.data;
       setSharedProperty(propertyData);
       
-      // Sync accent color from property's organization
       if (propertyData.organization?.accentColor) {
         setAccentColor(propertyData.organization.accentColor as any);
       }
 
-      // Force organization theme for public shared page
       if (propertyData.organization?.defaultTheme) {
         setTheme(propertyData.organization.defaultTheme.toLowerCase() as any);
       }
@@ -272,7 +280,10 @@ const AppContent = () => {
     }
   };
 
-  // Public shared property view
+  if (isUserLoading) {
+    return <LoadingFallback />;
+  }
+
   if (view === 'share' && sharedPropertyId) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
@@ -303,9 +314,7 @@ const AppContent = () => {
     );
   }
 
-  // If authenticated, show the dashboard layout
   if (isAuthenticated && view === 'dashboard') {
-    // Derive active values for initial load/sync
     const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
     const activeOrgId = activeMembership?.organizationId || user?.organizationId;
     const activeRole = activeMembership?.role || user?.role;
@@ -315,7 +324,7 @@ const AppContent = () => {
         <UnitProvider user={user}>
           <Layout 
             onLogout={handleLogout} 
-            user={{ ...user, organizationId: activeOrgId, role: activeRole }} 
+            user={{ ...user, organizationId: activeOrgId, role: activeRole } as any} 
             onUserUpdate={handleUserUpdate} 
           />
         </UnitProvider>
@@ -323,7 +332,6 @@ const AppContent = () => {
     );
   }
 
-  // Auth pages (Login/Signup/Forgot Password/Reset Password)
   if (view === 'login' || view === 'signup' || view === 'forgot-password' || view === 'reset-password' || view === 'invite') {
     return (
       <div style={{ 
@@ -395,10 +403,8 @@ const AppContent = () => {
     );
   }
 
-  // Landing Page
   return (
     <div className="app">
-      {/* Navigation */}
       <nav className="glass" style={{
         position: 'fixed',
         top: 0,
@@ -443,7 +449,6 @@ const AppContent = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main style={{ paddingTop: '4rem' }}>
         <Suspense fallback={<LoadingFallback />}>
           <Hero onSignupSuccess={handleSignupSuccess} />
@@ -452,7 +457,6 @@ const AppContent = () => {
         </Suspense>
       </main>
 
-      {/* Footer */}
       <footer style={{ padding: '4rem 0', backgroundColor: 'var(--footer-bg)', color: 'var(--footer-text)' }}>
         <div className="container">
           <div className="grid grid-3">
@@ -502,9 +506,11 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider>
-    <NavigationProvider>
-      <AppContent />
-    </NavigationProvider>
+    <UserProvider>
+      <NavigationProvider>
+        <AppContent />
+      </NavigationProvider>
+    </UserProvider>
   </ThemeProvider>
 );
 

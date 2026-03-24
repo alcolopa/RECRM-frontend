@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, CheckCircle2, HelpCircle } from 'lucide-react';
 import Button from './Button';
 import { userService, type UserProfile } from '../api/users';
+import { useUser } from '../App';
 
 export interface TutorialStep {
   title: string;
@@ -15,16 +16,15 @@ interface TutorialGuideProps {
   tutorialId: string;
   steps: TutorialStep[];
   onComplete?: () => void;
-  onUserUpdate?: (user: UserProfile) => void;
 }
 
 const TutorialGuide: React.FC<TutorialGuideProps> = ({ 
   user, 
   tutorialId, 
   steps, 
-  onComplete,
-  onUserUpdate 
+  onComplete
 }) => {
+  const { refreshProfile } = useUser();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [isSkippingAll, setIsSkippingAll] = useState(false);
@@ -80,8 +80,8 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
     setIsVisible(false);
     setIsDismissed(true);
     try {
-      const response = await userService.completeTutorial(tutorialId);
-      if (onUserUpdate) onUserUpdate(response.data);
+      await userService.completeTutorial(tutorialId);
+      await refreshProfile();
       if (onComplete) onComplete();
     } catch (err) {
       console.error('Failed to mark tutorial as complete', err);
@@ -91,9 +91,8 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
   const handleSkipAll = async () => {
     setIsSkippingAll(true);
     try {
-      const response = await userService.skipAllTutorials();
-      console.log('Skip all response user:', response.data);
-      if (onUserUpdate) onUserUpdate(response.data);
+      await userService.skipAllTutorials();
+      await refreshProfile();
       setIsVisible(false);
       setIsDismissed(true);
     } catch (err) {

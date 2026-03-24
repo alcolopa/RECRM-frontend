@@ -16,7 +16,7 @@ interface UnitContextType {
 
 const UnitContext = createContext<UnitContextType | undefined>(undefined);
 
-export const UnitProvider: React.FC<{ children: React.ReactNode; user?: UserProfile }> = ({ children, user }) => {
+export const UnitProvider: React.FC<{ children: React.ReactNode; user?: UserProfile | null }> = ({ children, user }) => {
   const [unit, setUnitState] = useState<UnitType>(user?.unitPreference || 'METRIC');
 
   useEffect(() => {

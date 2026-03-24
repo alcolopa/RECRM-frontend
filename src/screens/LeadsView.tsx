@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, UserSquare2, UserPlus, LayoutGrid, List, Edit2, Trash2, ExternalLink, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Loader2, UserSquare2, UserPlus, LayoutGrid, List, Edit2, Trash2, ExternalLink, RefreshCw } from 'lucide-react';
 import { type Lead, LeadStatus, leadService } from '../api/leads';
 import { type ContactType } from '../api/contacts';
-import { Input } from '../components/Input';
-import LeadCard from '../components/LeadCard';
-import LeadForm from '../components/LeadForm';
-import LeadDetails from '../components/LeadDetails';
-import LeadConvertModal from '../components/LeadConvertModal';
-import Button from '../components/Button';
-import ConfirmModal from '../components/ConfirmModal';
-
 import { type UserProfile, Permission } from '../api/users';
+import Button from '../components/Button';
+import { Input, Select } from '../components/Input';
+import LeadCard from '../components/LeadCard';
+import LeadDetails from '../components/LeadDetails';
+import LeadForm from '../components/LeadForm';
+import LeadConvertView from '../components/LeadConvertView';
+import ConfirmModal from '../components/ConfirmModal';
 import { usePermissions } from '../utils/permissions';
 
 interface LeadsViewProps {
@@ -20,52 +19,24 @@ interface LeadsViewProps {
 
 const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
   const permissions = usePermissions(user);
+  const [view, setView] = useState<'list' | 'details' | 'form' | 'convert'>('list');
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(1);
-  const [limit] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'form' | 'details'>('list');
-  const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
-  const [viewingLead, setViewingLead] = useState<Lead | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<LeadStatus | 'ALL'>('ALL');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  // Deletion state
+  const [viewingLead, setViewingLead] = useState<Lead | undefined>(undefined);
+  const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
+  const [convertingLead, setConvertingLead] = useState<Lead | undefined>(undefined);
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Conversion state
-  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  const getStatusBadge = (status: LeadStatus) => {
-    const styles: Record<LeadStatus, { bg: string, color: string }> = {
-      NEW: { bg: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' },
-      CONTACTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
-      QUALIFIED: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' },
-      PROPOSAL_SENT: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
-      NEGOTIATION: { bg: 'rgba(236, 72, 153, 0.1)', color: '#ec4899' },
-      LOST: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
-      CLOSED_WON: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }
-    };
-    const style = styles[status] || styles.NEW;
-    return (
-      <span className="badge" style={{ backgroundColor: style.bg, color: style.color }}>
-        {status.replace(/_/g, ' ')}
-      </span>
-    );
-  };
-
-  const fetchLeads = async (pageNum = page, status = filterStatus, sort = sortBy, order = sortOrder) => {
+  const fetchLeads = async () => {
     setIsLoading(true);
     try {
-      const apiStatus = status === 'ALL' ? undefined : status;
-      const response = await leadService.getAll(organizationId, pageNum, limit, apiStatus, sort, order);
-      setLeads(Array.isArray(response.data.items) ? response.data.items : []);
-      setTotalCount(response.data.total || 0);
+      const response = await leadService.getAll(organizationId);
+      setLeads(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Failed to fetch leads', err);
     } finally {
@@ -73,41 +44,34 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     }
   };
 
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-    setPage(1);
-  };
-
   useEffect(() => {
-    fetchLeads(page, filterStatus, sortBy, sortOrder);
-  }, [page, filterStatus, sortBy, sortOrder]);
-
-  useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    } else {
-      fetchLeads(1, filterStatus, sortBy, sortOrder);
-    }
-  }, [organizationId, filterStatus]);
+    fetchLeads();
+  }, [organizationId]);
 
   const handleSave = async (data: Partial<Lead>) => {
     try {
       if (editingLead) {
         await leadService.update(editingLead.id, data, organizationId);
       } else {
-        await leadService.create({ ...data, organizationId } as any);
+        await leadService.create({ ...data, organizationId });
       }
-      
       setView('list');
       setEditingLead(undefined);
       fetchLeads();
     } catch (err) {
-      console.error('Failed to save lead', err);
+      throw err;
+    }
+  };
+
+  const handleConvert = async (data: { type: ContactType; notes?: string }) => {
+    if (!convertingLead) return;
+    try {
+      await leadService.convert(convertingLead.id, data, organizationId);
+      setView('list');
+      setConvertingLead(undefined);
+      fetchLeads();
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -116,12 +80,12 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     setIsDeleting(true);
     try {
       await leadService.delete(deletingLeadId, organizationId);
+      setLeads(leads.filter(l => l.id !== deletingLeadId));
       setDeletingLeadId(null);
       if (viewingLead?.id === deletingLeadId) {
         setView('list');
         setViewingLead(undefined);
       }
-      fetchLeads();
     } catch (err) {
       console.error('Failed to delete lead', err);
     } finally {
@@ -129,41 +93,42 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     }
   };
 
-  const handleConvert = async (data: { type: ContactType; notes?: string }) => {
-    if (!convertingLead) return;
-    try {
-      await leadService.convert(convertingLead.id, data, organizationId);
-      setConvertingLead(null);
-      fetchLeads();
-      // Optionally navigate to contacts or show success
-    } catch (err) {
-      console.error('Failed to convert lead', err);
-      throw err;
-    }
-  };
-
-  const filteredLeads = (Array.isArray(leads) ? leads : []).filter(l => {
+  const filteredLeads = leads.filter(l => {
     const matchesSearch =
       l.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       l.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       l.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch;
+    const matchesStatus = filterStatus === 'ALL' || l.status === filterStatus;
+
+    return matchesSearch && matchesStatus;
   });
 
-  if (view === 'form') {
+  const getStatusBadge = (status: LeadStatus) => {
+    const styles: Record<LeadStatus, { bg: string, color: string }> = {
+      NEW: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
+      CONTACTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
+      QUALIFIED: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' },
+      PROPOSAL_SENT: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+      NEGOTIATION: { bg: 'rgba(236, 72, 153, 0.1)', color: '#ec4899' },
+      LOST: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
+      CLOSED_WON: { bg: 'rgba(22, 163, 74, 0.1)', color: '#16a34a' }
+    };
+    const style = styles[status];
     return (
-      <LeadForm
-        lead={editingLead}
-        onSave={handleSave}
-        onCancel={() => {
-          setView(viewingLead ? 'details' : 'list');
-          setEditingLead(undefined);
-        }}
-        organizationId={organizationId}
-      />
+      <span style={{ 
+        padding: '0.25rem 0.625rem', 
+        borderRadius: '2rem', 
+        fontSize: '0.75rem', 
+        fontWeight: 600,
+        backgroundColor: style.bg,
+        color: style.color,
+        textTransform: 'capitalize'
+      }}>
+        {status.toLowerCase().replace('_', ' ')}
+      </span>
     );
-  }
+  };
 
   if (view === 'details' && viewingLead) {
     return (
@@ -179,7 +144,37 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
           setView('form');
         }}
         onDelete={(id) => setDeletingLeadId(id)}
-        onConvert={(l) => setConvertingLead(l)}
+        onConvert={(l) => {
+          setConvertingLead(l);
+          setView('convert');
+        }}
+      />
+    );
+  }
+
+  if (view === 'form') {
+    return (
+      <LeadForm
+        organizationId={organizationId}
+        lead={editingLead}
+        onSave={handleSave}
+        onCancel={() => {
+          setView('list');
+          setEditingLead(undefined);
+        }}
+      />
+    );
+  }
+
+  if (view === 'convert' && convertingLead) {
+    return (
+      <LeadConvertView
+        lead={convertingLead}
+        onConvert={handleConvert}
+        onClose={() => {
+          setView('list');
+          setConvertingLead(undefined);
+        }}
       />
     );
   }
@@ -189,237 +184,196 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Leads</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>Track and nurture your potential properties and clients.</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>Track and manage potential clients.</p>
         </div>
         {permissions.can(Permission.LEADS_CREATE) && (
-          <Button
+          <Button 
             onClick={() => {
               setEditingLead(undefined);
               setView('form');
             }}
             leftIcon={<UserPlus size={20} />}
           >
-            Add Lead
+            Add New Lead
           </Button>
         )}
       </header>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ flex: 1, minWidth: '250px' }}>
           <Input
-            id="searchQuery"
-            name="searchQuery"
-            type="text"
-            placeholder="Search leads..."
+            id="search"
+            name="search"
+            placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             icon={Search}
           />
         </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', flex: 1 }}>
-          <Button
-            variant={filterStatus === 'ALL' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setFilterStatus('ALL')}
-          >
-            All
-          </Button>
-          {(Array.isArray(Object.values(LeadStatus)) ? Object.values(LeadStatus) : []).map(status => (
-            <Button
-              key={status}
-              variant={filterStatus === status ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setFilterStatus(status)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              {status.replace(/_/g, ' ')}
-            </Button>
-          ))}
+        <div style={{ width: '180px' }}>
+          <Select
+            id="status-filter"
+            name="status-filter"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as any)}
+            options={[
+              { value: 'ALL', label: 'All Statuses' },
+              ...Object.values(LeadStatus).map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase().replace('_', ' ') }))
+            ]}
+          />
         </div>
-
-        {/* View Switcher - Only on Desktop */}
-        <div className="view-toggle hidden-mobile">
-          <div 
-            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+        <div style={{ display: 'flex', backgroundColor: 'var(--color-bg)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--color-border)' }}>
+          <button 
             onClick={() => setViewMode('grid')}
-            title="Grid View"
+            style={{ 
+              padding: '0.5rem', borderRadius: '0.375rem', border: 'none', 
+              backgroundColor: viewMode === 'grid' ? 'var(--color-surface)' : 'transparent',
+              color: viewMode === 'grid' ? 'var(--color-primary)' : 'var(--color-text-muted)',
+              cursor: 'pointer', boxShadow: viewMode === 'grid' ? 'var(--shadow-sm)' : 'none'
+            }}
           >
             <LayoutGrid size={18} />
-          </div>
-          <div 
-            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-            title="List View"
+          </button>
+          <button 
+            onClick={() => setViewMode('table')}
+            style={{ 
+              padding: '0.5rem', borderRadius: '0.375rem', border: 'none', 
+              backgroundColor: viewMode === 'table' ? 'var(--color-surface)' : 'transparent',
+              color: viewMode === 'table' ? 'var(--color-primary)' : 'var(--color-text-muted)',
+              cursor: 'pointer', boxShadow: viewMode === 'table' ? 'var(--shadow-sm)' : 'none'
+            }}
           >
             <List size={18} />
-          </div>
+          </button>
         </div>
       </div>
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-          <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
+          <Loader2 className="animate-spin" size={40} color="var(--color-primary)" />
         </div>
       ) : filteredLeads.length > 0 ? (
-        <>
-          {viewMode === 'grid' || window.innerWidth < 768 ? (
-            <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
-              {filteredLeads.map((lead) => (
-                <LeadCard
-                  key={lead.id}
-                  lead={lead}
-                  user={user}
-                  onView={(l) => {
-                    setViewingLead(l);
-                    setView('details');
-                  }}
-                  onEdit={(l) => {
-                    setEditingLead(l);
-                    setView('form');
-                  }}
-                  onDelete={(id) => setDeletingLeadId(id)}
-                  onConvert={(l) => setConvertingLead(l)}
-                  canEdit={permissions.can(Permission.LEADS_EDIT)}
-                  canDelete={permissions.can(Permission.LEADS_DELETE)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleSort('firstName')} style={{ cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Lead {sortBy === 'firstName' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
-                      </div>
-                    </th>
-                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Status {sortBy === 'status' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
-                      </div>
-                    </th>
-                    <th onClick={() => handleSort('budget')} style={{ cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Budget {sortBy === 'budget' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
-                      </div>
-                    </th>
-                    <th>Location</th>
-                    <th>Property Type</th>
-                    <th>Assigned To</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.map(lead => (
-                    <tr key={lead.id}>
-                      <td>
+        viewMode === 'grid' ? (
+          <div className="grid grid-2 grid-3" style={{ gap: '1.5rem' }}>
+            {filteredLeads.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                user={user}
+                onView={(l) => {
+                  setViewingLead(l);
+                  setView('details');
+                }}
+                onEdit={(l) => {
+                  setEditingLead(l);
+                  setView('form');
+                }}
+                onDelete={(id) => setDeletingLeadId(id)}
+                onConvert={(l) => {
+                  setConvertingLead(l);
+                  setView('convert');
+                }}
+                canEdit={permissions.can(Permission.LEADS_EDIT)}
+                canDelete={permissions.can(Permission.LEADS_DELETE)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="card" style={{ overflowX: 'auto', padding: 0 }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Budget</th>
+                  <th>Location</th>
+                  <th>Added</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLeads.map((lead) => (
+                  <tr key={lead.id} onClick={() => { setViewingLead(lead); setView('details'); }} style={{ cursor: 'pointer' }}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ 
+                          width: '2rem', height: '2rem', borderRadius: '50%', 
+                          backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', 
+                          color: 'var(--color-primary)', display: 'flex', 
+                          alignItems: 'center', justifyContent: 'center', 
+                          fontSize: '0.75rem', fontWeight: 700 
+                        }}>
+                          {lead.firstName[0]}{lead.lastName[0]}
+                        </div>
                         <div>
                           <div style={{ fontWeight: 600 }}>{lead.firstName} {lead.lastName}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{lead.email || lead.phone || 'No contact info'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{lead.email}</div>
                         </div>
-                      </td>
-                      <td>{getStatusBadge(lead.status)}</td>
-                      <td>{lead.budget ? `$${lead.budget.toLocaleString()}` : '-'}</td>
-                      <td>{lead.preferredLocation || '-'}</td>
-                      <td>{lead.propertyType || '-'}</td>
-                      <td>
-                        {lead.assignedUser ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem' }}>
-                              {lead.assignedUser.firstName[0]}
-                            </div>
-                            <span style={{ fontSize: '0.8125rem' }}>{lead.assignedUser.firstName}</span>
-                          </div>
-                        ) : (
-                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Unassigned</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                      </div>
+                    </td>
+                    <td>{getStatusBadge(lead.status)}</td>
+                    <td style={{ fontWeight: 500 }}>
+                      {lead.budget ? `$${Number(lead.budget).toLocaleString()}` : '-'}
+                    </td>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                      {lead.preferredLocation || '-'}
+                    </td>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                      {new Date(lead.createdAt).toLocaleDateString()}
+                    </td>
+                    <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <button 
+                          className="table-action-btn"
+                          onClick={() => { setViewingLead(lead); setView('details'); }}
+                          title="View Details"
+                        >
+                          <ExternalLink size={16} />
+                        </button>
+                        {permissions.can(Permission.LEADS_EDIT) && (
                           <button 
                             className="table-action-btn"
-                            onClick={() => { setViewingLead(lead); setView('details'); }}
-                            title="View Details"
+                            style={{ color: 'var(--color-primary)' }}
+                            onClick={() => {
+                              setConvertingLead(lead);
+                              setView('convert');
+                            }}
+                            title="Convert to Contact"
                           >
-                            <ExternalLink size={16} />
+                            <RefreshCw size={16} />
                           </button>
-                          {permissions.can(Permission.LEADS_EDIT) && (
-                            <button 
-                              className="table-action-btn"
-                              style={{ color: 'var(--color-primary)' }}
-                              onClick={() => setConvertingLead(lead)}
-                              title="Convert to Contact"
-                            >
-                              <RefreshCw size={16} />
-                            </button>
-                          )}
-                          {permissions.can(Permission.LEADS_EDIT) && (
-                            <button 
-                              className="table-action-btn"
-                              onClick={() => { setEditingLead(lead); setView('form'); }}
-                              title="Edit"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          )}
-                          {permissions.can(Permission.LEADS_DELETE) && (
-                            <button 
-                              className="table-action-btn"
-                              style={{ color: 'var(--color-error)' }}
-                              onClick={() => setDeletingLeadId(lead.id)}
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalCount > limit && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              gap: '1rem',
-              marginTop: '2rem',
-              padding: '1rem',
-              background: 'var(--color-surface)',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-border)'
-            }}>
-              <Button 
-                variant="outline" 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1 || isLoading}
-              >
-                Previous
-              </Button>
-              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                Page {page} of {Math.ceil(totalCount / limit)}
-              </span>
-              <Button 
-                variant="outline" 
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= Math.ceil(totalCount / limit) || isLoading}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </>
+                        )}
+                        {permissions.can(Permission.LEADS_EDIT) && (
+                          <button 
+                            className="table-action-btn"
+                            onClick={() => { setEditingLead(lead); setView('form'); }}
+                            title="Edit"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        )}
+                        {permissions.can(Permission.LEADS_DELETE) && (
+                          <button 
+                            className="table-action-btn"
+                            style={{ color: 'var(--color-error)' }}
+                            onClick={() => setDeletingLeadId(lead.id)}
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       ) : (
-        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+        <div className="card" style={{ padding: '5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '4rem', height: '4rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
             <UserSquare2 size={32} />
           </div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>No leads found</h3>
@@ -442,21 +396,12 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
         onClose={() => setDeletingLeadId(null)}
         onConfirm={handleDelete}
         title="Delete Lead"
-        message="Are you sure you want to delete this lead? This will permanently remove all associated information."
+        message="Are you sure you want to delete this lead? This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
         variant="danger"
         isLoading={isDeleting}
       />
-
-      {convertingLead && (
-        <LeadConvertModal
-          isOpen={!!convertingLead}
-          onClose={() => setConvertingLead(null)}
-          onConvert={handleConvert}
-          lead={convertingLead}
-        />
-      )}
     </div>
   );
 };

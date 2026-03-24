@@ -20,6 +20,13 @@ The project follows a standard React component-based architecture:
 - `src/components/`: Reusable UI components (Hero, Features, Pricing, LoginForm).
 - `src/index.css`: Global styles and design tokens (colors, spacing, typography).
 
+## Mandatory Engineering Standards
+
+### Validation & Error Handling
+- **Preemptive Validation**: ALWAYS validate form inputs on the frontend before attempting an API call. This improves UX and reduces unnecessary server load.
+- **Field-Specific Errors**: NEVER display field-level validation errors in a general alert at the top of the form. Use the `mapBackendErrors` utility to assign errors to their respective fields and display them directly under the input components.
+- **Input Consistency**: All form inputs should use the standard `Input`, `Select`, or `Textarea` components which already support an `error` prop for consistent styling.
+
 ## Building and Running
 
 ### Prerequisites

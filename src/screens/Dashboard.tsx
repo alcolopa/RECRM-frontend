@@ -1,185 +1,70 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  TrendingUp, 
   Users, 
   Building2, 
-  Calendar,
-  HandCoins,
+  HandCoins, 
+  TrendingUp, 
+  TrendingDown, 
+  Clock, 
+  ChevronRight, 
   Loader2,
-  Settings2,
-  X,
-  Check,
+  AlertCircle,
   Plus,
-  GripVertical,
-  Activity,
-  LayoutGrid,
-  Maximize2,
-  Square
+  Target,
+  User,
+  Trash2,
+  Settings
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Responsive as ResponsiveLayout, WidthProvider } from 'react-grid-layout/legacy';
-
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
-
+import { motion } from 'framer-motion';
 import { dashboardService, type DashboardStat, type RecentLead, type UpcomingTask, type RecentActivity } from '../api/dashboard';
-import { userService, type UserProfile } from '../api/users';
 import Button from '../components/Button';
-import ConfirmModal from '../components/ConfirmModal';
+import { type UserProfile } from '../api/users';
+import { useNavigation } from '../contexts/NavigationContext';
+import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
+import '/node_modules/react-grid-layout/css/styles.css';
+import '/node_modules/react-resizable/css/styles.css';
 
-const ResponsiveGridLayout = WidthProvider(ResponsiveLayout);
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface DashboardProps {
   organizationId: string;
   user: UserProfile;
-  onUserUpdate: (user: UserProfile) => void;
 }
 
-type WidgetSize = 'small' | 'medium' | 'large';
-type WidgetType = 'totalLeads' | 'totalProperties' | 'activeOffers' | 'totalRevenue' | 'recentLeads' | 'upcomingTasks' | 'recentActivities';
-
-interface WidgetConfig {
-  id: WidgetType;
-  type: WidgetType;
-  size: WidgetSize;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  order: number;
-}
-
-const SIZE_MAP: Record<WidgetSize, { w: number, h: number }> = {
-  small: { w: 3, h: 2 },
-  medium: { w: 6, h: 4 },
-  large: { w: 12, h: 6 }
-};
-
-interface DashboardLayouts {
-  lg: WidgetConfig[];
-  md: WidgetConfig[];
-  sm: WidgetConfig[];
-  xs: WidgetConfig[];
-  xxs: WidgetConfig[];
-}
-
-const DEFAULT_LAYOUTS: DashboardLayouts = {
+const DEFAULT_LAYOUTS = {
   lg: [
-    { id: 'totalLeads', type: 'totalLeads', size: 'small', x: 0, y: 0, w: 3, h: 2, order: 0 },
-    { id: 'totalProperties', type: 'totalProperties', size: 'small', x: 3, y: 0, w: 3, h: 2, order: 1 },
-    { id: 'activeOffers', type: 'activeOffers', size: 'small', x: 6, y: 0, w: 3, h: 2, order: 2 },
-    { id: 'totalRevenue', type: 'totalRevenue', size: 'small', x: 9, y: 0, w: 3, h: 2, order: 3 },
-    { id: 'recentLeads', type: 'recentLeads', size: 'medium', x: 0, y: 2, w: 6, h: 4, order: 4 },
-    { id: 'upcomingTasks', type: 'upcomingTasks', size: 'medium', x: 6, y: 2, w: 6, h: 4, order: 5 },
-    { id: 'recentActivities', type: 'recentActivities', size: 'large', x: 0, y: 6, w: 12, h: 5, order: 6 },
+    { i: 'stats', x: 0, y: 0, w: 12, h: 4, static: false },
+    { i: 'pipeline', x: 0, y: 4, w: 8, h: 10, static: false },
+    { i: 'tasks', x: 8, y: 4, w: 4, h: 10, static: false },
+    { i: 'leads', x: 0, y: 14, w: 6, h: 10, static: false },
+    { i: 'activity', x: 6, y: 14, w: 6, h: 10, static: false },
   ],
   md: [
-    { id: 'totalLeads', type: 'totalLeads', size: 'small', x: 0, y: 0, w: 3, h: 2, order: 0 },
-    { id: 'totalProperties', type: 'totalProperties', size: 'small', x: 3, y: 0, w: 3, h: 2, order: 1 },
-    { id: 'activeOffers', type: 'activeOffers', size: 'small', x: 6, y: 0, w: 2, h: 2, order: 2 },
-    { id: 'totalRevenue', type: 'totalRevenue', size: 'small', x: 8, y: 0, w: 2, h: 2, order: 3 },
-    { id: 'recentLeads', type: 'recentLeads', size: 'medium', x: 0, y: 2, w: 5, h: 4, order: 4 },
-    { id: 'upcomingTasks', type: 'upcomingTasks', size: 'medium', x: 5, y: 2, w: 5, h: 4, order: 5 },
-    { id: 'recentActivities', type: 'recentActivities', size: 'large', x: 0, y: 6, w: 10, h: 5, order: 6 },
-  ],
-  sm: [
-    { id: 'totalLeads', type: 'totalLeads', size: 'small', x: 0, y: 0, w: 3, h: 2, order: 0 },
-    { id: 'totalProperties', type: 'totalProperties', size: 'small', x: 3, y: 0, w: 3, h: 2, order: 1 },
-    { id: 'activeOffers', type: 'activeOffers', size: 'small', x: 0, y: 2, w: 3, h: 2, order: 2 },
-    { id: 'totalRevenue', type: 'totalRevenue', size: 'small', x: 3, y: 2, w: 3, h: 2, order: 3 },
-    { id: 'recentLeads', type: 'recentLeads', size: 'medium', x: 0, y: 4, w: 6, h: 4, order: 4 },
-    { id: 'upcomingTasks', type: 'upcomingTasks', size: 'medium', x: 0, y: 8, w: 6, h: 4, order: 5 },
-    { id: 'recentActivities', type: 'recentActivities', size: 'large', x: 0, y: 12, w: 6, h: 5, order: 6 },
-  ],
-  xs: [
-    { id: 'totalLeads', type: 'totalLeads', size: 'small', x: 0, y: 0, w: 1, h: 2, order: 0 },
-    { id: 'totalProperties', type: 'totalProperties', size: 'small', x: 0, y: 2, w: 1, h: 2, order: 1 },
-    { id: 'activeOffers', type: 'activeOffers', size: 'small', x: 0, y: 4, w: 1, h: 2, order: 2 },
-    { id: 'totalRevenue', type: 'totalRevenue', size: 'small', x: 0, y: 6, w: 1, h: 2, order: 3 },
-    { id: 'recentLeads', type: 'recentLeads', size: 'medium', x: 0, y: 8, w: 1, h: 4, order: 4 },
-    { id: 'upcomingTasks', type: 'upcomingTasks', size: 'medium', x: 0, y: 12, w: 1, h: 4, order: 5 },
-    { id: 'recentActivities', type: 'recentActivities', size: 'large', x: 0, y: 16, w: 1, h: 5, order: 6 },
-  ],
-  xxs: [
-    { id: 'totalLeads', type: 'totalLeads', size: 'small', x: 0, y: 0, w: 1, h: 2, order: 0 },
-    { id: 'totalProperties', type: 'totalProperties', size: 'small', x: 0, y: 2, w: 1, h: 2, order: 1 },
-    { id: 'activeOffers', type: 'activeOffers', size: 'small', x: 0, y: 4, w: 1, h: 2, order: 2 },
-    { id: 'totalRevenue', type: 'totalRevenue', size: 'small', x: 0, y: 6, w: 1, h: 2, order: 3 },
-    { id: 'recentLeads', type: 'recentLeads', size: 'medium', x: 0, y: 8, w: 1, h: 4, order: 4 },
-    { id: 'upcomingTasks', type: 'upcomingTasks', size: 'medium', x: 0, y: 12, w: 1, h: 4, order: 5 },
-    { id: 'recentActivities', type: 'recentActivities', size: 'large', x: 0, y: 16, w: 1, h: 5, order: 6 },
+    { i: 'stats', x: 0, y: 0, w: 10, h: 4 },
+    { i: 'pipeline', x: 0, y: 4, w: 10, h: 8 },
+    { i: 'tasks', x: 0, y: 12, w: 10, h: 8 },
+    { i: 'leads', x: 0, y: 20, w: 10, h: 8 },
+    { i: 'activity', x: 0, y: 28, w: 10, h: 8 },
   ]
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ organizationId, user }) => {
+  const { navigate } = useNavigation();
   const [stats, setStats] = useState<DashboardStat[]>([]);
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const lastMoveTime = useRef<number>(0);
-  
-  const [isEditMode, setIsEditingMode] = useState(false);
-  const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
-  const [layouts, setLayouts] = useState<DashboardLayouts>(() => {
-    const saved = localStorage.getItem(`dashboard_layout_${user?.id}`);
-    let loadedConfig: any = null;
-
-    if (saved) {
-      try {
-        loadedConfig = JSON.parse(saved);
-      } catch (e) {}
-    } else if (user?.dashboardConfig) {
-      loadedConfig = user.dashboardConfig;
-    }
-
-    if (!loadedConfig) return DEFAULT_LAYOUTS;
-
-    // Migration logic: if widgets is an array, it's an old config
-    if (Array.isArray(loadedConfig.widgets)) {
-      const oldWidgets = loadedConfig.widgets as WidgetConfig[];
-      // Apply old array to all breakpoints as a starting point
-      const migrated: any = {};
-      Object.keys(DEFAULT_LAYOUTS).forEach(bp => {
-        migrated[bp] = (DEFAULT_LAYOUTS as any)[bp].map((def: WidgetConfig) => {
-          const match = oldWidgets.find(w => w.id === def.id);
-          return match ? { ...def, ...match } : def;
-        });
-      });
-      return migrated as DashboardLayouts;
-    }
-
-    // Ensure all breakpoints exist and are valid
-    const finalLayouts: any = {};
-    Object.keys(DEFAULT_LAYOUTS).forEach(bp => {
-      const bpLayout = loadedConfig[bp] || (loadedConfig.widgets && loadedConfig.widgets[bp]);
-      if (Array.isArray(bpLayout)) {
-        finalLayouts[bp] = (DEFAULT_LAYOUTS as any)[bp].map((def: WidgetConfig) => {
-          const match = bpLayout.find(w => w.id === def.id);
-          return match ? { ...def, ...match } : def;
-        });
-      } else {
-        finalLayouts[bp] = (DEFAULT_LAYOUTS as any)[bp];
-      }
-    });
-
-    return finalLayouts as DashboardLayouts;
+  const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [layouts, setLayouts] = useState<any>(() => {
+    const saved = localStorage.getItem(`dashboard-layout-${user.id}`);
+    return saved ? JSON.parse(saved) : DEFAULT_LAYOUTS;
   });
 
-  const activeWidgets = useMemo(() => layouts[currentBreakpoint as keyof DashboardLayouts] || layouts.lg, [layouts, currentBreakpoint]);
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const fetchData = async () => {
+  const fetchDashboardData = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const [statsRes, leadsRes, tasksRes, activitiesRes] = await Promise.all([
         dashboardService.getStats(organizationId),
@@ -187,511 +72,268 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user, onUserUpdat
         dashboardService.getUpcomingTasks(organizationId),
         dashboardService.getRecentActivities(organizationId),
       ]);
-      
-      const statsWithIcons = (Array.isArray(statsRes.data) ? statsRes.data : []).map(stat => {
-        if (stat.label === 'Total Leads') return { ...stat, icon: Users, color: 'var(--color-primary)' };
-        if (stat.label === 'Properties') return { ...stat, icon: Building2, color: 'var(--color-success)' };
-        if (stat.label === 'Active Offers') return { ...stat, icon: HandCoins, color: 'var(--color-warning)' };
-        if (stat.label === 'Revenue') return { ...stat, icon: TrendingUp, color: 'var(--color-primary)' };
-        return stat;
-      });
 
-      setStats(statsWithIcons);
-      setRecentLeads(Array.isArray(leadsRes.data) ? leadsRes.data : []);
-      setUpcomingTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
-      setRecentActivities(Array.isArray(activitiesRes.data) ? activitiesRes.data.slice(0, 5) : []);
+      setStats(statsRes.data);
+      setRecentLeads(leadsRes.data);
+      setUpcomingTasks(tasksRes.data);
+      setRecentActivities(activitiesRes.data);
     } catch (err) {
-      // Error handled by UI or silent
+      console.error('Failed to fetch dashboard data', err);
+      setError('Failed to load dashboard data. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (organizationId) {
-      fetchData();
-    }
+    fetchDashboardData();
   }, [organizationId]);
 
-  const saveLayout = async (currentLayouts: DashboardLayouts) => {
-    if (!user?.id) return;
-    
-    localStorage.setItem(`dashboard_layout_${user.id}`, JSON.stringify(currentLayouts));
-    setIsSaving(true);
-    try {
-      const response = await userService.updateMe({ 
-        dashboardConfig: currentLayouts
-      });
-      if (response.data) {
-        onUserUpdate(response.data);
-      }
-    } catch (err: any) {
-      setSaveError(err.response?.data?.message || 'Failed to sync dashboard. Progress saved locally.');
-    } finally {
-      setIsSaving(false);
+  const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
+    if (isEditMode) {
+      setLayouts(allLayouts);
     }
   };
 
-  const handleLayoutChange = (_: any[], allLayouts: any) => {
-    if (!isEditMode) return;
-    
-    const now = Date.now();
-    if (now - lastMoveTime.current < 100) return;
-    
-    const nextDashboardLayouts = { ...layouts };
-    
-    // Update all breakpoints that were provided
-    Object.keys(allLayouts).forEach(bp => {
-      const bpLayout = allLayouts[bp];
-      const existingWidgets = (Array.isArray(nextDashboardLayouts[bp as keyof DashboardLayouts]) ? nextDashboardLayouts[bp as keyof DashboardLayouts] : []);
-      
-      const updatedWidgets = existingWidgets.map(w => {
-        const match = bpLayout.find((l: any) => l.i === w.id);
-        if (match) {
-          return { ...w, x: match.x, y: match.y, w: match.w, h: match.h };
-        }
-        return w;
-      });
-
-      // Update order based on position
-      const sortedByPosition = [...updatedWidgets].sort((a, b) => {
-        if (a.y !== b.y) return a.y - b.y;
-        return a.x - b.x;
-      });
-
-      nextDashboardLayouts[bp as keyof DashboardLayouts] = updatedWidgets.map(w => ({
-        ...w,
-        order: sortedByPosition.findIndex(s => s.id === w.id)
-      }));
-    });
-    
-    lastMoveTime.current = now;
-    setLayouts(nextDashboardLayouts);
+  const saveLayout = () => {
+    localStorage.setItem(`dashboard-layout-${user.id}`, JSON.stringify(layouts));
+    setIsEditMode(false);
   };
 
-  const updateWidgetSize = (id: string, size: WidgetSize) => {
-    const dimensions = SIZE_MAP[size];
-    const nextLayouts = { ...layouts };
-    
-    Object.keys(nextLayouts).forEach(bp => {
-      const widgets = nextLayouts[bp as keyof DashboardLayouts];
-      if (Array.isArray(widgets)) {
-        nextLayouts[bp as keyof DashboardLayouts] = widgets.map(w => 
-          w.id === id ? { ...w, size, w: dimensions.w, h: dimensions.h } : w
-        );
-      }
-    });
-    
-    setLayouts(nextLayouts);
-  };
-
-  const removeWidget = (id: string) => {
-    const nextLayouts = { ...layouts };
-    Object.keys(nextLayouts).forEach(bp => {
-      const widgets = nextLayouts[bp as keyof DashboardLayouts];
-      if (Array.isArray(widgets)) {
-        nextLayouts[bp as keyof DashboardLayouts] = widgets.filter(w => w.id !== id);
-      }
-    });
-    setLayouts(nextLayouts);
-  };
-
-  const addWidget = (type: WidgetType) => {
-    if ((Array.isArray(activeWidgets) ? activeWidgets : []).find(l => l.type === type)) return;
-    const size = isStatWidget(type) ? 'small' : 'medium';
-    const dimensions = SIZE_MAP[size];
-    
-    const nextLayouts = { ...layouts };
-    Object.keys(nextLayouts).forEach(bp => {
-      const bpWidgets = (Array.isArray(nextLayouts[bp as keyof DashboardLayouts]) ? nextLayouts[bp as keyof DashboardLayouts] : []);
-      const newWidget: WidgetConfig = {
-        id: type,
-        type,
-        size,
-        x: 0,
-        y: Infinity,
-        w: bp === 'xs' || bp === 'xxs' ? 1 : dimensions.w,
-        h: dimensions.h,
-        order: bpWidgets.length
-      };
-      nextLayouts[bp as keyof DashboardLayouts] = [...bpWidgets, newWidget];
-    });
-    
-    setLayouts(nextLayouts);
-  };
-
-  const isStatWidget = (type: string) => 
-    ['totalLeads', 'totalProperties', 'activeOffers', 'totalRevenue'].includes(type);
-
-  const renderStatWidget = (label: string, isEdit: boolean) => {
-    const stat = (Array.isArray(stats) ? stats : []).find(s => s.label === label);
-    if (!stat) return <div className="card" style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={16} /></div>;
-
-    return (
-      <div className="card" style={{ 
-        padding: isMobile ? '0.75rem' : '1rem', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '0.5rem', 
-        height: '100%', 
-        border: isEdit ? '1px dashed var(--color-primary)' : '1px solid var(--color-border)', 
-        backgroundColor: 'var(--color-surface)', 
-        overflow: 'hidden',
-        transform: isEdit ? 'none' : undefined,
-        boxShadow: isEdit ? 'none' : undefined,
-        cursor: isEdit ? 'grab' : 'pointer'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ 
-            width: isMobile ? '1.75rem' : '2rem', 
-            height: isMobile ? '1.75rem' : '2rem', 
-            borderRadius: '0.4rem', 
-            backgroundColor: `${stat.color}15`, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            color: stat.color 
-          }}>
-            {stat.icon && <stat.icon size={isMobile ? 14 : 16} />}
-          </div>
-          <div style={{ color: stat.trend === 'up' ? 'var(--color-success)' : 'var(--color-error)', fontSize: '0.7rem', fontWeight: 700 }}>
-            {stat.change}
-          </div>
-        </div>
-        <div>
-          <p style={{ fontSize: isMobile ? '0.6rem' : '0.65rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</p>
-          <h3 style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 800 }}>{stat.value}</h3>
-        </div>
-      </div>
-    );
-  };
-
-  const renderWidgetContent = (widget: WidgetConfig) => {
-    const { type } = widget;
-    const isEdit = isEditMode;
-
-    switch (type) {
-      case 'totalLeads': return renderStatWidget('Total Leads', isEdit);
-      case 'totalProperties': return renderStatWidget('Properties', isEdit);
-      case 'activeOffers': return renderStatWidget('Active Offers', isEdit);
-      case 'totalRevenue': return renderStatWidget('Revenue', isEdit);
-      case 'recentLeads':
-        return (
-          <div className="card" style={{ 
-            padding: '1.25rem', 
-            height: '100%', 
-            border: isEdit ? '1px dashed var(--color-primary)' : '1px solid var(--color-border)', 
-            backgroundColor: 'var(--color-surface)', 
-            overflow: 'hidden',
-            transform: isEdit ? 'none' : undefined,
-            boxShadow: isEdit ? 'none' : undefined,
-            cursor: isEdit ? 'grab' : 'pointer'
-          }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Recent Leads</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {(Array.isArray(recentLeads) ? recentLeads : []).length > 0 ? (Array.isArray(recentLeads) ? recentLeads : []).map((lead, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.25rem 0' }}>
-                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 600, flexShrink: 0 }}>{lead.name[0]}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</p>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.email}</p>
-                  </div>
-                </div>
-              )) : <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No recent leads</p>}
-            </div>
-          </div>
-        );
-      case 'upcomingTasks':
-        return (
-          <div className="card" style={{ 
-            padding: '1.25rem', 
-            height: '100%', 
-            border: isEdit ? '1px dashed var(--color-primary)' : '1px solid var(--color-border)', 
-            backgroundColor: 'var(--color-surface)', 
-            overflow: 'hidden',
-            transform: isEdit ? 'none' : undefined,
-            boxShadow: isEdit ? 'none' : undefined,
-            cursor: isEdit ? 'grab' : 'pointer'
-          }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Upcoming Tasks</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {(Array.isArray(upcomingTasks) ? upcomingTasks : []).length > 0 ? (Array.isArray(upcomingTasks) ? upcomingTasks : []).map((task, i) => (
-                <div key={i} style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Calendar size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</p>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{task.time}</p>
-                  </div>
-                </div>
-              )) : <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No upcoming tasks</p>}
-            </div>
-          </div>
-        );
-      case 'recentActivities':
-        return (
-          <div className="card" style={{ 
-            padding: '1.25rem', 
-            height: '100%', 
-            border: isEdit ? '1px dashed var(--color-primary)' : '1px solid var(--color-border)', 
-            backgroundColor: 'var(--color-surface)', 
-            overflow: 'hidden',
-            transform: isEdit ? 'none' : undefined,
-            boxShadow: isEdit ? 'none' : undefined,
-            cursor: isEdit ? 'grab' : 'pointer'
-          }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Recent Activity</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {(Array.isArray(recentActivities) ? recentActivities : []).length > 0 ? (Array.isArray(recentActivities) ? recentActivities : []).map((activity, i) => (
-                <div key={i} style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Activity size={14} color="var(--color-primary)" style={{ flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activity.subject}</p>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{activity.time}</p>
-                  </div>
-                </div>
-              )) : <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No recent activity</p>}
-            </div>
-          </div>
-        );
-      default: return null;
-    }
-  };
-
-  const gridLayouts = useMemo(() => {
-    const rglLayouts: any = {};
-    Object.keys(layouts).forEach(bp => {
-      const widgets = (Array.isArray(layouts[bp as keyof DashboardLayouts]) ? layouts[bp as keyof DashboardLayouts] : []);
-      rglLayouts[bp] = widgets.map(l => ({ 
-        i: l.id, x: l.x, y: l.y, w: l.w, h: l.h 
-      }));
-    });
-    return rglLayouts;
-  }, [layouts]);
-
-  const disabledWidgetList = useMemo(() => {
-    const allTypes: WidgetType[] = ['totalLeads', 'totalProperties', 'activeOffers', 'totalRevenue', 'recentLeads', 'upcomingTasks', 'recentActivities'];
-    const widgets = (Array.isArray(activeWidgets) ? activeWidgets : []);
-    return allTypes.filter(t => !widgets.find(l => l.type === t));
-  }, [activeWidgets]);
-
-  const handleCancel = () => {
-    if (user?.id) {
-      const saved = localStorage.getItem(`dashboard_layout_${user.id}`);
-      if (saved) {
-        try {
-          setLayouts(JSON.parse(saved));
-        } catch(e) {}
-      }
-      else if (user.dashboardConfig) setLayouts(user.dashboardConfig);
-      else setLayouts(DEFAULT_LAYOUTS);
-    }
-    setIsEditingMode(false);
+  const resetLayout = () => {
+    setLayouts(DEFAULT_LAYOUTS);
+    localStorage.removeItem(`dashboard-layout-${user.id}`);
   };
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <Loader2 size={40} className="animate-spin" color="var(--color-primary)" />
       </div>
     );
   }
 
+  const renderStats = () => (
+    <div key="stats" className={isEditMode ? "widget-edit-wrapper" : ""}>
+      <div className="grid grid-2 grid-4" style={{ gap: '1.5rem', height: '100%' }}>
+        {stats.map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="card"
+            style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div style={{ 
+                padding: '0.75rem', 
+                borderRadius: '0.75rem', 
+                backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+                color: 'var(--color-primary)'
+              }}>
+                {stat.label === 'Total Revenue' ? <HandCoins size={24} /> : 
+                 stat.label === 'Active Properties' ? <Building2 size={24} /> :
+                 stat.label === 'New Leads' ? <Users size={24} /> : <Target size={24} />}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.25rem',
+                color: stat.trend === 'up' ? 'var(--color-success)' : 'var(--color-error)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                backgroundColor: stat.trend === 'up' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '2rem'
+              }}>
+                {stat.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                {stat.change}
+              </div>
+            </div>
+            <h3 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{stat.label}</h3>
+            <p style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem' }}>{stat.value}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderPipeline = () => (
+    <div key="pipeline" className={`card ${isEditMode ? "widget-edit-wrapper" : ""}`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Deal Pipeline</h3>
+        <Button variant="ghost" size="sm" onClick={() => navigate('deals')}>View All</Button>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius)' }}>
+        Pipeline Chart Placeholder
+      </div>
+    </div>
+  );
+
+  const renderTasks = () => (
+    <div key="tasks" className={`card ${isEditMode ? "widget-edit-wrapper" : ""}`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Upcoming Tasks</h3>
+        <Button variant="ghost" size="sm" onClick={() => navigate('tasks')}>View All</Button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {upcomingTasks.map((task, idx) => (
+          <div key={idx} style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.75rem', borderRadius: '0.75rem', backgroundColor: 'var(--color-bg)' }}>
+            <div style={{ 
+              width: '2.5rem', height: '2.5rem', borderRadius: '50%', 
+              backgroundColor: task.isToday ? 'rgba(var(--color-primary-rgb), 0.1)' : 'var(--color-surface)',
+              color: task.isToday ? 'var(--color-primary)' : 'var(--color-text-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <Clock size={18} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{task.title}</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{task.time}</p>
+            </div>
+            <ChevronRight size={16} color="var(--color-text-muted)" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderLeads = () => (
+    <div key="leads" className={`card ${isEditMode ? "widget-edit-wrapper" : ""}`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Recent Leads</h3>
+        <Button variant="ghost" size="sm" onClick={() => navigate('leads')}>View All</Button>
+      </div>
+      <div className="table-responsive">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Lead</th>
+              <th>Status</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentLeads.map((lead, idx) => (
+              <tr key={idx}>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{lead.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{lead.email}</div>
+                </td>
+                <td>
+                  <span style={{ 
+                    fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.5rem', borderRadius: '2rem',
+                    backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)'
+                  }}>
+                    {lead.status}
+                  </span>
+                </td>
+                <td style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{lead.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderActivity = () => (
+    <div key="activity" className={`card ${isEditMode ? "widget-edit-wrapper" : ""}`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Recent Activity</h3>
+        <Button variant="ghost" size="sm">Refresh</Button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {recentActivities.length > 0 ? recentActivities.map((activity) => (
+          <div key={activity.id} style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ 
+              width: '2rem', height: '2rem', borderRadius: '50%', 
+              backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, marginTop: '0.25rem'
+            }}>
+              <Clock size={14} color="var(--color-text-muted)" />
+            </div>
+            <div style={{ flex: 1, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{activity.subject}</p>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{activity.time}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.125rem' }}>
+                <User size={10} color="var(--color-primary)" />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{activity.userName}</span>
+              </div>
+            </div>
+          </div>
+        )) : <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '2rem' }}>No recent activity</p>}
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '4rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Dashboard Overview</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>Customize your dashboard view.</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Welcome back, {user.firstName}!</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>Here's what's happening with your properties and leads today.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           {isEditMode ? (
             <>
-              <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-              <Button variant="primary" onClick={() => {
-                saveLayout(layouts);
-                setIsEditingMode(false);
-              }} isLoading={isSaving} leftIcon={<Check size={18} />}>Done</Button>
+              <Button variant="outline" onClick={resetLayout} leftIcon={<Trash2 size={18} />}>Reset</Button>
+              <Button variant="primary" onClick={saveLayout} leftIcon={<Check size={18} />}>Save Layout</Button>
             </>
           ) : (
-            <Button variant="outline" onClick={() => setIsEditingMode(true)} leftIcon={<Settings2 size={18} />}>Edit Layout</Button>
+            <Button variant="outline" onClick={() => setIsEditMode(true)} leftIcon={<Settings size={18} />}>Customize</Button>
           )}
+          <Button onClick={() => navigate('properties', { context: 'add' })} leftIcon={<Plus size={20} />}>New Listing</Button>
         </div>
       </header>
 
-      <div style={{ 
-        margin: isMobile ? '0 -1rem' : '0 -1.5rem', 
-        minHeight: '500px' 
-      }}>
+      {error && (
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(220, 38, 38, 0.1)', color: 'var(--color-error)', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <AlertCircle size={20} />
+          {error}
+        </div>
+      )}
+
+      {isEditMode ? (
         <ResponsiveGridLayout
           className="layout"
-          layouts={gridLayouts}
+          layouts={layouts}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 1, xxs: 1 }}
-          rowHeight={isMobile ? 50 : 60}
-          isDraggable={isEditMode}
-          isResizable={isEditMode && !isMobile}
-          onLayoutChange={handleLayoutChange as any}
-          onBreakpointChange={setCurrentBreakpoint}
-          margin={isMobile ? [12, 12] : [24, 24]}
-          useCSSTransforms={true}
-          resizeHandle={
-            <div className="react-resizable-handle" style={{ 
-              position: 'absolute', 
-              right: '2px', 
-              bottom: '2px', 
-              cursor: 'nwse-resize', 
-              width: '18px', 
-              height: '18px', 
-              display: isEditMode && !isMobile ? 'flex' : 'none',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-primary)',
-              opacity: 0.6,
-              transition: 'opacity 0.2s',
-              zIndex: 10
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v6h-6M21 21L12 12" />
-              </svg>
-            </div>
-          }
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={30}
+          onLayoutChange={handleLayoutChange}
+          draggableHandle=".widget-edit-wrapper"
         >
-          {(Array.isArray(activeWidgets) ? activeWidgets : []).map((widget) => (
-            <div key={widget.id} style={{ 
-              position: 'relative', 
-              userSelect: isEditMode ? 'none' : 'auto',
-              WebkitUserSelect: isEditMode ? 'none' : 'auto',
-              cursor: isEditMode ? 'default' : 'inherit'
-            }}>
-              <AnimatePresence>
-                {isEditMode && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    style={{ 
-                      position: 'absolute', 
-                      top: '0.625rem', 
-                      right: '0.625rem', 
-                      display: 'flex', 
-                      gap: '0.4rem',
-                      zIndex: 100
-                    }}
-                  >
-                    {isMobile && (
-                      <div style={{ display: 'flex', backgroundColor: 'var(--color-surface)', borderRadius: '0.5rem', border: '1px solid var(--color-border)', overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
-                        <button onClick={() => updateWidgetSize(widget.id, 'small')} style={{ padding: '0.45rem', border: 'none', background: widget.size === 'small' ? 'var(--color-primary)' : 'none', color: widget.size === 'small' ? 'white' : 'inherit', cursor: 'pointer', transition: 'all 0.2s' }}><Square size={12} /></button>
-                        <button onClick={() => updateWidgetSize(widget.id, 'medium')} style={{ padding: '0.45rem', border: 'none', background: widget.size === 'medium' ? 'var(--color-primary)' : 'none', color: widget.size === 'medium' ? 'white' : 'inherit', cursor: 'pointer', transition: 'all 0.2s' }}><Maximize2 size={12} /></button>
-                      </div>
-                    )}
-                    
-                    <div style={{ 
-                      padding: '0.45rem', 
-                      backgroundColor: 'var(--color-surface)', 
-                      borderRadius: '0.5rem', 
-                      border: '1px solid var(--color-border)', 
-                      cursor: 'grab', 
-                      color: 'var(--color-primary)', 
-                      boxShadow: 'var(--shadow-md)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      transition: 'all 0.2s',
-                      pointerEvents: 'none' // Allow dragging through this icon
-                    }}>
-                      <GripVertical size={16} />
-                    </div>
-                    
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeWidget(widget.id);
-                      }}
-                      style={{ 
-                        padding: '0.45rem', 
-                        backgroundColor: 'var(--color-surface)', 
-                        color: '#ef4444', 
-                        borderRadius: '0.5rem', 
-                        border: '1px solid var(--color-border)', 
-                        cursor: 'pointer', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        boxShadow: 'var(--shadow-md)',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = '#fef2f2';
-                        e.currentTarget.style.borderColor = '#fecaca';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.backgroundColor = 'var(--color-surface)';
-                        e.currentTarget.style.borderColor = 'var(--color-border)';
-                      }}
-                    >
-                      <X size={16} />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <div style={{ height: '100%', opacity: isEditMode ? 0.95 : 1, transition: 'opacity 0.2s' }}>
-                {renderWidgetContent(widget)}
-              </div>
-            </div>
-          ))}
+          {renderStats()}
+          {renderPipeline()}
+          {renderTasks()}
+          {renderLeads()}
+          {renderActivity()}
         </ResponsiveGridLayout>
-      </div>
-
-      <AnimatePresence>
-        {isEditMode && (Array.isArray(disabledWidgetList) ? disabledWidgetList : []).length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            style={{ marginTop: '2rem', padding: '2rem', border: '2px dashed var(--color-border)', borderRadius: '1rem' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--color-text-muted)' }}>
-              <Plus size={20} />
-              <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Add Widgets</h3>
-            </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
-              gap: isMobile ? '0.75rem' : '1rem' 
-            }}>
-              {(Array.isArray(disabledWidgetList) ? disabledWidgetList : []).map(type => (
-                <div 
-                  key={type}
-                  onClick={() => addWidget(type)}
-                  className="card"
-                  style={{ padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s ease', backgroundColor: 'rgba(var(--color-primary-rgb), 0.03)' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--color-primary-rgb), 0.08)'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(var(--color-primary-rgb), 0.03)'}
-                >
-                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-surface)', borderRadius: '0.5rem', color: 'var(--color-primary)' }}>
-                    <LayoutGrid size={18} />
-                  </div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, textTransform: 'capitalize' }}>
-                    {type.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <ConfirmModal
-        isOpen={!!saveError}
-        onClose={() => setSaveError(null)}
-        onConfirm={() => setSaveError(null)}
-        title="Error"
-        message={saveError || ''}
-        confirmLabel="Close"
-        variant="primary"
-      />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div key="stats">{renderStats()}</div>
+          <div className="grid grid-12" style={{ gap: '2rem' }}>
+            <div className="grid-col-span-8">{renderPipeline()}</div>
+            <div className="grid-col-span-4">{renderTasks()}</div>
+          </div>
+          <div className="grid grid-2" style={{ gap: '2rem' }}>
+            {renderLeads()}
+            {renderActivity()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const Check = ({ size, color }: { size?: number, color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
 
 export default Dashboard;

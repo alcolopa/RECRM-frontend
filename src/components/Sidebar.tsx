@@ -8,7 +8,9 @@ import {
   ChevronRight,
   X,
   HandCoins,
-  Building
+  Building,
+  CheckSquare,
+  Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigation, type NavigationTab } from '../contexts/NavigationContext';
@@ -48,6 +50,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
     { id: 'leads', label: 'Leads', icon: UserSquare2, permission: Permission.LEADS_VIEW },
     { id: 'contacts', label: 'Contacts', icon: Users, permission: Permission.CONTACTS_VIEW },
     { id: 'properties', label: 'Properties', icon: Building2, permission: Permission.PROPERTIES_VIEW },
+    { id: 'tasks', label: 'Tasks', icon: CheckSquare, permission: Permission.TASKS_VIEW },
+    { id: 'calendar', label: 'Calendar', icon: Calendar, permission: Permission.CALENDAR_VIEW },
     { id: 'offers', label: 'Offers', icon: HandCoins, permission: Permission.DEALS_VIEW },
     { id: 'profile', label: 'Profile', icon: UserSquare2 },
   ];
@@ -90,16 +94,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
     >
       {/* Sidebar Header - Organization Branding */}
       <div style={{ 
-        padding: isCollapsed && !isMobile ? '0 0.75rem' : '0 1rem', 
+        padding: isCollapsed && !isMobile ? '0 0.75rem' : '0 1.25rem', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: (isCollapsed && !isMobile) ? 'center' : 'space-between',
         height: '4.5rem',
         borderBottom: '1px solid var(--color-border)',
         position: 'relative',
-        overflow: 'visible' // Ensure button isn't clipped
+        gap: '0.75rem'
       }}>
-        {/* ... (branding content) */}
         <div 
           onClick={() => {
             if (can(Permission.ORG_SETTINGS_EDIT)) {
@@ -110,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.75rem',
+            gap: '0.875rem',
             cursor: can(Permission.ORG_SETTINGS_EDIT) ? 'pointer' : 'default',
             flex: 1,
             minWidth: 0,
@@ -120,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
           <div style={{
             width: '2.5rem',
             height: '2.5rem',
-            borderRadius: 'var(--radius)',
+            borderRadius: '0.75rem',
             backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
             backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
             backgroundSize: 'contain',
@@ -133,19 +136,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
             fontWeight: 700,
             fontSize: '1rem',
             border: activeOrg?.logo ? '1px solid var(--color-border)' : 'none',
-            flexShrink: 0
+            flexShrink: 0,
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)'
           }}>
             {!activeOrg?.logo && <Building size={20} />}
           </div>
           {showFullBranding && (
             <span style={{ 
-              fontSize: '1rem', 
+              fontSize: '1.0625rem', 
               fontWeight: 800, 
               color: 'var(--color-text)', 
               lineHeight: 1.2,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              letterSpacing: '-0.01em'
             }}>
               {activeOrg?.name || 'EstateHub'}
             </span>
@@ -158,22 +163,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile, isTablet, 
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             style={{
               ...iconButtonStyle,
-              background: 'var(--color-surface)', // Solid background
-              color: 'var(--color-primary)',
-              borderRadius: '50%', // Circle looks better for floating
-              width: '1.75rem',
-              height: '1.75rem',
+              background: 'var(--color-bg)',
+              color: 'var(--color-text-muted)',
+              borderRadius: '50%',
+              width: '1.5rem',
+              height: '1.5rem',
               position: 'absolute',
-              right: '-0.875rem', // Center on border
+              right: '-0.75rem',
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 1200, // Higher than Sidebar (1100)
-              boxShadow: 'var(--shadow-md)',
+              zIndex: 1200,
+              boxShadow: 'var(--shadow-sm)',
               border: '1px solid var(--color-border)',
-              display: 'flex'
+              display: 'flex',
+              opacity: 0,
+              transition: 'all 0.2s ease',
             }}
+            className="sidebar-collapse-btn"
           >
-            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
         )}
 

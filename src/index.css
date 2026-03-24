@@ -589,4 +589,49 @@ input:focus, textarea:focus, select:focus {
   box-shadow: var(--shadow-sm);
 }
 
+/* Sidebar & Layout Helpers */
+aside:hover .sidebar-collapse-btn {
+  opacity: 1 !important;
+  right: -0.75rem !important;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hide scrollbars but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 

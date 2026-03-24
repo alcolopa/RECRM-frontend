@@ -21,13 +21,15 @@ import PhoneInput from '../components/PhoneInput';
 import PasswordStrength from '../components/PasswordStrength';
 import { isPasswordStrong } from '../utils/validation';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
+import { useUser } from '../App';
 
 interface ProfileViewProps {
   user: UserProfile;
   onUserUpdate: (updatedUser: UserProfile) => void;
 }
 
-const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
+  const { refreshProfile } = useUser();
   const activeMembership = (Array.isArray(user?.memberships) ? user.memberships : []).find((m: any) => m.organizationId === user.organizationId) || (Array.isArray(user?.memberships) ? user.memberships : [])[0];
   const activeRoleName = activeMembership?.customRole?.name || activeMembership?.role || user.role;
   const activeOrgName = activeMembership?.organization?.name || 'No Organization';
@@ -102,7 +104,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       const newAvatarUrl = response.data.avatar;
       
       setFormData(prev => ({ ...prev, avatar: newAvatarUrl }));
-      onUserUpdate({ ...user, avatar: newAvatarUrl });
+      await refreshProfile();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -165,8 +167,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, onUserUpdate }) => {
       delete updatePayload.confirmPassword;
       delete updatePayload.avatar;
 
-      const response = await userService.updateMe(updatePayload);
-      onUserUpdate(response.data);
+      await userService.updateMe(updatePayload);
+      await refreshProfile();
       setSuccess(true);
       setHasChanges(false);
       setFormData(prev => ({ ...prev, password: '', oldPassword: '', confirmPassword: '' }));

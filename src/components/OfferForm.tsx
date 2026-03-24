@@ -7,7 +7,8 @@ import {
   Building2,
   User,
   AlertCircle,
-  X
+  X,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
@@ -64,8 +65,6 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-
-
   useEffect(() => {
     if (formData.contactId) {
       const fetchContact = async () => {
@@ -114,9 +113,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
       setFormData(prev => ({ ...prev, propertyId: navigationState.prefillData.propertyId }));
     }
 
-    // Clear navigation state after restoration to prevent loops
     if (navigationState.draftData || navigationState.prefillData) {
-      // Small timeout to ensure everything is set before clearing
       setTimeout(clearNavigationState, 100);
     }
   }, []);
@@ -203,10 +200,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
     setError(null);
     
     const isValid = validate();
-    if (!isValid) {
-      // Don't show a general error alert if we have specific field errors
-      return;
-    }
+    if (!isValid) return;
 
     setIsSubmitting(true);
 
@@ -215,12 +209,10 @@ const OfferForm: React.FC<OfferFormProps> = ({
         ...formData,
         price: Number(formData.price),
         deposit: formData.deposit ? Number(formData.deposit) : undefined,
-        // Dates are already handled by DateSelector (either ISO string or null)
       }, organizationId);
       onSuccess();
     } catch (err: any) {
       console.error('Failed to create offer', err);
-      
       const backendErrors = mapBackendErrors(err);
       if (Object.keys(backendErrors).length > 0) {
         setErrors(backendErrors);
@@ -233,7 +225,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
     }
   };
 
-  const handleContactSelect = (_contactId: string, contact?: Contact) => {
+  const handleContactSelect = (contact: Contact | null) => {
     if (contact) {
       setSelectedContact(contact);
       setFormData(prev => ({ ...prev, contactId: contact.id }));
@@ -252,7 +244,6 @@ const OfferForm: React.FC<OfferFormProps> = ({
       setFormData(prev => ({ ...prev, propertyId: '' }));
     }
   };
-
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '850px', margin: '0 auto' }}>
@@ -298,17 +289,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
               type="button"
               onClick={() => setError(null)}
               aria-label="Dismiss error"
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                cursor: 'pointer', 
-                padding: '0.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'inherit',
-                opacity: 0.7
-              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', color: 'inherit', opacity: 0.7 }}
             >
               <X size={18} />
             </button>
@@ -323,9 +304,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
         gap: isMobile ? '1.25rem' : '2rem',
         padding: isMobile ? '1.25rem' : '2rem'
       }}>
-        {/* Section 1: Property & Buyer */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '1.25rem' : '2.5rem' }}>
-          {/* Property Section */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
@@ -348,7 +327,6 @@ const OfferForm: React.FC<OfferFormProps> = ({
             />
           </div>
 
-          {/* Buyer Section */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
@@ -372,7 +350,6 @@ const OfferForm: React.FC<OfferFormProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Offer Terms */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
           <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', margin: 0 }}>
             <HandCoins size={14} /> Offer Details
@@ -412,10 +389,10 @@ const OfferForm: React.FC<OfferFormProps> = ({
               value={formData.financingType}
               onChange={(e) => handleFieldChange('financingType', e.target.value)}
               options={[
-                { value: FinancingType.CASH, label: 'Cash' },
-                { value: FinancingType.MORTGAGE, label: 'Mortgage' },
-                { value: FinancingType.PRIVATE_FINANCING, label: 'Private' },
-                { value: FinancingType.OTHER, label: 'Other' },
+                { value: 'CASH', label: 'Cash' },
+                { value: 'MORTGAGE', label: 'Mortgage' },
+                { value: 'PRIVATE_FINANCING', label: 'Private' },
+                { value: 'OTHER', label: 'Other' },
               ]}
               error={errors.financingType}
             />
@@ -441,8 +418,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
               onChange={(e) => handleFieldChange('offerer', e.target.value as OffererType)}
               icon={User}
               options={[
-                { value: OffererType.BUYER, label: 'Buyer' },
-                { value: OffererType.AGENCY, label: 'Agency' },
+                { value: 'BUYER', label: 'Buyer' },
+                { value: 'AGENCY', label: 'Agency' },
               ]}
               required
               error={errors.offerer}

@@ -4,21 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import Button from './Button';
 import { userService } from '../api/users';
+import { useUser } from '../App';
 
 interface ThemeSelectorProps {
   variant?: 'ghost' | 'outline';
   showLabel?: boolean;
-  onUserUpdate?: (updatedUser: any) => void;
 }
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ 
   variant = 'ghost',
-  showLabel = false,
-  onUserUpdate
+  showLabel = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+  const { refreshProfile } = useUser();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -36,12 +36,10 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     setIsOpen(false);
     
     try {
-      const response = await userService.updateMe({
+      await userService.updateMe({
         preferredTheme: newTheme.toUpperCase() as any
       });
-      if (onUserUpdate) {
-        onUserUpdate(response.data);
-      }
+      await refreshProfile();
     } catch (err) {
       console.error('Failed to update theme preference in database', err);
     }
