@@ -19,7 +19,9 @@ import {
   Plus,
   Trash2,
   Check,
-  ChevronLeft
+  ChevronLeft,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { organizationService, type Organization } from '../api/organization';
@@ -29,8 +31,9 @@ import PhoneInput from '../components/PhoneInput';
 import UserSelector from '../components/UserSelector';
 import Button from '../components/Button';
 import CustomSelect from '../components/CustomSelect';
+import ColorPicker from '../components/ColorPicker';
 import Tabs from '../components/Tabs';
-import { useTheme, ACCENTS } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { getImageUrl } from '../utils/url';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 
@@ -362,7 +365,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       )}
 
       {/* Tabs Navigation */}
-      <Tabs 
+      <Tabs
         variant="underline"
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as any)}
@@ -472,108 +475,52 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Customize how your organization and shared listings look.</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em', display: 'block', marginBottom: '0.75rem' }}>
-                    Primary Accent Color
-                  </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    {(Array.isArray(Object.entries(ACCENTS)) ? Object.entries(ACCENTS) : []).map(([key, hex]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          if (!isOwner) return;
-                          setFormData(prev => ({ ...prev, accentColor: hex }));
-                          setHasChanges(true);
-                        }}
-                        disabled={!isOwner}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.75rem',
-                          borderRadius: 'var(--radius)',
-                          border: `2px solid ${formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                          background: formData.accentColor === hex ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
-                          cursor: isOwner ? 'pointer' : 'not-allowed',
-                          transition: 'all 0.2s ease',
-                          outline: 'none',
-                          minWidth: '90px'
-                        }}
-                      >
-                        <div style={{
-                          width: '2rem',
-                          height: '2rem',
-                          borderRadius: '50%',
-                          backgroundColor: hex,
-                          boxShadow: formData.accentColor === hex ? `0 0 0 2px var(--color-surface), 0 0 0 4px ${hex}` : 'none'
-                        }} />
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: formData.accentColor === hex ? 'var(--color-primary)' : 'var(--color-text)' }}>
-                          {key.charAt(0) + key.slice(1).toLowerCase()}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <ColorPicker
+                  label="Primary Accent Color"
+                  value={formData.accentColor}
+                  onChange={(hex) => {
+                    if (!isOwner) return;
+                    setFormData(prev => ({ ...prev, accentColor: hex }));
+                    setHasChanges(true);
+                  }}
+                  disabled={!isOwner}
+                />
 
                 <div style={{ height: '1px', backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
 
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.025em', display: 'block', marginBottom: '0.75rem' }}>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>
                     Default Sharing Theme
                   </label>
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
+                    <Button
                       type="button"
+                      variant={formData.defaultTheme === 'LIGHT' ? 'primary' : 'outline'}
                       onClick={() => {
                         if (!isOwner) return;
                         setFormData(prev => ({ ...prev, defaultTheme: 'LIGHT' }));
                         setHasChanges(true);
                       }}
                       disabled={!isOwner}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.75rem',
-                        padding: '1rem',
-                        borderRadius: 'var(--radius)',
-                        border: `2px solid ${formData.defaultTheme === 'LIGHT' ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                        background: formData.defaultTheme === 'LIGHT' ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
-                        cursor: isOwner ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.2s ease'
-                      }}
+                      leftIcon={<Sun size={18} />}
+                      style={{ flex: 1 }}
                     >
-                      <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '50%', border: '2px solid #CBD5E1', background: '#F8FAFC' }} />
-                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Light Mode</span>
-                    </button>
-                    <button
+                      Light Mode
+                    </Button>
+                    <Button
                       type="button"
+                      variant={formData.defaultTheme === 'DARK' ? 'primary' : 'outline'}
                       onClick={() => {
                         if (!isOwner) return;
                         setFormData(prev => ({ ...prev, defaultTheme: 'DARK' }));
                         setHasChanges(true);
                       }}
                       disabled={!isOwner}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.75rem',
-                        padding: '1rem',
-                        borderRadius: 'var(--radius)',
-                        border: `2px solid ${formData.defaultTheme === 'DARK' ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                        background: formData.defaultTheme === 'DARK' ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
-                        cursor: isOwner ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.2s ease'
-                      }}
+                      leftIcon={<Moon size={18} />}
+                      style={{ flex: 1 }}
                     >
-                      <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '50%', border: '2px solid #334155', background: '#0F172A' }} />
-                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Dark Mode</span>
-                    </button>
+                      Dark Mode
+                    </Button>
                   </div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', fontStyle: 'italic' }}>
                     This theme will be applied by default when anyone views your shared properties publicly.
@@ -899,7 +846,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                             isLoading={resendingId === inv.id}
                             leftIcon={<Send size={14} />}
                             size="sm"
-                            style={{ 
+                            style={{
                               backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
                               color: 'var(--color-primary)',
                               fontSize: '0.75rem',
@@ -911,9 +858,9 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                           <Button
                             variant="ghost"
                             onClick={() => handleCancelInvite(inv.id)}
-                            style={{ 
-                              color: 'var(--color-text-muted)', 
-                              padding: '0.5rem', 
+                            style={{
+                              color: 'var(--color-text-muted)',
+                              padding: '0.5rem',
                               minWidth: 'auto',
                               height: 'auto'
                             }}
@@ -932,14 +879,14 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       )}
 
       {activeTab === 'roles' && (
-        <RolesManagement 
-          roles={Array.isArray(roles) ? roles : []} 
-          organizationId={org?.id || ''} 
+        <RolesManagement
+          roles={Array.isArray(roles) ? roles : []}
+          organizationId={org?.id || ''}
           onUpdate={() => {
             fetchRoles();
             fetchOrganization();
-          }} 
-          isMobileOrTablet={isMobileOrTablet} 
+          }}
+          isMobileOrTablet={isMobileOrTablet}
         />
       )}
     </div>
@@ -1044,16 +991,16 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
 
   if (isEditing) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
       >
         <header style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setIsEditing(false)}
-            style={{ 
+            style={{
               padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: 'pointer', color: 'var(--color-text)', flexShrink: 0
             }}
@@ -1086,7 +1033,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
               onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}
               placeholder="e.g. Sales Manager"
             />
-            <Select 
+            <Select
               label="Hierarchy Level"
               id="level"
               name="level"
@@ -1119,17 +1066,17 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
                     {group.permissions.map(perm => (
-                      <div 
-                        key={perm} 
+                      <div
+                        key={perm}
                         onClick={() => !selectedRole?.isSystem && togglePermission(perm)}
-                        style={{ 
+                        style={{
                           display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8125rem', cursor: selectedRole?.isSystem ? 'default' : 'pointer',
                           color: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-text)' : 'var(--color-text-muted)',
                           padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'rgba(var(--color-primary-rgb), 0.03)' : 'transparent',
                           transition: 'all 0.2s ease'
                         }}
                       >
-                        <div 
+                        <div
                           style={{
                             width: '20px', height: '20px', borderRadius: '6px', border: `2px solid ${(Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'var(--color-border)'}`,
                             backgroundColor: (Array.isArray(roleForm.permissions) ? roleForm.permissions : []).includes(perm) ? 'var(--color-primary)' : 'transparent',
@@ -1193,7 +1140,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                 <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{role.description || 'No description provided.'}</p>
               </div>
               {!role.isSystem && (
-                <Button 
+                <Button
                   variant="ghost"
                   onClick={() => handleDeleteRole(role.id)}
                   style={{ color: 'var(--color-text-muted)', padding: '0.25rem', minWidth: 'auto', height: 'auto' }}
@@ -1202,7 +1149,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
                 </Button>
               )}
             </div>
-            
+
             <div style={{ flex: 1, marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <Shield size={14} className="text-primary" />
@@ -1227,7 +1174,7 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
               </div>
             </div>
 
-            <Button 
+            <Button
               variant="outline"
               onClick={() => handleEditRole(role)}
               fullWidth
