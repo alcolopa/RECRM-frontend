@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Bell,
-  Search,
-  ChevronDown,
-  User,
-  Settings,
+import { 
+  Bell, 
+  Search, 
+  ChevronDown, 
+  User, 
+  Settings, 
   LogOut,
   HelpCircle,
   Loader2,
-  X,
   Target,
   Building2,
   Users,
-  CheckSquare
+  CheckSquare,
+  Menu,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
@@ -25,10 +26,11 @@ import { searchService, type SearchResult } from '../api/search';
 interface TopBarProps {
   user: UserProfile;
   onLogout: () => void;
+  onMenuClick: () => void;
   onUserUpdate: (updatedUser: any) => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
+const TopBar: React.FC<TopBarProps> = ({ user, onLogout, onMenuClick }) => {
   const { navigate } = useNavigation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -36,12 +38,16 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
@@ -55,7 +61,10 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Debounced search logic
@@ -111,28 +120,36 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '0 2rem',
+      padding: isMobile ? '0 1rem' : '0 2rem',
       borderBottom: '1px solid var(--color-border)',
       position: 'sticky',
       top: 0,
       zIndex: 90,
       backgroundColor: 'var(--color-surface)'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+        <button 
+          onClick={onMenuClick}
+          className="visible-mobile"
+          style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer', padding: '0.5rem' }}
+        >
+          <Menu size={24} />
+        </button>
+
         {/* Search Container */}
-        <div ref={searchRef} className="hidden-mobile" style={{ position: 'relative', width: '100%', maxWidth: '450px' }}>
+        <div ref={searchRef} style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '200px' : '450px' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
-            <input
-              type="text"
-              placeholder="Search leads, properties, tasks..."
+            <input 
+              type="text" 
+              placeholder={isMobile ? "Search..." : "Search leads, properties, tasks..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
               style={{
                 width: '100%',
-                height: '2.75rem',
-                padding: '0 1rem 0 3rem',
+                height: '2.5rem',
+                padding: '0 1rem 0 2.75rem',
                 borderRadius: '2rem',
                 border: '1px solid var(--color-border)',
                 backgroundColor: 'var(--color-bg)',
@@ -144,14 +161,7 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
               className="topbar-search"
             />
             {isSearching && (
-              <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-primary)' }} />
-            )}
-            {searchQuery && !isSearching && (
-              <X
-                size={16}
-                onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', cursor: 'pointer' }}
-              />
+              <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-primary)' }} />
             )}
           </div>
 
@@ -165,59 +175,49 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
                 style={{
                   position: 'absolute',
                   top: '110%',
-                  left: 0,
-                  right: 0,
+                  left: isMobile ? '-50px' : 0,
+                  right: isMobile ? '-100px' : 0,
                   backgroundColor: 'var(--color-surface)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-2xl)',
                   border: '1px solid var(--color-border)',
                   overflow: 'hidden',
-                  zIndex: 1000
+                  zIndex: 1000,
+                  minWidth: isMobile ? '280px' : 'auto'
                 }}
               >
                 <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.02)' }}>
                   <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {searchResults.length} Results for "{searchQuery}"
+                    {searchResults.length} Results
                   </span>
                 </div>
                 <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                  {searchResults.length > 0 ? (
-                    searchResults.map((result) => (
-                      <div
-                        key={`${result.type}-${result.id}`}
-                        onClick={() => handleResultClick(result)}
-                        style={{
-                          padding: '0.875rem 1.25rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          cursor: 'pointer',
-                          transition: 'background 0.2s',
-                          borderBottom: '1px solid var(--color-border)'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <div style={{
-                          width: '2rem', height: '2rem', borderRadius: '0.5rem', backgroundColor: 'var(--color-bg)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                          {getResultIcon(result.type)}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.title}</p>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.subtitle}</p>
-                        </div>
-                        <span style={{ fontSize: '0.625rem', fontWeight: 800, padding: '0.125rem 0.5rem', borderRadius: '1rem', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
-                          {result.type}
-                        </span>
+                  {searchResults.map((result) => (
+                    <div 
+                      key={`${result.type}-${result.id}`}
+                      onClick={() => handleResultClick(result)}
+                      style={{
+                        padding: '0.875rem 1.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                        borderBottom: '1px solid var(--color-border)'
+                      }}
+                    >
+                      <div style={{
+                        width: '2rem', height: '2rem', borderRadius: '0.5rem', backgroundColor: 'var(--color-bg)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        {getResultIcon(result.type)}
                       </div>
-                    ))
-                  ) : (
-                    <div style={{ padding: '2rem', textAlign: 'center' }}>
-                      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No results found.</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.title}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.subtitle}</p>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               </motion.div>
             )}
@@ -225,15 +225,15 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginRight: '0.5rem' }} className="hidden-mobile">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} className="hidden-mobile">
           <ThemeSelector />
         </div>
 
         {/* Notifications */}
-        <div style={{ position: 'relative' }} ref={notificationsRef}>
-          <Button
-            variant="ghost"
+        <div style={{ position: isMobile ? 'static' : 'relative' }} ref={notificationsRef}>
+          <Button 
+            variant="ghost" 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', position: 'relative' }}
           >
@@ -253,44 +253,74 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
           <AnimatePresence>
             {isNotificationsOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={isMobile ? { x: '100%' } : { opacity: 0, y: 10, scale: 0.95 }}
+                animate={isMobile ? { x: 0 } : { opacity: 1, y: 0, scale: 1 }}
+                exit={isMobile ? { x: '100%' } : { opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                 style={{
-                  position: 'absolute',
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
                   right: 0,
-                  top: '120%',
-                  width: '320px',
+                  bottom: 0,
                   backgroundColor: 'var(--color-surface)',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-2xl)',
-                  border: '1px solid var(--color-border)',
-                  overflow: 'hidden',
-                  zIndex: 100
+                  zIndex: 2000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  ...( !isMobile && {
+                    position: 'absolute',
+                    top: '120%',
+                    left: 'auto',
+                    right: 0,
+                    bottom: 'auto',
+                    width: '320px',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-2xl)',
+                    border: '1px solid var(--color-border)',
+                    height: 'auto'
+                  })
                 }}
               >
-                <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Notifications</h3>
-                  <button style={{ fontSize: '0.75rem', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Mark all as read</button>
-                </div>
-                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {/* Mobile Header */}
+                {isMobile ? (
+                  <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button 
+                      onClick={() => setIsNotificationsOpen(false)}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer' }}
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, flex: 1 }}>Notifications</h2>
+                    <button style={{ fontSize: '0.875rem', color: 'var(--color-primary)', background: 'none', border: 'none', fontWeight: 600 }}>Clear all</button>
+                  </div>
+                ) : (
+                  <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Notifications</h3>
+                    <button style={{ fontSize: '0.75rem', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Mark all as read</button>
+                  </div>
+                )}
+
+                <div style={{ flex: 1, overflowY: 'auto' }}>
                   {notifications.map(notif => (
                     <div key={notif.id} style={{
-                      padding: '1rem 1.25rem',
+                      padding: '1.25rem 1rem',
                       borderBottom: '1px solid var(--color-border)',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s',
                       backgroundColor: notif.read ? 'transparent' : 'rgba(var(--color-primary-rgb), 0.02)'
-                    }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = notif.read ? 'transparent' : 'rgba(var(--color-primary-rgb), 0.02)'}>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>{notif.title}</p>
-                      <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.4, marginBottom: '0.5rem' }}>{notif.description}</p>
-                      <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{notif.time}</p>
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                        <p style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{notif.title}</p>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{notif.time}</span>
+                      </div>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{notif.description}</p>
                     </div>
                   ))}
                 </div>
-                <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid var(--color-border)' }}>
-                  <button style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>View all notifications</button>
-                </div>
+                
+                {!isMobile && (
+                  <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid var(--color-border)' }}>
+                    <button style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>View all notifications</button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -298,25 +328,20 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
 
         {/* Profile Dropdown */}
         <div style={{ position: 'relative' }} ref={profileRef}>
-          <div
+          <div 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.25rem 0.25rem 0.25rem 0.75rem',
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.25rem',
               borderRadius: '2rem',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              backgroundColor: isProfileOpen ? 'rgba(var(--color-primary-rgb), 0.05)' : 'transparent',
-              border: `1px solid ${isProfileOpen ? 'var(--color-primary)' : 'transparent'}`
+              transition: 'all 0.2s ease'
             }}
-            onMouseEnter={e => !isProfileOpen && (e.currentTarget.style.backgroundColor = 'var(--color-bg)')}
-            onMouseLeave={e => !isProfileOpen && (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            <div className="hidden-mobile" style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)' }}>{user?.firstName} {user?.lastName}</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>{user?.role?.toLowerCase()}</p>
+            <div className="hidden-mobile" style={{ textAlign: 'right', marginRight: '0.25rem' }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)' }}>{user?.firstName}</p>
             </div>
             <div style={{
               width: '36px',
@@ -335,7 +360,7 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
             }}>
               {!user?.avatar && user?.firstName?.[0]?.toUpperCase()}
             </div>
-            <ChevronDown size={16} color="var(--color-text-muted)" style={{ marginRight: '0.25rem', transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            <ChevronDown size={14} color="var(--color-text-muted)" style={{ transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </div>
 
           <AnimatePresence>
@@ -358,33 +383,16 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
                 }}
               >
                 <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.02)' }}>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 700 }}>{user.firstName} {user.lastName}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 700 }}>{user?.firstName} {user?.lastName}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
                 </div>
                 <div style={{ padding: '0.5rem' }}>
-                  <button
-                    onClick={() => { setIsProfileOpen(false); navigate('profile'); }}
-                    style={dropdownButtonStyle}
-                  >
-                    <User size={16} /> Profile Settings
-                  </button>
-                  <button
-                    onClick={() => { setIsProfileOpen(false); navigate('organization'); }}
-                    style={dropdownButtonStyle}
-                  >
-                    <Settings size={16} /> Organization
-                  </button>
-                  <button style={dropdownButtonStyle}>
-                    <HelpCircle size={16} /> Help Center
-                  </button>
+                  <button onClick={() => { setIsProfileOpen(false); navigate('profile'); }} style={dropdownButtonStyle}><User size={16} /> Profile Settings</button>
+                  <button onClick={() => { setIsProfileOpen(false); navigate('organization'); }} style={dropdownButtonStyle}><Settings size={16} /> Organization</button>
+                  <button style={dropdownButtonStyle}><HelpCircle size={16} /> Help Center</button>
                 </div>
                 <div style={{ padding: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
-                  <button
-                    onClick={onLogout}
-                    style={{ ...dropdownButtonStyle, color: 'var(--color-error)' }}
-                  >
-                    <LogOut size={16} /> Sign Out
-                  </button>
+                  <button onClick={onLogout} style={{ ...dropdownButtonStyle, color: 'var(--color-error)' }}><LogOut size={16} /> Sign Out</button>
                 </div>
               </motion.div>
             )}
@@ -396,19 +404,7 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout }) => {
 };
 
 const dropdownButtonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem',
-  width: '100%',
-  padding: '0.75rem 1rem',
-  border: 'none',
-  background: 'none',
-  borderRadius: 'var(--radius)',
-  fontSize: '0.875rem',
-  color: 'var(--color-text)',
-  cursor: 'pointer',
-  textAlign: 'left',
-  transition: 'background 0.2s'
+  display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.75rem 1rem', border: 'none', background: 'none', borderRadius: 'var(--radius)', fontSize: '0.875rem', color: 'var(--color-text)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.2s'
 };
 
 export default TopBar;

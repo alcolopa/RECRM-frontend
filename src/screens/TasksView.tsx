@@ -46,7 +46,14 @@ const TasksView: React.FC<TasksViewProps> = ({ organizationId, user }) => {
     setIsLoading(true);
     try {
       const response = await taskService.getAll(organizationId);
-      setTasks(Array.isArray(response.data) ? response.data : []);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setTasks(data);
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setTasks((data as any).items);
+      } else {
+        setTasks([]);
+      }
     } catch (err) {
       console.error('Failed to fetch tasks', err);
     } finally {

@@ -90,7 +90,14 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   const fetchAgents = async () => {
     try {
       const response = await userService.getAll(organizationId);
-      setAgents(Array.isArray(response.data) ? response.data : []);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setAgents(data);
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setAgents((data as any).items);
+      } else {
+        setAgents([]);
+      }
     } catch (err) {
       console.error('Failed to fetch agents', err);
     }
@@ -255,7 +262,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
       </header>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: '250px' }}>
           <Input
             id="searchQuery"

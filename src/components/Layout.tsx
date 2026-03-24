@@ -1,9 +1,9 @@
 import { useState, lazy, Suspense } from 'react';
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Target,
+import { 
+  LayoutDashboard, 
+  Building2, 
+  Users, 
+  Target, 
   HandCoins,
   Calendar,
   CheckSquare,
@@ -48,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     { id: 'properties', label: 'Properties', icon: Building2 },
     { id: 'contacts', label: 'Contacts', icon: Users },
     { id: 'leads', label: 'Leads', icon: Target },
+    { id: 'deals', label: 'Deals', icon: HandCoins },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'offers', label: 'Offers', icon: HandCoins },
@@ -64,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const renderContent = () => {
     const activeOrgId = activeMembership?.organizationId || user.organizationId || '';
     const activeRole = activeMembership?.role || user.role;
-
+    
     const userWithContext = {
       ...user,
       organizationId: activeOrgId,
@@ -157,29 +158,29 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: 100
       }}>
-        <div
+        <div 
           onClick={() => navigate('dashboard')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0 0.5rem',
-            marginBottom: '2.5rem',
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem', 
+            padding: '0 0.5rem', 
+            marginBottom: '2.5rem', 
             overflow: 'hidden',
             cursor: 'pointer'
           }}
         >
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)',
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '10px', 
+            backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)', 
             backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
             backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            display: 'flex',
-            alignItems: 'center',
+            display: 'flex', 
+            alignItems: 'center', 
             justifyContent: 'center',
             color: 'white',
             flexShrink: 0,
@@ -250,14 +251,15 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
 
       {/* Main Content Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar
-          user={user}
-          onLogout={onLogout}
+        <TopBar 
+          user={user} 
+          onLogout={onLogout} 
+          onMenuClick={() => setIsMobileMenuOpen(true)}
           onUserUpdate={onUserUpdate}
         />
-
-        <main style={{
-          flex: 1,
+        
+        <main style={{ 
+          flex: 1, 
           padding: '2rem',
           maxWidth: '1600px',
           width: '100%',
@@ -272,10 +274,10 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
           </Suspense>
         </main>
 
-        <TutorialGuide
+        <TutorialGuide 
           key={activeTab}
-          user={user}
-          tutorialId={activeTab as string}
+          user={user} 
+          tutorialId={activeTab as string} 
           steps={TUTORIAL_STEPS[activeTab as string] || []}
         />
       </div>
@@ -284,7 +286,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <div
+            <div 
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 position: 'fixed',
@@ -308,19 +310,19 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)',
+                  <div style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '8px', 
+                    backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)', 
                     backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white'
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    color: 'white' 
                   }}>
                     {!activeOrg?.logo && <Building2 size={20} />}
                   </div>

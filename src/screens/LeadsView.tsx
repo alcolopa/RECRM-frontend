@@ -36,7 +36,15 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
     setIsLoading(true);
     try {
       const response = await leadService.getAll(organizationId);
-      setLeads(Array.isArray(response.data) ? response.data : []);
+      // Support both direct array and { items: [] } wrapper
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setLeads(data);
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setLeads((data as any).items);
+      } else {
+        setLeads([]);
+      }
     } catch (err) {
       console.error('Failed to fetch leads', err);
     } finally {
@@ -200,7 +208,7 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
       </header>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', position: 'relative', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: '250px' }}>
           <Input
             id="search"

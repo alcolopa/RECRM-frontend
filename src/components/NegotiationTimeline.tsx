@@ -142,7 +142,8 @@ const NegotiationTimeline: React.FC<NegotiationTimelineProps> = ({ negotiation }
               <div className="card" style={{ 
                 width: isMobile ? '100%' : 'calc(50% - 2rem)',
                 padding: '1rem',
-                borderLeft: isMobile ? `4px solid ${isBuyer ? '#3b82f6' : 'var(--color-primary)'}` : '1px solid var(--color-border)',
+                borderLeft: !isBuyer ? `4px solid var(--color-primary)` : '1px solid var(--color-border)',
+                borderRight: isBuyer ? `4px solid #3b82f6` : '1px solid var(--color-border)',
                 boxShadow: 'var(--shadow-sm)',
                 display: 'flex',
                 flexDirection: 'column',

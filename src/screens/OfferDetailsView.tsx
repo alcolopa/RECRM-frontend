@@ -7,7 +7,11 @@ import {
   Check,
   Loader2,
   DollarSign,
-  Plus
+  HandCoins,
+  Plus,
+  User,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { offersService, type Offer } from '../api/offers';
@@ -16,6 +20,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import ConfirmModal from '../components/ConfirmModal';
 import CounterOfferForm from '../components/CounterOfferForm';
 import NegotiationTimeline from '../components/NegotiationTimeline';
+import { getImageUrl } from '../utils/url';
 
 interface OfferDetailsViewProps {
   organizationId: string;
@@ -28,10 +33,17 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'details' | 'counter'>('details');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchOfferDetails = async () => {
     if (!offerId) return;
@@ -123,126 +135,210 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: isMobile ? '1.5rem' : '2.5rem', 
+        maxWidth: '1200px', 
+        margin: '0 auto',
+        paddingBottom: isMobile ? '2rem' : 0
+      }}
     >
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Dynamic Header */}
+      <header style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'flex-start' : 'center', 
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: '1.5rem' 
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button 
             onClick={() => navigate('offers')}
             style={{ 
-              padding: '0.5rem', borderRadius: '50%', background: 'var(--color-surface)', 
-              border: '1px solid var(--color-border)', cursor: 'pointer', color: 'var(--color-text)' 
+              padding: '0.625rem', borderRadius: '50%', background: 'var(--color-surface)', 
+              border: '1px solid var(--color-border)', cursor: 'pointer', color: 'var(--color-text)',
+              boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', flexShrink: 0
             }}
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: '1.875rem', fontWeight: 800 }}>Offer Detail</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.5rem' : '1.75rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Offer Details</h1>
               <span style={{ 
-                padding: '0.25rem 0.75rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: 700,
-                backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)', textTransform: 'uppercase'
+                padding: '0.2rem 0.625rem', borderRadius: '2rem', fontSize: '0.65rem', fontWeight: 700,
+                backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)', textTransform: 'uppercase',
+                letterSpacing: '0.05em', border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
               }}>
                 {offer.status.replace('_', ' ')}
               </span>
             </div>
-            <p style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Building2 size={16} /> {offer.negotiation.property.title}
-            </p>
+            <div style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+              <Building2 size={14} /> 
+              <span style={{ fontWeight: 500 }}>{offer.negotiation.property.title}</span>
+            </div>
           </div>
         </div>
 
         {canTakeAction && (
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <Button variant="outline" onClick={() => setIsRejectModalOpen(true)}>Reject</Button>
-            <Button variant="outline" onClick={() => setView('counter')} leftIcon={<Plus size={18} />}>Counter</Button>
-            <Button variant="primary" onClick={() => setIsAcceptModalOpen(true)} leftIcon={<Check size={18} />}>Accept Offer</Button>
+          <div style={{ display: 'flex', gap: '0.75rem', width: isMobile ? '100%' : 'auto' }}>
+            <Button 
+              variant="danger" 
+              onClick={() => setIsRejectModalOpen(true)} 
+              fullWidth={isMobile}
+            >
+              Reject
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setView('counter')} 
+              leftIcon={<Plus size={18} />}
+              fullWidth={isMobile}
+            >
+              Counter
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={() => setIsAcceptModalOpen(true)} 
+              leftIcon={<Check size={18} />}
+              fullWidth={isMobile}
+            >
+              {isMobile ? 'Accept' : 'Accept Offer'}
+            </Button>
           </div>
         )}
       </header>
 
-      <div className="grid grid-3" style={{ gap: '2rem', alignItems: 'start' }}>
-        <div className="grid-col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="card" style={{ padding: '2rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
-              <div>
-                <p style={labelStyle}>Offer Price</p>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                  ${Number(offer.price).toLocaleString()}
-                </h2>
-              </div>
-              <div>
-                <p style={labelStyle}>Deposit</p>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                  ${Number(offer.deposit || 0).toLocaleString()}
-                </h3>
-              </div>
-              <div>
-                <p style={labelStyle}>Financing</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                  <DollarSign size={18} color="var(--color-text-muted)" />
-                  {offer.financingType.replace('_', ' ')}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '2rem 0' }} />
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
-              <div>
-                <p style={labelStyle}>Proposed Closing</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                  <Calendar size={18} color="var(--color-text-muted)" />
-                  {offer.closingDate ? new Date(offer.closingDate).toLocaleDateString() : 'Not set'}
-                </div>
-              </div>
-              <div>
-                <p style={labelStyle}>Offer Expiration</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                  <Clock size={18} color="var(--color-text-muted)" />
-                  {offer.expirationDate ? new Date(offer.expirationDate).toLocaleDateString() : 'Not set'}
-                </div>
-              </div>
-              <div>
-                <p style={labelStyle}>Submitted By</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                  <Clock size={18} color="var(--color-text-muted)" />
-                  {isAgencyOffer ? 'Agency (Seller Side)' : 'Buyer'}
-                </div>
-              </div>
-            </div>
-
-            {offer.notes && (
-              <>
-                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '2rem 0' }} />
-                <p style={labelStyle}>Terms & Notes</p>
-                <p style={{ lineHeight: 1.6, color: 'var(--color-text-muted)' }}>{offer.notes}</p>
-              </>
-            )}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(12, 1fr)', 
+        gap: '2rem', 
+        alignItems: 'start' 
+      }}>
+        {/* Main Information Panel */}
+        <div style={{ gridColumn: isMobile ? 'auto' : 'span 8', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Key Metrics Row */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', 
+            gap: isMobile ? '1rem' : '1.5rem' 
+          }}>
+            <MetricCard 
+              label="Offer Price" 
+              value={`$${Number(offer.price).toLocaleString()}`} 
+              icon={DollarSign}
+              highlight
+            />
+            <MetricCard 
+              label="Security Deposit" 
+              value={`$${Number(offer.deposit || 0).toLocaleString()}`} 
+              icon={HandCoins}
+            />
+            <MetricCard 
+              label="Financing" 
+              value={offer.financingType.replace('_', ' ')} 
+              icon={FileText}
+            />
           </div>
 
-          <NegotiationTimeline negotiation={offer.negotiation} currentOfferId={offer.id} />
+          {/* Detailed Terms Section */}
+          <div className="card" style={{ padding: isMobile ? '1.25rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
+              <FileText size={20} color="var(--color-primary)" />
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Terms & Contingencies</h3>
+            </div>
+
+            {offer.notes ? (
+              <p style={{ lineHeight: 1.7, color: 'var(--color-text)', fontSize: isMobile ? '0.9375rem' : '1rem', whiteSpace: 'pre-wrap' }}>
+                {offer.notes}
+              </p>
+            ) : (
+              <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--color-bg)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>No additional notes or terms provided.</p>
+              </div>
+            )}
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+              gap: '1.5rem', 
+              marginTop: '0.5rem', 
+              paddingTop: '1.5rem', 
+              borderTop: '1px solid var(--color-border)' 
+            }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ padding: '0.625rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', flexShrink: 0 }}>
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <p style={labelStyle}>Proposed Closing</p>
+                  <p style={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+                    {offer.closingDate ? new Date(offer.closingDate).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Flexible'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ padding: '0.625rem', borderRadius: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', flexShrink: 0 }}>
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <p style={labelStyle}>Offer Expiration</p>
+                  <p style={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+                    {offer.expirationDate ? new Date(offer.expirationDate).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'No Expiry'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div style={{ marginTop: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.25rem', paddingLeft: '0.25rem' }}>Negotiation History</h3>
+            <NegotiationTimeline negotiation={offer.negotiation} currentOfferId={offer.id} />
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem' }}>Participants</h3>
+        {/* Sidebar Panel */}
+        <div style={{ gridColumn: isMobile ? 'auto' : 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <User size={18} color="var(--color-primary)" />
+              Participants
+            </h3>
+            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <ParticipantItem 
                 label="Buyer" 
                 name={`${offer.negotiation.contact.firstName} ${offer.negotiation.contact.lastName}`}
-                sub={offer.negotiation.contact.email || ''}
+                sub={offer.negotiation.contact.email || offer.negotiation.contact.phone || ''}
               />
               <ParticipantItem 
                 label="Property Owner" 
                 name={offer.negotiation.property.sellerProfile?.contact?.firstName ? `${offer.negotiation.property.sellerProfile.contact.firstName} ${offer.negotiation.property.sellerProfile.contact.lastName}` : 'Direct Listing'}
                 sub={offer.negotiation.property.address}
               />
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
               <ParticipantItem 
-                label="Created By" 
+                label="Managed By" 
                 name={`${offer.createdBy.firstName} ${offer.createdBy.lastName}`}
                 sub={offer.createdBy.email}
+                avatar={offer.createdBy.avatar}
               />
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: '1.25rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.03)', borderStyle: 'dashed' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <AlertCircle size={18} color="var(--color-primary)" style={{ flexShrink: 0, marginTop: '0.125rem' }} />
+              <div>
+                <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Agent Context</h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
+                  Currently <strong>{offer.status.toLowerCase().replace('_', ' ')}</strong>. 
+                  {isAgencyOffer ? " Submitted by agency on client behalf." : " Submitted directly by buyer."}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -270,26 +366,57 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   );
 };
 
-const ParticipantItem: React.FC<{ label: string, name: string, sub: string }> = ({ label, name, sub }) => (
-  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-    <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--color-primary)' }}>
-      {name[0]}
+const MetricCard: React.FC<{ label: string, value: string, icon: any, highlight?: boolean }> = ({ label, value, icon: Icon, highlight }) => (
+  <div className="card" style={{ 
+    padding: '1.25rem', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '0.5rem',
+    backgroundColor: highlight ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
+    border: highlight ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+    boxShadow: highlight ? 'var(--shadow-md)' : 'var(--shadow-sm)'
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <p style={labelStyle}>{label}</p>
+      <Icon size={14} color={highlight ? 'var(--color-primary)' : 'var(--color-text-muted)'} />
+    </div>
+    <p style={{ 
+      fontSize: '1.25rem', 
+      fontWeight: 800, 
+      color: highlight ? 'var(--color-primary)' : 'var(--color-text)',
+      letterSpacing: '-0.01em'
+    }}>{value}</p>
+  </div>
+);
+
+const ParticipantItem: React.FC<{ label: string, name: string, sub: string, avatar?: string }> = ({ label, name, sub, avatar }) => (
+  <div style={{ display: 'flex', gap: '0.875rem', alignItems: 'center' }}>
+    <div style={{ 
+      width: '2.5rem', height: '2.75rem', borderRadius: '50%', 
+      backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+      fontWeight: 700, color: 'var(--color-primary)', flexShrink: 0,
+      border: '1px solid var(--color-border)',
+      backgroundImage: avatar ? `url("${getImageUrl(avatar)}")` : 'none',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }}>
+      {!avatar && name[0].toUpperCase()}
     </div>
     <div style={{ minWidth: 0 }}>
-      <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{label}</p>
-      <p style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</p>
-      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>
+      <p style={labelStyle}>{label}</p>
+      <p style={{ fontSize: '0.875rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</p>
+      <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>
     </div>
   </div>
 );
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  fontWeight: 700,
+  fontSize: '0.625rem',
+  fontWeight: 800,
   color: 'var(--color-text-muted)',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  marginBottom: '0.5rem'
+  letterSpacing: '0.075em',
+  marginBottom: '0.125rem'
 };
 
 export default OfferDetailsView;

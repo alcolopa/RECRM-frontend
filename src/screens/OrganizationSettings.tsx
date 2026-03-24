@@ -94,7 +94,13 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       const response = await organizationService.getRoles(user.organizationId);
-      const rolesData = Array.isArray(response.data) ? response.data : [];
+      const data = response.data;
+      let rolesData = [];
+      if (Array.isArray(data)) {
+        rolesData = data;
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        rolesData = (data as any).items;
+      }
       setRoles(rolesData);
       if (rolesData.length > 0 && !inviteCustomRoleId) {
         const agentRole = rolesData.find((r: any) => r.name === 'Agent');
@@ -120,7 +126,14 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       const response = await organizationService.getInvitations(user.organizationId);
-      setInvitations(Array.isArray(response.data) ? response.data : []);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setInvitations(data);
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setInvitations((data as any).items);
+      } else {
+        setInvitations([]);
+      }
     } catch (err) {
       console.error('Failed to fetch invitations', err);
     }

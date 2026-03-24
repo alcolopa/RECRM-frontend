@@ -106,7 +106,14 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const fetchAgents = async () => {
     try {
       const response = await userService.getAll(organizationId);
-      setAgents(Array.isArray(response.data) ? response.data : []);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setAgents(data);
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setAgents((data as any).items);
+      } else {
+        setAgents([]);
+      }
     } catch (err) {
       console.error('Failed to fetch agents', err);
     }
@@ -269,7 +276,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
       </div>
 
       {/* Filters & Search */}
-      <div className="card offers-filters" style={{ padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }}>
+      <div className="card offers-filters" style={{ padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap', position: 'relative', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: isMobile ? '0' : '250px' }}>
           <Input
             id="searchQuery"
