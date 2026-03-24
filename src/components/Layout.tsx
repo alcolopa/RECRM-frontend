@@ -1,9 +1,9 @@
 import { useState, lazy, Suspense } from 'react';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Users, 
-  Target, 
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  Target,
   HandCoins,
   Calendar,
   CheckSquare,
@@ -18,6 +18,7 @@ import TopBar from './TopBar';
 import TutorialGuide, { type TutorialStep } from './TutorialGuide';
 import { useNavigation } from '../contexts/NavigationContext';
 import { type UserProfile } from '../api/users';
+import { getImageUrl } from '../utils/url';
 
 // Lazy load screens
 const Dashboard = lazy(() => import('../screens/Dashboard'));
@@ -47,7 +48,6 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     { id: 'properties', label: 'Properties', icon: Building2 },
     { id: 'contacts', label: 'Contacts', icon: Users },
     { id: 'leads', label: 'Leads', icon: Target },
-    { id: 'deals', label: 'Deals', icon: HandCoins },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'offers', label: 'Offers', icon: HandCoins },
@@ -55,16 +55,16 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
 
   const bottomItems = [
     { id: 'profile', label: 'Profile', icon: UserIcon },
-    { id: 'organization', label: 'Settings', icon: Settings },
+    { id: 'organization', label: 'Organization Settings', icon: Settings },
   ];
 
+  const activeMembership = user.memberships?.find((m: any) => m.organizationId === user.organizationId) || user.memberships?.[0];
+  const activeOrg = activeMembership?.organization;
+
   const renderContent = () => {
-    // Standardize user context for all views
-    const activeMembership = user.memberships?.find((m: any) => m.organizationId === user.organizationId) || user.memberships?.[0];
     const activeOrgId = activeMembership?.organizationId || user.organizationId || '';
     const activeRole = activeMembership?.role || user.role;
-    
-    // Ensure nested objects like customRole are passed down
+
     const userWithContext = {
       ...user,
       organizationId: activeOrgId,
@@ -125,7 +125,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     >
       <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
       {!isSidebarCollapsed && (
-        <span style={{ fontWeight: activeTab === item.id ? 700 : 500, fontSize: '0.9375rem' }}>{item.label}</span>
+        <span style={{ fontWeight: activeTab === item.id ? 700 : 500, fontSize: '0.9375rem', textAlign: 'left' }}>{item.label}</span>
       )}
       {activeTab === item.id && (
         <div style={{
@@ -157,23 +157,39 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: 100
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0 0.5rem', marginBottom: '2.5rem', overflow: 'hidden' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            borderRadius: '10px', 
-            backgroundColor: 'var(--color-primary)', 
-            display: 'flex', 
-            alignItems: 'center', 
+        <div
+          onClick={() => navigate('dashboard')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0 0.5rem',
+            marginBottom: '2.5rem',
+            overflow: 'hidden',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)',
+            backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            flexShrink: 0
+            flexShrink: 0,
+            border: activeOrg?.logo ? '1px solid var(--color-border)' : 'none'
           }}>
-            <Building2 size={24} />
+            {!activeOrg?.logo && <Building2 size={24} />}
           </div>
           {!isSidebarCollapsed && (
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-              Estate<span className="text-primary">Hub</span>
+            <span style={{ fontWeight: 800, fontSize: '1.125rem', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {activeOrg?.name || 'EstateHub'}
             </span>
           )}
         </div>
@@ -212,7 +228,8 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
           style={{
             position: 'absolute',
             right: '-12px',
-            top: '2.5rem',
+            top: '2.25rem',
+            transform: 'translateY(-50%)',
             width: '24px',
             height: '24px',
             borderRadius: '50%',
@@ -233,15 +250,14 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
 
       {/* Main Content Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar 
-          user={user} 
-          onLogout={onLogout} 
-          onMenuClick={() => setIsMobileMenuOpen(true)}
+        <TopBar
+          user={user}
+          onLogout={onLogout}
           onUserUpdate={onUserUpdate}
         />
-        
-        <main style={{ 
-          flex: 1, 
+
+        <main style={{
+          flex: 1,
           padding: '2rem',
           maxWidth: '1600px',
           width: '100%',
@@ -256,10 +272,10 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
           </Suspense>
         </main>
 
-        <TutorialGuide 
+        <TutorialGuide
           key={activeTab}
-          user={user} 
-          tutorialId={activeTab as string} 
+          user={user}
+          tutorialId={activeTab as string}
           steps={TUTORIAL_STEPS[activeTab as string] || []}
         />
       </div>
@@ -268,7 +284,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <div 
+            <div
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 position: 'fixed',
@@ -292,10 +308,23 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                    <Building2 size={20} />
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)',
+                    backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white'
+                  }}>
+                    {!activeOrg?.logo && <Building2 size={20} />}
                   </div>
-                  <span style={{ fontWeight: 800, fontSize: '1.125rem' }}>EstateHub</span>
+                  <span style={{ fontWeight: 800, fontSize: '1.125rem' }}>{activeOrg?.name || 'EstateHub'}</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)' }}>
                   <X size={24} />
