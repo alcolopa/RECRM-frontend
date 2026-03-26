@@ -31,6 +31,12 @@ export interface RecentActivity {
   time: string;
 }
 
+export interface PipelineData {
+  stage: string;
+  count: number;
+  value: number;
+}
+
 export const dashboardService = {
   getStats: (orgId: string) => 
     api.get<DashboardStat[]>('/dashboard/stats', { params: { organizationId: orgId } }),
@@ -43,4 +49,7 @@ export const dashboardService = {
 
   getRecentActivities: (orgId: string) =>
     api.get<RecentActivity[]>('/dashboard/recent-activities', { params: { organizationId: orgId } }),
+
+  getPipeline: (orgId: string) =>
+    api.get<PipelineData[]>('/dashboard/pipeline', { params: { organizationId: orgId } }),
 };

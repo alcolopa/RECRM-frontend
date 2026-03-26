@@ -11,12 +11,14 @@ import {
   Building,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  HandCoins
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userService, type UserProfile } from '../api/users';
 import { Input } from '../components/Input';
 import Button from '../components/Button';
+import CommissionInput from '../components/CommissionInput';
 import PhoneInput from '../components/PhoneInput';
 import PasswordStrength from '../components/PasswordStrength';
 import { isPasswordStrong } from '../utils/validation';
@@ -65,6 +67,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  
+  // Commission Override State
+  const [agentCommission, setAgentCommission] = useState<any>(null);
+  const [isCommissionLoading, setIsCommissionLoading] = useState(false);
+  const [isCommissionSaving, setIsCommissionSaving] = useState(false);
+  const [commissionSuccess, setCommissionSuccess] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -80,7 +88,39 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
       preferredTheme: user.preferredTheme || 'SYSTEM'
     });
     setHasChanges(false);
+    fetchAgentCommission();
   }, [user]);
+
+  const fetchAgentCommission = async () => {
+    if (!user?.id) return;
+    setIsCommissionLoading(true);
+    try {
+      const response = await userService.getMyCommissionConfig();
+      setAgentCommission(response.data);
+    } catch (err) {
+      console.error('Failed to fetch agent commission config', err);
+    } finally {
+      setIsCommissionLoading(false);
+    }
+  };
+
+  const handleSaveCommission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+    
+    setIsCommissionSaving(true);
+    setCommissionSuccess(false);
+    try {
+      await userService.updateMyCommissionConfig(agentCommission);
+      setCommissionSuccess(true);
+      setTimeout(() => setCommissionSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to update agent commission config', err);
+      setError('Failed to update commission overrides.');
+    } finally {
+      setIsCommissionSaving(false);
+    }
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -189,7 +229,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
   const isMobileOrTablet = typeof window !== 'undefined' ? window.innerWidth <= 1024 : false;
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', padding: isMobileOrTablet ? '0 1rem 5rem' : '0 0 5rem' }}>
       <header>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Account Settings</h1>
         <p style={{ color: 'var(--color-text-muted)' }}>Manage your personal information, avatar, and security settings.</p>
@@ -357,7 +397,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
               }}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : '1fr 1fr', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Unit Preference</label>
                 <select
@@ -496,6 +536,69 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
               {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><Save size={18} /> Save All Changes</>}
             </button>
           </form>
+
+          {/* Commission Overrides Section */}
+          <div className="card" style={{ padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ padding: '0.4rem', borderRadius: '0.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' }}>
+                  <HandCoins size={18} />
+                </div>
+                Commission & Revenue Overrides
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                Set custom splits that override the organization's default settings for your deals.
+              </p>
+            </div>
+
+            <AnimatePresence>
+              {commissionSuccess && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ ...successAlertStyle, marginBottom: '1.5rem' }}>
+                  <CheckCircle2 size={18} /> Commission overrides updated!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {isCommissionLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                <Loader2 size={24} className="animate-spin" color="var(--color-primary)" />
+              </div>
+            ) : (
+              <form onSubmit={handleSaveCommission} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <CommissionInput
+                    label="Rental Fee Override"
+                    value={agentCommission?.rentAgentValue ?? ''}
+                    type={agentCommission?.rentAgentType || 'PERCENTAGE'}
+                    onChange={(val, type) => setAgentCommission({ ...agentCommission, rentAgentValue: val, rentAgentType: type })}
+                    placeholder="Organization Default"
+                    helperText="Your fee from the agency for rental deals"
+                  />
+                  <CommissionInput
+                    label="Sales Fee Override"
+                    value={agentCommission?.saleAgentValue ?? ''}
+                    type={agentCommission?.saleAgentType || 'PERCENTAGE'}
+                    onChange={(val, type) => setAgentCommission({ ...agentCommission, saleAgentValue: val, saleAgentType: type })}
+                    placeholder="Organization Default"
+                    helperText="Your fee from the agency for sales deals"
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <Button
+                    type="submit"
+                    isLoading={isCommissionSaving}
+                    disabled={isCommissionSaving}
+                    leftIcon={<Save size={18} />}
+                    fullWidth={isMobileOrTablet}
+                    style={{ minWidth: isMobileOrTablet ? '100% ' : '160px' }}
+                  >
+                    Save Overrides
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>

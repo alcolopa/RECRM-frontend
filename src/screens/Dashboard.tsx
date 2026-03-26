@@ -12,7 +12,7 @@ import {
   Settings,
   GripHorizontal
 } from 'lucide-react';
-import { dashboardService, type DashboardStat, type RecentLead, type UpcomingTask, type RecentActivity } from '../api/dashboard';
+import { dashboardService, type DashboardStat, type RecentLead, type UpcomingTask, type RecentActivity, type PipelineData } from '../api/dashboard';
 import Button from '../components/Button';
 import { type UserProfile } from '../api/users';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -94,6 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user }) => {
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [pipelineData, setPipelineData] = useState<PipelineData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -106,17 +107,19 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const [statsRes, leadsRes, tasksRes, activitiesRes] = await Promise.all([
+      const [statsRes, leadsRes, tasksRes, activitiesRes, pipelineRes] = await Promise.all([
         dashboardService.getStats(organizationId),
         dashboardService.getRecentLeads(organizationId),
         dashboardService.getUpcomingTasks(organizationId),
         dashboardService.getRecentActivities(organizationId),
+        dashboardService.getPipeline(organizationId),
       ]);
 
       setStats(statsRes.data);
       setRecentLeads(leadsRes.data);
       setUpcomingTasks(tasksRes.data);
       setRecentActivities(activitiesRes.data);
+      setPipelineData(pipelineRes.data);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
       setError('Failed to load dashboard data. Please try again.');
@@ -196,8 +199,30 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user }) => {
         <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Deal Pipeline</h3>
         <Button variant="ghost" size="sm" onClick={() => navigate('deals')}>View All</Button>
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius)' }}>
-        Pipeline Chart Placeholder
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
+        {pipelineData.map((stage) => {
+          const maxValue = Math.max(...pipelineData.map(d => d.value), 1);
+          const percentage = (stage.value / maxValue) * 100;
+          
+          return (
+            <div key={stage.stage} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600 }}>
+                <span>{stage.stage} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({stage.count})</span></span>
+                <span>${stage.value.toLocaleString()}</span>
+              </div>
+              <div style={{ height: '0.5rem', backgroundColor: 'var(--color-bg)', borderRadius: '1rem', overflow: 'hidden' }}>
+                <div style={{ 
+                  height: '100%', 
+                  width: `${Math.max(percentage, 2)}%`, 
+                  backgroundColor: stage.stage === 'Closed Won' ? 'var(--color-success)' : 
+                                  stage.stage === 'Closed Lost' ? 'var(--color-error)' : 'var(--color-primary)',
+                  borderRadius: '1rem',
+                  transition: 'width 0.5s ease-out'
+                }} />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -13,12 +13,15 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
 import { type Contact } from '../api/contacts';
-import { offersService, FinancingType, OfferStatus, OffererType } from '../api/offers';
+import { offersService, FinancingType, OfferStatus, OffererType, type DealType } from '../api/offers';
+import { organizationService, type CommissionConfig } from '../api/organization';
+import { userService } from '../api/users';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
 import ContactSelector from './ContactSelector';
 import PropertySelector from './PropertySelector';
 import DateSelector from './DateSelector';
+import CommissionInput from './CommissionInput';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 import { useNavigation } from '../contexts/NavigationContext';
 
@@ -26,6 +29,7 @@ interface OfferFormProps {
   onCancel: () => void;
   onSuccess: () => void;
   organizationId: string;
+  user: any;
   initialProperty?: Property;
   initialContactId?: string;
 }
@@ -34,6 +38,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
   onCancel, 
   onSuccess, 
   organizationId,
+  user,
   initialProperty,
   initialContactId
 }) => {
@@ -57,8 +62,16 @@ const OfferForm: React.FC<OfferFormProps> = ({
     expirationDate: null as string | null,
     notes: '',
     offerer: OffererType.BUYER,
-    status: OfferStatus.SUBMITTED
+    status: OfferStatus.SUBMITTED,
+    type: 'SALE' as DealType,
+    buyerCommission: undefined as number | undefined,
+    sellerCommission: undefined as number | undefined,
+    agentCommission: undefined as number | undefined
   });
+
+  const [showOverrides, setShowOverrides] = useState(false);
+  const [orgConfig, setOrgConfig] = useState<CommissionConfig | null>(null);
+  const [agentConfig, setAgentConfig] = useState<any>(null);
 
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,6 +111,22 @@ const OfferForm: React.FC<OfferFormProps> = ({
       setSelectedProperty(initialProperty || null);
     }
   }, [formData.propertyId, organizationId]);
+
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      try {
+        const [orgRes, agentRes] = await Promise.all([
+          organizationService.getCommissionConfig(organizationId),
+          userService.getCommissionConfig(user?.id || '')
+        ]);
+        setOrgConfig(orgRes.data);
+        setAgentConfig(agentRes.data);
+      } catch (err) {
+        console.error('Failed to fetch commission configs', err);
+      }
+    };
+    fetchConfigs();
+  }, [organizationId]);
 
   // Restore draft state and handle prefilled IDs from navigation
   useEffect(() => {
@@ -167,6 +196,64 @@ const OfferForm: React.FC<OfferFormProps> = ({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const calculateCommission = () => {
+    if (showOverrides) {
+      const buyer = Number(formData.buyerCommission) || 0;
+      const seller = Number(formData.sellerCommission) || 0;
+      const agent = Number(formData.agentCommission) || 0;
+      return {
+        buyer,
+        seller,
+        total: buyer + seller,
+        agent
+      };
+    }
+
+    const price = Number(formData.price) || 0;
+    
+    const resolveField = (saleField: string, rentField: string) => {
+      const field = formData.type === 'SALE' ? saleField : rentField;
+      const valField = `${field}Value`;
+      const typeField = `${field}Type`;
+      
+      const agentConfigAny = agentConfig as any;
+      const orgConfigAny = orgConfig as any;
+      
+      const val = agentConfigAny?.[valField] ?? orgConfigAny?.[valField] ?? 0;
+      const type = agentConfigAny?.[typeField] ?? orgConfigAny?.[typeField] ?? (formData.type === 'SALE' ? 'PERCENTAGE' : 'MULTIPLIER');
+      
+      return { val, type };
+    };
+
+    const buyer = resolveField('saleBuyer', 'rentBuyer');
+    const seller = resolveField('saleSeller', 'rentSeller');
+    const agent = resolveField('saleAgent', 'rentAgent');
+
+    const calcValue = (base: number, config: { val: number, type: string }) => {
+      const val = Number(config.val) || 0;
+      if (config.type === 'PERCENTAGE') return (base * val) / 100;
+      if (config.type === 'FIXED') return val;
+      if (config.type === 'MULTIPLIER') return base * val;
+      return 0;
+    };
+
+    const buyerComm = calcValue(price, buyer);
+    const sellerComm = calcValue(price, seller);
+    const totalComm = buyerComm + sellerComm;
+    
+    // Agent share is typically a percentage of the total commission
+    const agentComm = agent.type === 'FIXED' ? agent.val : calcValue(totalComm, agent);
+
+    return {
+      buyer: buyerComm,
+      seller: sellerComm,
+      total: totalComm,
+      agent: agentComm
+    };
+  };
+
+  const commission = calculateCommission();
 
   const handleFieldChange = (id: string, value: any) => {
     setFormData(prev => ({ ...prev, [id]: value }));
@@ -351,22 +438,82 @@ const OfferForm: React.FC<OfferFormProps> = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
-          <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', margin: 0 }}>
-            <HandCoins size={14} /> Offer Details
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', margin: 0 }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
+              <HandCoins size={14} /> Offer Details
+            </h3>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowOverrides(!showOverrides)}
+                style={{
+                  padding: '0.25rem 0.625rem',
+                  borderRadius: '1rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: showOverrides ? 'var(--color-warning-light, #fef3c7)' : 'transparent',
+                  color: showOverrides ? 'var(--color-warning-dark, #92400e)' : 'var(--color-text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  marginRight: '0.5rem'
+                }}
+              >
+                {showOverrides ? 'MANUAL ON' : 'AUTO CALC'}
+              </button>
+              <div style={{ height: '1rem', width: '1px', backgroundColor: 'var(--color-border)', marginRight: '0.5rem' }} />
+              <button
+                type="button"
+                onClick={() => handleFieldChange('type', 'SALE')}
+                style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '1rem',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: formData.type === 'SALE' ? 'var(--color-primary)' : 'transparent',
+                  color: formData.type === 'SALE' ? 'white' : 'var(--color-text-muted)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                SALE
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFieldChange('type', 'RENT')}
+                style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '1rem',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: formData.type === 'RENT' ? 'var(--color-primary)' : 'transparent',
+                  color: formData.type === 'RENT' ? 'white' : 'var(--color-text-muted)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                RENT
+              </button>
+            </div>
+          </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.25rem' }}>
             <Input
               id="price"
               name="price"
-              label="Offer Price"
+              label={formData.type === 'SALE' ? 'Offer Price' : 'Monthly Rent'}
               type="number"
-              placeholder="e.g. 450000"
+              placeholder={formData.type === 'SALE' ? 'e.g. 450000' : 'e.g. 2500'}
               value={formData.price}
               onChange={(e) => handleFieldChange('price', e.target.value)}
               icon={DollarSign}
               required
               error={errors.price}
+              helperText={formData.type === 'RENT' ? "Total monthly rent requested." : undefined}
             />
             <Input
               id="deposit"
@@ -435,8 +582,97 @@ const OfferForm: React.FC<OfferFormProps> = ({
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             icon={FileText}
             rows={3}
-            error={errors.notes}
-          />
+              error={errors.notes}
+            />
+
+            {showOverrides && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
+                  gap: '1rem',
+                  padding: '1rem',
+                  backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                  borderRadius: 'var(--radius)',
+                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  marginTop: '0.5rem'
+                }}
+              >
+                <Input
+                  id="buyerCommission"
+                  label="Buyer Comm ($)"
+                  type="number"
+                  value={formData.buyerCommission}
+                  onChange={(e) => handleFieldChange('buyerCommission', e.target.value)}
+                  placeholder="0.00"
+                  icon={DollarSign}
+                />
+                <Input
+                  id="sellerCommission"
+                  label="Seller Comm ($)"
+                  type="number"
+                  value={formData.sellerCommission}
+                  onChange={(e) => handleFieldChange('sellerCommission', e.target.value)}
+                  placeholder="0.00"
+                  icon={DollarSign}
+                />
+                <Input
+                  id="agentCommission"
+                  label="Agent Share ($)"
+                  type="number"
+                  value={formData.agentCommission}
+                  onChange={(e) => handleFieldChange('agentCommission', e.target.value)}
+                  placeholder="0.00"
+                  icon={HandCoins}
+                />
+              </motion.div>
+            )}
+
+            {/* Commission Preview Card */}
+          <div style={{ 
+            marginTop: '0.5rem', 
+            padding: '1.25rem', 
+            borderRadius: 'var(--radius)', 
+            backgroundColor: 'rgba(var(--color-primary-rgb), 0.03)', 
+            border: '1px dashed rgba(var(--color-primary-rgb), 0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Commission Projection</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', padding: '0.125rem 0.5rem', borderRadius: '1rem', fontWeight: 700 }}>
+                {formData.type === 'SALE' ? 'SALE MODE' : 'RENT MODE'}
+              </span>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Buyer Side</div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>${commission.buyer.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Seller Side</div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>${commission.seller.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Agency Total</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>${commission.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(var(--color-primary-rgb), 0.1)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700 }}>
+                  {(user?.firstName || user?.email || 'A')[0].toUpperCase()}
+                </div>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Personal Share Projection</span>
+              </div>
+              <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>${commission.agent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            </div>
+          </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <Button

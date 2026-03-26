@@ -193,7 +193,7 @@ const AppContent = () => {
       if (!token) resetToDefault();
     }
 
-    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details', 'tasks', 'calendar'];
+    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details', 'tasks', 'calendar', 'payments'];
     const isDashboardPath = dashboardTabs.some(tab => path === `/${tab}`);
 
     if (token && user) {

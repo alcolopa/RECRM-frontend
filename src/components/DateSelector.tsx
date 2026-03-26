@@ -14,6 +14,7 @@ interface DateSelectorProps {
   placeholder?: string;
   includeTime?: boolean;
   onOpen?: () => void;
+  align?: 'left' | 'right';
 }
 
 type ViewMode = 'calendar' | 'month' | 'year';
@@ -28,7 +29,8 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   id,
   placeholder = 'Select date...',
   includeTime = false,
-  onOpen
+  onOpen,
+  align = 'left'
 }) => {
   const getNext15MinSlot = (date: Date) => {
     const ms = 1000 * 60 * 15; // 15 minutes in ms
@@ -214,7 +216,8 @@ const DateSelector: React.FC<DateSelectorProps> = ({
             style={{
               position: isMobile ? 'relative' : 'absolute',
               top: isMobile ? 'auto' : '100%',
-              left: 0,
+              left: isMobile ? 0 : (align === 'left' ? 0 : 'auto'),
+              right: isMobile ? 0 : (align === 'right' ? 0 : 'auto'),
               backgroundColor: 'var(--color-surface)',
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--color-border)',

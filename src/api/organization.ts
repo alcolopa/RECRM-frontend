@@ -90,6 +90,27 @@ export interface Organization {
   updatedAt: string;
 }
 
+export type CommissionType = 'PERCENTAGE' | 'FIXED' | 'MULTIPLIER';
+
+export interface CommissionConfig {
+  id: string;
+  organizationId: string;
+  rentBuyerValue?: number;
+  rentBuyerType?: CommissionType;
+  rentSellerValue?: number;
+  rentSellerType?: CommissionType;
+  rentAgentValue?: number;
+  rentAgentType?: CommissionType;
+  saleBuyerValue?: number;
+  saleBuyerType?: CommissionType;
+  saleSellerValue?: number;
+  saleSellerType?: CommissionType;
+  saleAgentValue?: number;
+  saleAgentType?: CommissionType;
+  paymentTiming?: string;
+  paymentMethod?: string;
+}
+
 export const organizationService = {
   get: (organizationId?: string) => 
     api.get<Organization>('/organization', { params: { organizationId } }),
@@ -135,4 +156,11 @@ export const organizationService = {
   
   updateMemberRole: (orgId: string, membershipId: string, customRoleId: string) => 
     api.patch(`/organization/${orgId}/members/${membershipId}/role`, { customRoleId }),
+
+  // Commission
+  getCommissionConfig: (orgId: string) => 
+    api.get<CommissionConfig>(`/commission/org`, { params: { organizationId: orgId } }),
+  
+  updateCommissionConfig: (orgId: string, data: Partial<CommissionConfig>) => 
+    api.post<CommissionConfig>(`/commission/org`, data, { params: { organizationId: orgId } }),
 };

@@ -96,6 +96,17 @@ export interface UserProfile {
   organizationId?: string;
 }
 
+export type CommissionType = 'PERCENTAGE' | 'FIXED' | 'MULTIPLIER';
+
+export interface AgentCommissionConfig {
+  id: string;
+  agentId: string;
+  rentAgentValue?: number;
+  rentAgentType?: CommissionType;
+  saleAgentValue?: number;
+  saleAgentType?: CommissionType;
+}
+
 export const userService = {
   getMe: () => api.get<UserProfile>('/users/me'),
   getAll: (orgId: string) => api.get<UserProfile[]>('/users', { params: { organizationId: orgId } }),
@@ -115,4 +126,17 @@ export const userService = {
   verifyInvitation: (token: string) => api.get(`/auth/invite/verify/${token}`),
   acceptInvitation: (token: string) => api.post('/auth/invite/accept', { token }),
   registerInvitation: (data: any) => api.post('/auth/invite/register', data),
+
+  // Commission Overrides
+  getMyCommissionConfig: () => 
+    api.get<AgentCommissionConfig>('/commission/agent'),
+  
+  updateMyCommissionConfig: (data: Partial<AgentCommissionConfig>) => 
+    api.patch<AgentCommissionConfig>('/commission/agent', data),
+
+  getCommissionConfig: (agentId: string) => 
+    api.get<AgentCommissionConfig>(`/commission/agent/${agentId}`),
+  
+  updateCommissionConfig: (agentId: string, data: Partial<AgentCommissionConfig>) => 
+    api.patch<AgentCommissionConfig>(`/commission/agent/${agentId}`, data),
 };

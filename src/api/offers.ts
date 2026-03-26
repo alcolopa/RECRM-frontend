@@ -4,6 +4,7 @@ import { type Contact } from './contacts';
 import { type UserProfile } from './users';
 
 export type OfferStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'EXPIRED';
+export type DealType = 'SALE' | 'RENT';
 export const OfferStatus = {
   DRAFT: 'DRAFT' as OfferStatus,
   SUBMITTED: 'SUBMITTED' as OfferStatus,
@@ -63,6 +64,10 @@ export interface Offer {
   status: OfferStatus;
   notes?: string;
   offerer: OffererType;
+  type: DealType;
+  buyerCommission?: number;
+  sellerCommission?: number;
+  agentCommission?: number;
   negotiationId: string;
   negotiation: OfferNegotiation;
   organizationId: string;

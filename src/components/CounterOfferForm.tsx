@@ -33,9 +33,15 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
     closingDate: originalOffer.closingDate ? new Date(originalOffer.closingDate).toISOString() : '',
     expirationDate: originalOffer.expirationDate ? new Date(originalOffer.expirationDate).toISOString() : '',
     notes: '',
-    offerer: 'AGENCY' as OffererType
+    offerer: 'AGENCY' as OffererType,
+    buyerCommission: originalOffer.buyerCommission,
+    sellerCommission: originalOffer.sellerCommission,
+    agentCommission: originalOffer.agentCommission
   });
 
+  const [showOverrides, setShowOverrides] = useState(
+    !!(originalOffer.buyerCommission || originalOffer.sellerCommission || originalOffer.agentCommission)
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,6 +207,74 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
             icon={FileText}
             rows={4}
           />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Commission Overrides</h3>
+            <button
+              type="button"
+              onClick={() => setShowOverrides(!showOverrides)}
+              style={{
+                padding: '0.4rem 0.8rem',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: '1px solid var(--color-border)',
+                backgroundColor: showOverrides ? 'var(--color-warning-light, #fef3c7)' : 'var(--color-surface)',
+                color: showOverrides ? 'var(--color-warning-dark, #92400e)' : 'var(--color-text-muted)',
+              }}
+            >
+              {showOverrides ? 'Manual Override ACTIVE' : 'Use System Defaults'}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showOverrides && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
+                  gap: '1rem',
+                  padding: '1.25rem',
+                  backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                  borderRadius: 'var(--radius)',
+                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  overflow: 'hidden'
+                }}
+              >
+                <Input
+                  id="buyerCommission"
+                  label="Buyer Comm ($)"
+                  type="number"
+                  value={formData.buyerCommission}
+                  onChange={(e) => handleFieldChange('buyerCommission', Number(e.target.value))}
+                  placeholder="0.00"
+                  icon={DollarSign}
+                />
+                <Input
+                  id="sellerCommission"
+                  label="Seller Comm ($)"
+                  type="number"
+                  value={formData.sellerCommission}
+                  onChange={(e) => handleFieldChange('sellerCommission', Number(e.target.value))}
+                  placeholder="0.00"
+                  icon={DollarSign}
+                />
+                <Input
+                  id="agentCommission"
+                  label="Agent Share ($)"
+                  type="number"
+                  value={formData.agentCommission}
+                  onChange={(e) => handleFieldChange('agentCommission', Number(e.target.value))}
+                  placeholder="0.00"
+                  icon={HandCoins}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '2rem' }}>
             <Button variant="outline" style={{ flex: 1 }} onClick={onCancel} type="button">

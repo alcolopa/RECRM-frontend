@@ -12,7 +12,9 @@ import {
   LogOut,
   User as UserIcon,
   Settings,
-  X
+  X,
+  Banknote,
+  TrendingUp
 } from 'lucide-react';
 import TopBar from './TopBar';
 import TutorialGuide, { type TutorialStep } from './TutorialGuide';
@@ -31,6 +33,7 @@ const OffersView = lazy(() => import('../screens/OffersView'));
 const OfferDetailsView = lazy(() => import('../screens/OfferDetailsView'));
 const TasksView = lazy(() => import('../screens/TasksView'));
 const CalendarView = lazy(() => import('../screens/CalendarView'));
+const PaymentsView = lazy(() => import('../screens/PaymentsView'));
 
 interface LayoutProps {
   onLogout: () => void;
@@ -52,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'offers', label: 'Offers', icon: HandCoins },
+    { id: 'payments', label: 'Payments & Payouts', icon: Banknote },
   ];
 
   const bottomItems = [
@@ -96,6 +100,8 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         return <TasksView organizationId={activeOrgId} user={userWithContext as any} />;
       case 'calendar':
         return <CalendarView organizationId={activeOrgId} user={userWithContext as any} />;
+      case 'payments':
+        return <PaymentsView organizationId={activeOrgId} user={userWithContext as any} />;
       default:
         return <Dashboard organizationId={activeOrgId} user={user} />;
     }

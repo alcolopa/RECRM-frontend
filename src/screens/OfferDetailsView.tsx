@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { offersService, type Offer } from '../api/offers';
+import { organizationService, type CommissionConfig } from '../api/organization';
+import { userService } from '../api/users';
 import Button from '../components/Button';
 import { useNavigation } from '../contexts/NavigationContext';
 import ConfirmModal from '../components/ConfirmModal';
@@ -38,6 +40,9 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  
+  const [orgConfig, setOrgConfig] = useState<CommissionConfig | null>(null);
+  const [agentConfig, setAgentConfig] = useState<any>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -58,8 +63,24 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
     }
   };
 
+  const fetchConfigs = async () => {
+    try {
+      const [orgRes, agentRes] = await Promise.all([
+        organizationService.getCommissionConfig(organizationId),
+        userService.getMe()
+      ]);
+      setOrgConfig(orgRes.data);
+      // For agent config, we might need a specific getCommissionConfig if it's not in getMe
+      const agentCommRes = await userService.getCommissionConfig(agentRes.data.id);
+      setAgentConfig(agentCommRes.data);
+    } catch (err) {
+      console.error('Failed to fetch configs', err);
+    }
+  };
+
   useEffect(() => {
     fetchOfferDetails();
+    fetchConfigs();
   }, [offerId, organizationId]);
 
   const handleAccept = async () => {
@@ -130,6 +151,35 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 
   const isAgencyOffer = offer.offerer === 'AGENCY';
   const canTakeAction = offer.status === 'SUBMITTED' || offer.status === 'COUNTERED' || offer.status === 'UNDER_REVIEW';
+
+  const calculateCommission = () => {
+    const price = Number(offer.price) || 0;
+    const type = (offer as any).type || 'SALE';
+    
+    if (type === 'RENT') {
+      const buyerMonths = agentConfig?.rentBuyerMonths ?? orgConfig?.rentBuyerMonths ?? 0;
+      const sellerMonths = agentConfig?.rentSellerMonths ?? orgConfig?.rentSellerMonths ?? 0;
+      const agentShare = agentConfig?.rentAgentShare ?? orgConfig?.rentAgentMinShare ?? 0;
+
+      const buyerComm = price * buyerMonths;
+      const sellerComm = price * sellerMonths;
+      const agentComm = price * agentShare;
+
+      return { buyer: buyerComm, seller: sellerComm, total: buyerComm + sellerComm, agent: agentComm };
+    } else {
+      const buyerPercent = agentConfig?.saleBuyerPercent ?? orgConfig?.saleBuyerPercent ?? 0;
+      const sellerPercent = agentConfig?.saleSellerPercent ?? orgConfig?.saleSellerPercent ?? 0;
+      const agentPercent = agentConfig?.saleAgentPercent ?? orgConfig?.saleAgentMinPercent ?? 0;
+
+      const buyerComm = (price * buyerPercent) / 100;
+      const sellerComm = (price * sellerPercent) / 100;
+      const agentComm = (price * agentPercent) / 100;
+
+      return { buyer: buyerComm, seller: sellerComm, total: buyerComm + sellerComm, agent: agentComm };
+    }
+  };
+
+  const commission = calculateCommission();
 
   return (
     <motion.div 
@@ -302,6 +352,52 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 
         {/* Sidebar Panel */}
         <div style={{ gridColumn: isMobile ? 'auto' : 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Commission Breakdown Card */}
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.03)', border: '1px solid var(--color-primary)' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <HandCoins size={18} />
+              Commission Breakdown
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Buyer Side</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>${commission.buyer.toLocaleString()}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Seller Side</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>${commission.seller.toLocaleString()}</span>
+              </div>
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>Total Agency</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>${commission.total.toLocaleString()}</span>
+              </div>
+              
+              <div style={{ 
+                marginTop: '0.5rem',
+                padding: '0.75rem', 
+                borderRadius: '0.5rem', 
+                backgroundColor: 'var(--color-surface)', 
+                border: '1px solid var(--color-border)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700 }}>
+                    {(offer.createdBy.firstName || offer.createdBy.email || 'A')[0].toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Agent Share</span>
+                </div>
+                <span style={{ fontSize: '1rem', fontWeight: 700 }}>${commission.agent.toLocaleString()}</span>
+              </div>
+            </div>
+            
+            <p style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', textAlign: 'center', fontStyle: 'italic' }}>
+              * Calculated based on current {(offer as any).type || 'SALE'} rates
+            </p>
+          </div>
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={18} color="var(--color-primary)" />

@@ -10,12 +10,11 @@ import {
   Camera,
   ShieldAlert,
   UserPlus,
-  X,
   Clock,
-  Send,
   Shield,
   Settings,
   Users,
+  HandCoins,
   Plus,
   Trash2,
   Check,
@@ -27,12 +26,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { organizationService, type Organization } from '../api/organization';
 import { type UserProfile } from '../api/users';
 import { Input, Select } from '../components/Input';
+import CommissionInput from '../components/CommissionInput';
 import PhoneInput from '../components/PhoneInput';
 import UserSelector from '../components/UserSelector';
 import Button from '../components/Button';
 import CustomSelect from '../components/CustomSelect';
 import ColorPicker from '../components/ColorPicker';
 import Tabs from '../components/Tabs';
+import AgentCommissionModal from '../components/AgentCommissionModal';
 import { useTheme } from '../contexts/ThemeContext';
 import { getImageUrl } from '../utils/url';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
@@ -74,7 +75,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
   const [hasChanges, setHasChanges] = useState(false);
   const { setAccentColor } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'team' | 'roles'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'team' | 'roles' | 'commission'>('general');
   const [roles, setRoles] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -83,6 +84,13 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
+  const [commissionConfig, setCommissionConfig] = useState<any>(null);
+  const [isCommissionLoading, setIsCommissionLoading] = useState(false);
+  const [isCommissionSaving, setIsCommissionSaving] = useState(false);
+
+  const [selectedAgentForCommission, setSelectedAgentForCommission] = useState<{ id: string, name: string } | null>(null);
+  const [isAgentCommissionModalOpen, setIsAgentCommissionModalOpen] = useState(false);
+
   const isOwner = user.role === 'OWNER';
 
   useEffect(() => {
@@ -90,8 +98,52 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (isOwner) {
       fetchInvitations();
       fetchRoles();
+      fetchCommissionConfig();
     }
   }, []);
+
+  const fetchCommissionConfig = async () => {
+    if (!user.organizationId) return;
+    try {
+      setIsCommissionLoading(true);
+      const response = await organizationService.getCommissionConfig(user.organizationId);
+      setCommissionConfig(response.data || {
+        rentBuyerValue: 0,
+        rentBuyerType: 'MULTIPLIER',
+        rentSellerValue: 0,
+        rentSellerType: 'MULTIPLIER',
+        rentAgentValue: 0,
+        rentAgentType: 'PERCENTAGE',
+        saleBuyerValue: 0,
+        saleBuyerType: 'PERCENTAGE',
+        saleSellerValue: 0,
+        saleSellerType: 'PERCENTAGE',
+        saleAgentValue: 0,
+        saleAgentType: 'PERCENTAGE',
+        paymentTiming: '',
+        paymentMethod: ''
+      });
+    } catch (err) {
+      console.error('Failed to fetch commission config', err);
+    } finally {
+      setIsCommissionLoading(false);
+    }
+  };
+
+  const handleSaveCommission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user.organizationId) return;
+    setIsCommissionSaving(true);
+    try {
+      await organizationService.updateCommissionConfig(user.organizationId, commissionConfig);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(getErrorMessage(err, 'Failed to save commission settings.'));
+    } finally {
+      setIsCommissionSaving(false);
+    }
+  };
 
   const fetchRoles = async () => {
     if (!user.organizationId) return;
@@ -119,7 +171,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     if (!user.organizationId) return;
     try {
       await organizationService.updateMemberRole(user.organizationId, membershipId, customRoleId);
-      fetchOrganization(); // Refresh to see changes
+      fetchOrganization(false); // Refresh to see changes without full loader
     } catch (err: any) {
       setError(getErrorMessage(err, 'Failed to update member role.'));
     }
@@ -193,9 +245,9 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
     }
   };
 
-  const fetchOrganization = async () => {
+  const fetchOrganization = async (showLoader = true) => {
     try {
-      setIsLoading(true);
+      if (showLoader) setIsLoading(true);
       const response = await organizationService.get();
       const orgData = response.data;
       setOrg(orgData);
@@ -351,545 +403,813 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
   const isMobileOrTablet = typeof window !== 'undefined' ? window.innerWidth <= 1024 : false;
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
-      <header>
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Organization Settings</h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>Manage your organization's profile, team, and permissions.</p>
-      </header>
+    <>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
+        <header>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Organization Settings</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>Manage your organization's profile, team, and permissions.</p>
+        </header>
 
-      {!isOwner && (
-        <div style={warningBannerStyle}>
-          <ShieldAlert size={20} />
-          <span>Viewing only. Only the organization owner can modify these settings.</span>
-        </div>
-      )}
+        {!isOwner && (
+          <div style={warningBannerStyle}>
+            <ShieldAlert size={20} />
+            <span>Viewing only. Only the organization owner can modify these settings.</span>
+          </div>
+        )}
 
-      {/* Tabs Navigation */}
-      <Tabs
-        variant="underline"
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as any)}
-        options={[
-          { id: 'general', label: 'General', icon: Settings },
-          { id: 'team', label: 'Team', icon: Users },
-          ...(isOwner ? [{ id: 'roles', label: 'Roles & Permissions', icon: Shield }] : [])
-        ]}
-      />
+        {/* Tabs Navigation */}
+        <Tabs
+          variant="underline"
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          fullWidth={isMobileOrTablet}
+          options={[
+            { id: 'general', label: 'General', icon: Settings },
+            { id: 'team', label: 'Team', icon: Users },
+            ...(isOwner ? [
+              { id: 'roles', label: 'Roles & Permissions', icon: Shield },
+              { id: 'commission', label: 'Commission', icon: HandCoins }
+            ] : [])
+          ]}
+        />
 
-      {activeTab === 'general' && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobileOrTablet ? '1fr' : '320px 1fr',
-          gap: '2rem',
-          alignItems: 'flex-start'
-        }}>
-          {/* Left Side: Logo Card */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
-              <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 1.5rem' }}>
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '1rem',
-                  backgroundColor: 'rgba(5, 150, 105, 0.05)',
-                  backgroundImage: formData.logo ? `url("${getImageUrl(formData.logo)}")` : 'none',
-                  backgroundSize: 'contain',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--color-primary)',
-                  fontSize: '2.5rem',
-                  fontWeight: 700,
-                  border: '1px solid var(--color-border)',
-                  boxShadow: 'var(--shadow-sm)',
-                  overflow: 'hidden'
-                }}>
-                  {!formData.logo && !isUploading && <Building size={48} />}
-                  {isUploading && <Loader2 size={32} className="animate-spin" />}
-                </div>
-                {isOwner && (
-                  <label htmlFor="logo-upload" style={{
-                    position: 'absolute',
-                    bottom: '-10px',
-                    right: '-10px',
-                    backgroundColor: 'var(--color-primary)',
-                    color: 'var(--color-text)',
-                    padding: '0.5rem',
-                    borderRadius: '50%',
-                    boxShadow: 'var(--shadow)',
-                    cursor: isUploading ? 'not-allowed' : 'pointer',
+        {activeTab === 'general' && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobileOrTablet ? '1fr' : '320px 1fr',
+            gap: '2rem',
+            alignItems: 'flex-start'
+          }}>
+            {/* Left Side: Logo Card */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
+                <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 1.5rem' }}>
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '1rem',
+                    backgroundColor: 'rgba(5, 150, 105, 0.05)',
+                    backgroundImage: formData.logo ? `url("${getImageUrl(formData.logo)}")` : 'none',
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    opacity: isUploading ? 0.7 : 1,
-                    border: '3px solid var(--color-surface)'
+                    color: 'var(--color-primary)',
+                    fontSize: '2.5rem',
+                    fontWeight: 700,
+                    border: '1px solid var(--color-border)',
+                    boxShadow: 'var(--shadow-sm)',
+                    overflow: 'hidden'
                   }}>
-                    <Camera size={18} color='white' />
-                    <input
-                      id="logo-upload"
-                      name="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      disabled={isUploading}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
-                )}
+                    {!formData.logo && !isUploading && <Building size={48} />}
+                    {isUploading && <Loader2 size={32} className="animate-spin" />}
+                  </div>
+                  {isOwner && (
+                    <label htmlFor="logo-upload" style={{
+                      position: 'absolute',
+                      bottom: '-10px',
+                      right: '-10px',
+                      backgroundColor: 'var(--color-primary)',
+                      color: 'var(--color-text)',
+                      padding: '0.5rem',
+                      borderRadius: '50%',
+                      boxShadow: 'var(--shadow)',
+                      cursor: isUploading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: isUploading ? 0.7 : 1,
+                      border: '3px solid var(--color-surface)'
+                    }}>
+                      <Camera size={18} color='white' />
+                      <input
+                        id="logo-upload"
+                        name="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        disabled={isUploading}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem' }}>{org?.name}</h2>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>@{org?.slug}</p>
               </div>
 
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem' }}>{org?.name}</h2>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>@{org?.slug}</p>
+              <div className="card" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldAlert size={18} color="var(--color-primary)" />
+                  Ownership
+                </h3>
+                {org && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <UserSelector
+                      label="Current Owner"
+                      organizationId={org.id}
+                      selectedUserId={formData.ownerId}
+                      onSelect={(ownerId) => {
+                        if (!isOwner) return;
+                        setFormData(prev => ({ ...prev, ownerId }));
+                        setHasChanges(true);
+                      }}
+                    />
+                  </div>
+                )}
+                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                  The organization slug is unique and cannot be changed. Only the current owner can transfer ownership to another member.
+                </p>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldAlert size={18} color="var(--color-primary)" />
-                Ownership
-              </h3>
-              {org && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <UserSelector
-                    label="Current Owner"
-                    organizationId={org.id}
-                    selectedUserId={formData.ownerId}
-                    onSelect={(ownerId) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="card" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Theme & Appearance</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Customize how your organization and shared listings look.</p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <ColorPicker
+                    label="Primary Accent Color"
+                    value={formData.accentColor}
+                    onChange={(hex) => {
                       if (!isOwner) return;
-                      setFormData(prev => ({ ...prev, ownerId }));
+                      setFormData(prev => ({ ...prev, accentColor: hex }));
+                      setHasChanges(true);
+                    }}
+                    disabled={!isOwner}
+                  />
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
+
+                  <div>
+                    <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>
+                      Default Sharing Theme
+                    </label>
+                    <div style={{ display: 'flex', gap: '1rem', flexDirection: isMobileOrTablet ? 'column' : 'row' }}>
+                      <Button
+                        type="button"
+                        variant={formData.defaultTheme === 'LIGHT' ? 'primary' : 'outline'}
+                        onClick={() => {
+                          if (!isOwner) return;
+                          setFormData(prev => ({ ...prev, defaultTheme: 'LIGHT' }));
+                          setHasChanges(true);
+                        }}
+                        disabled={!isOwner}
+                        leftIcon={<Sun size={18} />}
+                        style={{ flex: 1 }}
+                      >
+                        Light Mode
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={formData.defaultTheme === 'DARK' ? 'primary' : 'outline'}
+                        onClick={() => {
+                          if (!isOwner) return;
+                          setFormData(prev => ({ ...prev, defaultTheme: 'DARK' }));
+                          setHasChanges(true);
+                        }}
+                        disabled={!isOwner}
+                        leftIcon={<Moon size={18} />}
+                        style={{ flex: 1 }}
+                      >
+                        Dark Mode
+                      </Button>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                      This theme will be applied by default when anyone views your shared properties publicly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>General Information</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Public information about your company.</p>
+                </div>
+
+                <AnimatePresence>
+                  {success && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={successAlertStyle}>
+                      <CheckCircle2 size={18} /> Settings updated successfully!
+                    </motion.div>
+                  )}
+                  {error && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={errorAlertStyle}>
+                      <AlertCircle size={18} /> {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Input
+                  label="Organization Name"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                  }}
+                  placeholder="Company Name"
+                  icon={Building}
+                  disabled={!isOwner}
+                  error={errors.name}
+                />
+
+                <div className="grid grid-2" style={{ gap: '1.25rem', alignItems: 'flex-start' }}>
+                  <Input
+                    label="Public Email"
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => {
+                      handleChange(e);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    placeholder="contact@company.com"
+                    icon={Mail}
+                    disabled={!isOwner}
+                    error={errors.email}
+                  />
+                  <PhoneInput
+                    id="phone"
+                    label="Phone Number"
+                    value={formData.phone}
+                    onChange={(val) => {
+                      if (!isOwner) return;
+                      setFormData(prev => ({ ...prev, phone: val }));
                       setHasChanges(true);
                     }}
                   />
                 </div>
-              )}
-              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-                The organization slug is unique and cannot be changed. Only the current owner can transfer ownership to another member.
-              </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label htmlFor="address" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Office Address</label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: '0.75rem', top: '0.75rem', color: 'var(--muted-foreground)' }}>
+                      <MapPin size={18} />
+                    </div>
+                    <textarea
+                      id="address"
+                      rows={3}
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Street, City, State, Country"
+                      disabled={!isOwner}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem 0.75rem 2.5rem',
+                        borderRadius: 'var(--radius)',
+                        border: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-surface)',
+                        color: 'var(--color-text)',
+                        fontSize: '1rem',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {isOwner && (
+                  <Button
+                    type="submit"
+                    disabled={isSaving || !hasChanges}
+                    isLoading={isSaving}
+                    leftIcon={<Save size={18} />}
+                    style={{
+                      width: isMobileOrTablet ? '100%' : 'fit-content',
+                      minWidth: '180px',
+                      alignSelf: isMobileOrTablet ? 'stretch' : 'flex-end',
+                      marginTop: '1rem'
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                )}
+              </form>
             </div>
           </div>
+        )}
 
+        {activeTab === 'team' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Theme & Appearance</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Customize how your organization and shared listings look.</p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <ColorPicker
-                  label="Primary Accent Color"
-                  value={formData.accentColor}
-                  onChange={(hex) => {
-                    if (!isOwner) return;
-                    setFormData(prev => ({ ...prev, accentColor: hex }));
-                    setHasChanges(true);
-                  }}
-                  disabled={!isOwner}
-                />
-
-                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
-
-                <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>
-                    Default Sharing Theme
-                  </label>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button
-                      type="button"
-                      variant={formData.defaultTheme === 'LIGHT' ? 'primary' : 'outline'}
-                      onClick={() => {
-                        if (!isOwner) return;
-                        setFormData(prev => ({ ...prev, defaultTheme: 'LIGHT' }));
-                        setHasChanges(true);
-                      }}
-                      disabled={!isOwner}
-                      leftIcon={<Sun size={18} />}
-                      style={{ flex: 1 }}
-                    >
-                      Light Mode
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={formData.defaultTheme === 'DARK' ? 'primary' : 'outline'}
-                      onClick={() => {
-                        if (!isOwner) return;
-                        setFormData(prev => ({ ...prev, defaultTheme: 'DARK' }));
-                        setHasChanges(true);
-                      }}
-                      disabled={!isOwner}
-                      leftIcon={<Moon size={18} />}
-                      style={{ flex: 1 }}
-                    >
-                      Dark Mode
-                    </Button>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', fontStyle: 'italic' }}>
-                    This theme will be applied by default when anyone views your shared properties publicly.
+            {/* Team Members Section */}
+            <div className="card" style={{ padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
+              <div style={{
+                marginBottom: '2rem',
+                display: 'flex',
+                flexDirection: isMobileOrTablet ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: isMobileOrTablet ? 'flex-start' : 'flex-end',
+                gap: '1.5rem'
+              }}>
+                <div style={{ width: '100%' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>Organization Team</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '500px', lineHeight: '1.5' }}>
+                    Manage your organization's members, roles, and performance-based commission structures.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>General Information</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Public information about your company.</p>
-              </div>
-
-              <AnimatePresence>
-                {success && (
-                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={successAlertStyle}>
-                    <CheckCircle2 size={18} /> Settings updated successfully!
-                  </motion.div>
-                )}
-                {error && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={errorAlertStyle}>
-                    <AlertCircle size={18} /> {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <Input
-                label="Organization Name"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={(e) => {
-                  handleChange(e);
-                  if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
-                }}
-                placeholder="Company Name"
-                icon={Building}
-                disabled={!isOwner}
-                error={errors.name}
-              />
-
-              <div className="grid grid-2" style={{ gap: '1.25rem', alignItems: 'flex-start' }}>
-                <Input
-                  label="Public Email"
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => {
-                    handleChange(e);
-                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-                  }}
-                  placeholder="contact@company.com"
-                  icon={Mail}
-                  disabled={!isOwner}
-                  error={errors.email}
-                />
-                <PhoneInput
-                  id="phone"
-                  label="Phone Number"
-                  value={formData.phone}
-                  onChange={(val) => {
-                    if (!isOwner) return;
-                    setFormData(prev => ({ ...prev, phone: val }));
-                    setHasChanges(true);
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="address" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>Office Address</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '0.75rem', top: '0.75rem', color: 'var(--muted-foreground)' }}>
-                    <MapPin size={18} />
-                  </div>
-                  <textarea
-                    id="address"
-                    rows={3}
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Street, City, State, Country"
-                    disabled={!isOwner}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem 0.75rem 2.5rem',
-                      borderRadius: 'var(--radius)',
-                      border: '1px solid var(--color-border)',
-                      backgroundColor: 'var(--color-surface)',
-                      color: 'var(--color-text)',
-                      fontSize: '1rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      resize: 'vertical'
-                    }}
-                  />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: isMobileOrTablet ? '100%' : 'auto', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: 'var(--color-text-muted)',
+                    backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
+                    padding: '0.5rem 0.8rem',
+                    borderRadius: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    flexShrink: 0
+                  }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
+                    {(Array.isArray(org?.memberships) ? org.memberships : []).length} Active Members
+                  </span>
+                  {isOwner && (
+                    <Button
+                      onClick={() => {
+                        const inviteSection = document.getElementById('invite-section');
+                        if (inviteSection) inviteSection.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      leftIcon={<UserPlus size={18} />}
+                      style={{ flex: isMobileOrTablet ? 1 : 'none' }}
+                    >
+                      Invite
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {isOwner && (
-                <Button
-                  type="submit"
-                  disabled={isSaving || !hasChanges}
-                  isLoading={isSaving}
-                  leftIcon={<Save size={18} />}
+              <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}>
+                  <Users size={18} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Find team members..."
                   style={{
-                    width: isMobileOrTablet ? '100%' : 'fit-content',
-                    minWidth: '180px',
-                    alignSelf: isMobileOrTablet ? 'stretch' : 'flex-end',
-                    marginTop: '1rem'
+                    width: '100%',
+                    padding: '0.875rem 1rem 0.875rem 3rem',
+                    borderRadius: '0.75rem',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'var(--color-surface)',
+                    color: 'var(--color-text)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
                   }}
-                >
-                  Save Changes
-                </Button>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'team' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Team Members Section */}
-          <div className="card" style={{ padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Team Members</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>People who have access to this organization.</p>
+                  disabled
+                />
               </div>
-              <div style={{
-                width: '2.25rem',
-                height: '2.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-                color: 'var(--color-primary)',
-                borderRadius: '50%',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
-              }}>
-                {(Array.isArray(org?.memberships) ? org.memberships : []).length}
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {(Array.isArray(org?.memberships) ? org.memberships : []).map((membership: any) => (
-                <div key={membership.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem',
-                  borderRadius: 'var(--radius)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap',
-                  gap: '1rem'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                    <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-                      backgroundImage: membership.user.avatar ? `url("${getImageUrl(membership.user.avatar)}")` : 'none',
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--color-primary)',
-                      fontWeight: 700,
-                      border: '2px solid var(--color-bg)'
-                    }}>
-                      {!membership.user.avatar && (membership.user.firstName?.[0] || membership.user.email[0]).toUpperCase()}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {(Array.isArray(org?.memberships) ? org.memberships : []).map((membership: any) => (
+                  <div key={membership.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '1.25rem 1.5rem',
+                    borderRadius: '1rem',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'var(--color-surface)',
+                    flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap',
+                    gap: '1.5rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}>
+                    {/* Avatar & User Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: isMobileOrTablet ? '1 1 100%' : '1' }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+                        backgroundImage: membership.user.avatar ? `url("${getImageUrl(membership.user.avatar)}")` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--color-primary)',
+                        fontWeight: 700,
+                        border: '1px solid var(--color-border)',
+                        flexShrink: 0
+                      }}>
+                        {!membership.user.avatar && (membership.user.firstName?.[0] || membership.user.email[0]).toUpperCase()}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {membership.user.firstName} {membership.user.lastName}
+                          {membership.user.id === user.id && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', padding: '0.15rem 0.5rem', borderRadius: '2rem', textTransform: 'uppercase' }}>You</span>}
+                        </span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{membership.user.email}</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
-                        {membership.user.firstName} {membership.user.lastName}
-                        {membership.user.id === user.id && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem' }}>You</span>}
-                      </span>
-                      <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>{membership.user.email}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: isMobileOrTablet ? '100%' : 'auto', justifyContent: 'flex-end' }}>
-                    {isOwner && membership.user.id !== user.id ? (
-                      <div style={{ minWidth: '160px' }}>
+
+                    {/* Role Dropdown */}
+                    <div style={{ width: isMobileOrTablet ? '100%' : '200px', flexShrink: 0 }}>
+                      {isOwner && membership.user.id !== user.id ? (
                         <CustomSelect
-                          label="Role"
                           value={membership.customRoleId || ''}
                           onChange={(val) => handleUpdateMemberRole(membership.id, val as string)}
                           options={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id, label: r.name }))}
-                          style={{ minHeight: '2.5rem' }}
+                          style={{ minHeight: '2.75rem', borderRadius: '0.75rem' }}
+                        // Label is removed here
                         />
-                      </div>
-                    ) : (
-                      <span style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        color: membership.role === 'OWNER' ? 'var(--color-warning)' : 'var(--color-text-muted)',
-                        padding: '0.375rem 0.75rem',
-                        backgroundColor: membership.role === 'OWNER' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                        borderRadius: '0.5rem',
-                        letterSpacing: '0.025em'
-                      }}>
-                        {membership.customRole?.name || membership.role}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                      ) : (
+                        <div style={{ height: '2.75rem', display: 'flex', alignItems: 'center', padding: '0 1rem', borderRadius: '0.75rem', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                          {membership.customRole?.name || membership.role}
+                        </div>
+                      )}
+                    </div>
 
-          {/* Team & Invitations Section */}
-          {isOwner && (
-            <div className="card" style={{ padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Invite Members</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Send an email invitation to join your organization.</p>
+                    {/* Actions: Badge & Commission */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: 'auto', flexShrink: 0 }}>
+                      {/* Role Badge */}
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: membership.role === 'OWNER' ? '#D97706' : '#6B7280',
+                        padding: '0.25rem 0.625rem',
+                        backgroundColor: membership.role === 'OWNER' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                        borderRadius: '0.375rem',
+                        letterSpacing: '0.05em',
+                        border: membership.role === 'OWNER' ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(107, 114, 128, 0.2)'
+                      }}>
+                        {membership.role}
+                      </span>
+
+                      {/* Commission Button (Only for Agents) */}
+                      {(membership.role === 'AGENT' || membership.role === 'OWNER') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAgentForCommission({
+                              id: membership.user.id,
+                              name: `${membership.user.firstName} ${membership.user.lastName}`
+                            });
+                            setIsAgentCommissionModalOpen(true);
+                          }}
+                          leftIcon={<HandCoins size={16} />}
+                          style={{ height: '2.75rem', padding: '0 1rem', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', fontSize: '0.8125rem', fontWeight: 700 }}
+                        >
+                          Commission
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Team & Invitations Section */}
+            {isOwner && (
+              <div className="card" style={{ padding: isMobileOrTablet ? '1.5rem' : '2rem' }}>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Invite Members</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Send an email invitation to join your organization.</p>
+                </div>
+
+                <form onSubmit={handleInvite} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexDirection: isMobileOrTablet ? 'column' : 'row', alignItems: isMobileOrTablet ? 'stretch' : 'flex-end' }}>
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      id="inviteEmail"
+                      placeholder="colleague@example.com"
+                      type="email"
+                      label="Email Address"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      icon={Mail}
+                      style={{ marginBottom: 0 }}
+                    />
+                  </div>
+                  <div style={{ width: isMobileOrTablet ? '100%' : '240px' }}>
+                    <CustomSelect
+                      label="Initial Role"
+                      value={inviteCustomRoleId}
+                      onChange={(val) => setInviteCustomRoleId(val as string)}
+                      options={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id, label: r.name }))}
+                      placeholder="Select a role"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isInviting || !inviteEmail.trim() || !inviteCustomRoleId}
+                    isLoading={isInviting}
+                    leftIcon={<UserPlus size={18} />}
+                    style={{ height: '2.75rem', padding: '0 1.5rem' }}
+                  >
+                    Send Invite
+                  </Button>
+                </form>
+
+                <AnimatePresence>
+                  {inviteSuccess && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ ...successAlertStyle, marginBottom: '1.5rem' }}>
+                      <CheckCircle2 size={18} /> Invitation sent successfully!
+                    </motion.div>
+                  )}
+                  {inviteError && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ ...errorAlertStyle, marginBottom: '1.5rem' }}>
+                      <AlertCircle size={18} /> {inviteError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Clock size={16} className="text-primary" /> Pending Invitations ({(Array.isArray(invitations) ? invitations : []).length})
+                  </h4>
+
+                  {(Array.isArray(invitations) ? invitations : []).length === 0 ? (
+                    <div style={{
+                      padding: '3rem 2rem',
+                      textAlign: 'center',
+                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.02)',
+                      borderRadius: '1rem',
+                      border: '1px dashed var(--color-border)'
+                    }}>
+                      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>No pending invitations at the moment.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {(Array.isArray(invitations) ? invitations : []).map((inv) => (
+                        <div key={inv.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '1.25rem 1.5rem',
+                          backgroundColor: 'var(--color-surface)',
+                          borderRadius: '1rem',
+                          border: '1px solid var(--color-border)',
+                          gap: '1.5rem',
+                          boxShadow: 'var(--shadow-sm)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1 }}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '12px',
+                              backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+                              color: 'var(--color-primary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '1px solid var(--color-border)',
+                              flexShrink: 0
+                            }}>
+                              <Mail size={20} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                              <span style={{ fontSize: '1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.email}</span>
+                              <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
+                                Sent {new Date(inv.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Role Indicator - Styled like the active list */}
+                          <div style={{ width: isMobileOrTablet ? '100%' : '200px', flexShrink: 0 }}>
+                            <div style={{ height: '2.75rem', display: 'flex', alignItems: 'center', padding: '0 1rem', borderRadius: '0.75rem', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                              {inv.customRole?.name || inv.role}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: 'auto', flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              color: '#6B7280',
+                              padding: '0.25rem 0.625rem',
+                              backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                              borderRadius: '0.375rem',
+                              letterSpacing: '0.05em',
+                              border: '1px solid rgba(107, 114, 128, 0.2)'
+                            }}>
+                              INVITED
+                            </span>
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleResendInvite(inv.id)}
+                                disabled={resendingId === inv.id}
+                                isLoading={resendingId === inv.id}
+                                size="sm"
+                                style={{
+                                  color: 'var(--color-primary)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.025em'
+                                }}
+                              >
+                                Resend
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleCancelInvite(inv.id)}
+                                size="sm"
+                                style={{
+                                  color: '#EF4444', // Red-500
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.025em'
+                                }}
+                              >
+                                Revoke
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'roles' && (
+          <RolesManagement
+            roles={Array.isArray(roles) ? roles : []}
+            organizationId={org?.id || ''}
+            onUpdate={() => {
+              fetchRoles();
+              fetchOrganization(false);
+            }}
+            isMobileOrTablet={isMobileOrTablet}
+          />
+        )}
+
+        {activeTab === 'commission' && (
+          isCommissionLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+              <Loader2 size={32} className="animate-spin" color="var(--color-primary)" />
+            </div>
+          ) : (
+            <form onSubmit={handleSaveCommission} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="card" style={{ padding: '2rem' }}>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' }}>
+                      <HandCoins size={20} />
+                    </div>
+                    Sale Commission Defaults
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Set the default commission percentages for all sales deals in the organization.</p>
+                </div>
+
+                <div className="grid grid-2" style={{ gap: '1.5rem', marginBottom: '2rem' }}>
+                  <CommissionInput
+                    label="Buyer Side"
+                    value={commissionConfig?.saleBuyerValue ?? 0}
+                    type={commissionConfig?.saleBuyerType ?? 'PERCENTAGE'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleBuyerValue: val, saleBuyerType: type })}
+                    helperText="Default commission from the buyer's side for Sale deals."
+                  />
+                  <CommissionInput
+                    label="Seller Side"
+                    value={commissionConfig?.saleSellerValue ?? 0}
+                    type={commissionConfig?.saleSellerType ?? 'PERCENTAGE'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleSellerValue: val, saleSellerType: type })}
+                    helperText="Default commission from the seller's side for Sale deals."
+                  />
+                </div>
+
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '2rem 0', opacity: 0.5 }} />
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Agent Split Range</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem' }}>The default share range for agents on sale deals.</p>
+                </div>
+
+                <div style={{ maxWidth: '400px' }}>
+                  <CommissionInput
+                    label="Agent Baseline Split"
+                    value={commissionConfig?.saleAgentValue ?? 0}
+                    type={commissionConfig?.saleAgentType ?? 'PERCENTAGE'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleAgentValue: val, saleAgentType: type })}
+                    helperText="Default portion of the deal commission given to the agent."
+                  />
+                </div>
               </div>
 
-              <form onSubmit={handleInvite} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexDirection: isMobileOrTablet ? 'column' : 'row', alignItems: isMobileOrTablet ? 'stretch' : 'flex-end' }}>
-                <div style={{ flex: 1 }}>
-                  <Input
-                    id="inviteEmail"
-                    placeholder="colleague@example.com"
-                    type="email"
-                    label="Email Address"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    icon={Mail}
-                    style={{ marginBottom: 0 }}
+              <div className="card" style={{ padding: '2rem' }}>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' }}>
+                      <Clock size={20} />
+                    </div>
+                    Rent Commission Defaults
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Set default commission rules for rental deals based on month count.</p>
+                </div>
+
+                <div className="grid grid-2" style={{ gap: '1.5rem', marginBottom: '2rem' }}>
+                  <CommissionInput
+                    label="Buyer Side"
+                    value={commissionConfig?.rentBuyerValue ?? 0}
+                    type={commissionConfig?.rentBuyerType ?? 'MULTIPLIER'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentBuyerValue: val, rentBuyerType: type })}
+                    helperText="Default commission from the buyer's side for Rent deals (e.g. 1 month)."
+                  />
+                  <CommissionInput
+                    label="Seller Side"
+                    value={commissionConfig?.rentSellerValue ?? 0}
+                    type={commissionConfig?.rentSellerType ?? 'MULTIPLIER'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentSellerValue: val, rentSellerType: type })}
+                    helperText="Default commission from the seller's side for Rent deals."
                   />
                 </div>
-                <div style={{ width: isMobileOrTablet ? '100%' : '240px' }}>
-                  <CustomSelect
-                    label="Initial Role"
-                    value={inviteCustomRoleId}
-                    onChange={(val) => setInviteCustomRoleId(val as string)}
-                    options={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id, label: r.name }))}
-                    placeholder="Select a role"
+
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '2rem 0', opacity: 0.5 }} />
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Agent Split Share</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem' }}>Percentage of the total commission months that goes to the agent.</p>
+                </div>
+
+                <div style={{ maxWidth: '400px' }}>
+                  <CommissionInput
+                    label="Agent Baseline Split"
+                    value={commissionConfig?.rentAgentValue ?? 0}
+                    type={commissionConfig?.rentAgentType ?? 'PERCENTAGE'}
+                    onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentAgentValue: val, rentAgentType: type })}
+                    helperText="Default portion of the deal commission given to the agent."
                   />
                 </div>
+              </div>
+
+              <div className="card" style={{ padding: '2rem' }}>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Payment & Payout</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Configure payout terms and methods.</p>
+                </div>
+
+                <div className="grid grid-2" style={{ gap: '1.5rem' }}>
+                  <Select
+                    label="Payment Timing"
+                    id="paymentTiming"
+                    value={commissionConfig?.paymentTiming || ''}
+                    onChange={(e) => setCommissionConfig({ ...commissionConfig, paymentTiming: e.target.value })}
+                    options={[
+                      { value: '', label: 'Select timing...' },
+                      { value: 'UPFRONT', label: 'Upfront on Deal Signing' },
+                      { value: 'CLOSING', label: 'On Deal Closing' },
+                      { value: 'MILESTONE', label: 'Vesting/Milestone Based' }
+                    ]}
+                  />
+                  <Select
+                    label="Preferred Payout Method"
+                    id="paymentMethod"
+                    value={commissionConfig?.paymentMethod || ''}
+                    onChange={(e) => setCommissionConfig({ ...commissionConfig, paymentMethod: e.target.value })}
+                    options={[
+                      { value: '', label: 'Select method...' },
+                      { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+                      { value: 'CHECK', label: 'Check' },
+                      { value: 'INTERNAL_CREDIT', label: 'Internal Credit' }
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                 <Button
                   type="submit"
-                  disabled={isInviting || !inviteEmail.trim() || !inviteCustomRoleId}
-                  isLoading={isInviting}
-                  leftIcon={<UserPlus size={18} />}
-                  style={{ height: '2.75rem', padding: '0 1.5rem' }}
+                  isLoading={isCommissionSaving}
+                  disabled={isCommissionSaving}
+                  leftIcon={<Save size={18} />}
+                  fullWidth={isMobileOrTablet}
+                  style={{ minWidth: isMobileOrTablet ? '100% ' : '180px' }}
                 >
-                  Send Invite
+                  Save Commission Settings
                 </Button>
-              </form>
-
-              <AnimatePresence>
-                {inviteSuccess && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ ...successAlertStyle, marginBottom: '1.5rem' }}>
-                    <CheckCircle2 size={18} /> Invitation sent successfully!
-                  </motion.div>
-                )}
-                {inviteError && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ ...errorAlertStyle, marginBottom: '1.5rem' }}>
-                    <AlertCircle size={18} /> {inviteError}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Clock size={16} className="text-primary" /> Pending Invitations ({(Array.isArray(invitations) ? invitations : []).length})
-                </h4>
-
-                {(Array.isArray(invitations) ? invitations : []).length === 0 ? (
-                  <div style={{
-                    padding: '3rem 2rem',
-                    textAlign: 'center',
-                    backgroundColor: 'rgba(var(--color-primary-rgb), 0.02)',
-                    borderRadius: '1rem',
-                    border: '1px dashed var(--color-border)'
-                  }}>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>No pending invitations at the moment.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {(Array.isArray(invitations) ? invitations : []).map((inv) => (
-                      <div key={inv.id} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.875rem 1.25rem',
-                        backgroundColor: 'var(--color-surface)',
-                        borderRadius: 'var(--radius)',
-                        border: '1px solid var(--color-border)'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
-                            color: 'var(--color-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Mail size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{inv.email}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                              Role: <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{inv.customRole?.name || inv.role}</span> • Sent {new Date(inv.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleResendInvite(inv.id)}
-                            disabled={resendingId === inv.id}
-                            isLoading={resendingId === inv.id}
-                            leftIcon={<Send size={14} />}
-                            size="sm"
-                            style={{
-                              backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
-                              color: 'var(--color-primary)',
-                              fontSize: '0.75rem',
-                              fontWeight: 700
-                            }}
-                          >
-                            Resend
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleCancelInvite(inv.id)}
-                            style={{
-                              color: 'var(--color-text-muted)',
-                              padding: '0.5rem',
-                              minWidth: 'auto',
-                              height: 'auto'
-                            }}
-                          >
-                            <X size={20} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            </form>
+          )
+        )}
+      </div>
 
-      {activeTab === 'roles' && (
-        <RolesManagement
-          roles={Array.isArray(roles) ? roles : []}
-          organizationId={org?.id || ''}
-          onUpdate={() => {
-            fetchRoles();
-            fetchOrganization();
-          }}
-          isMobileOrTablet={isMobileOrTablet}
-        />
-      )}
-    </div>
+      <AgentCommissionModal
+        isOpen={isAgentCommissionModalOpen}
+        onClose={() => setIsAgentCommissionModalOpen(false)}
+        agentId={selectedAgentForCommission?.id || ''}
+        agentName={selectedAgentForCommission?.name || ''}
+      />
+    </>
   );
 };
 

@@ -196,6 +196,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
           fetchOffers();
         }}
         organizationId={organizationId}
+        user={user}
         initialProperty={prefillProperty}
         initialContactId={prefillContactId}
       />
