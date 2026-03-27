@@ -2,6 +2,7 @@ import api, { type PaginatedResponse } from './client';
 import { type Property } from './properties';
 import { type Contact } from './contacts';
 import { type UserProfile } from './users';
+import { type Deal } from './deals';
 
 export type OfferStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'EXPIRED';
 export type DealType = 'SALE' | 'RENT';
@@ -74,6 +75,7 @@ export interface Offer {
   createdById: string;
   createdBy: UserProfile;
   history: OfferHistory[];
+  associatedDeal?: Deal;
   createdAt: string;
   updatedAt: string;
 }

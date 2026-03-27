@@ -11,12 +11,15 @@ import {
   Plus,
   User,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  XCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { offersService, type Offer } from '../api/offers';
 import { organizationService, type CommissionConfig } from '../api/organization';
 import { userService } from '../api/users';
+import { dealService, type DealStage } from '../api/deals';
 import Button from '../components/Button';
 import { useNavigation } from '../contexts/NavigationContext';
 import ConfirmModal from '../components/ConfirmModal';
@@ -114,11 +117,24 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   const handleCounterSave = async (data: any) => {
     if (!offer) return;
     try {
-      await offersService.counter(offer.id, data, organizationId);
+      const res = await offersService.counter(offer.id, data, organizationId);
       setView('details');
-      fetchOfferDetails();
+      navigate('offer-details', { prefillData: { offerId: res.data.id } });
     } catch (err) {
       throw err;
+    }
+  };
+
+  const handleCloseDeal = async (stage: DealStage) => {
+    if (!offer?.associatedDeal) return;
+    setIsActionLoading(true);
+    try {
+      await dealService.update(offer.associatedDeal.id, { stage }, organizationId);
+      await fetchOfferDetails(); 
+    } catch (err) {
+      console.error('Failed to close deal', err);
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -257,6 +273,50 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               {isMobile ? 'Accept' : 'Accept Offer'}
             </Button>
           </div>
+        )}
+
+        {offer.status === 'ACCEPTED' && offer.associatedDeal && (
+          offer.associatedDeal.stage === 'NEGOTIATION' ? (
+            <div style={{ display: 'flex', gap: '0.75rem', width: isMobile ? '100%' : 'auto' }}>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => handleCloseDeal('CLOSED_LOST')}
+                leftIcon={<XCircle size={18} />}
+                fullWidth={isMobile}
+                isLoading={isActionLoading}
+              >
+                Mark as Lost
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => handleCloseDeal('CLOSED_WON')}
+                leftIcon={<Trophy size={18} />}
+                fullWidth={isMobile}
+                style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}
+                isLoading={isActionLoading}
+              >
+                Mark as Won
+              </Button>
+            </div>
+          ) : (
+            <div style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '2rem', 
+              fontSize: '0.875rem', 
+              fontWeight: 700,
+              backgroundColor: offer.associatedDeal.stage === 'CLOSED_WON' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+              color: offer.associatedDeal.stage === 'CLOSED_WON' ? '#10b981' : '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              border: `1px solid ${offer.associatedDeal.stage === 'CLOSED_WON' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+            }}>
+              {offer.associatedDeal.stage === 'CLOSED_WON' ? <Trophy size={18} /> : <XCircle size={18} />}
+              Deal {offer.associatedDeal.stage.replace('CLOSED_', '')}
+            </div>
+          )
         )}
       </header>
 
