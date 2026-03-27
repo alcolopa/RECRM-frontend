@@ -37,10 +37,19 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterListingType, setFilterListingType] = useState('');
+  const [filterMinPrice, setFilterMinPrice] = useState('');
+  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+  const [filterBedrooms, setFilterBedrooms] = useState('');
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string, color: string }> = {
       AVAILABLE: { bg: 'rgba(5, 150, 105, 0.1)', color: 'var(--color-primary)' },
-      UNDER_CONTRACT: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+      RESERVED: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
       SOLD: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
       RENTED: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
       OFF_MARKET: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' }
@@ -53,11 +62,28 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
     );
   };
 
+  const activeFilterCount = [filterStatus, filterType, filterListingType, filterMinPrice, filterMaxPrice, filterBedrooms].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setFilterStatus('');
+    setFilterType('');
+    setFilterListingType('');
+    setFilterMinPrice('');
+    setFilterMaxPrice('');
+    setFilterBedrooms('');
+  };
+
   const fetchProperties = async (pageNum = page, agentId = selectedAgentId, sort = sortBy, order = sortOrder) => {
     setIsLoading(true);
     try {
       const filters = {
         assignedUserId: agentId === 'all' ? undefined : agentId,
+        status: filterStatus || undefined,
+        type: filterType || undefined,
+        listingType: filterListingType || undefined,
+        minPrice: filterMinPrice ? Number(filterMinPrice) : undefined,
+        maxPrice: filterMaxPrice ? Number(filterMaxPrice) : undefined,
+        bedrooms: filterBedrooms ? Number(filterBedrooms) : undefined,
         sortBy: sort,
         sortOrder: order
       };
@@ -105,15 +131,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
 
   useEffect(() => {
     fetchProperties(page, selectedAgentId, sortBy, sortOrder);
-  }, [page, selectedAgentId, sortBy, sortOrder]);
-
-  useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    } else {
-      fetchProperties(1, selectedAgentId, sortBy, sortOrder);
-    }
-  }, [organizationId, selectedAgentId]);
+  }, [page, selectedAgentId, sortBy, sortOrder, organizationId, filterStatus, filterType, filterListingType, filterMinPrice, filterMaxPrice, filterBedrooms]);
 
   useEffect(() => {
     fetchAgents();
@@ -261,58 +279,173 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
         )}
       </header>
 
-      {/* Filters & Search */}
-      <div className="card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 10 }}>
-        <div style={{ flex: 1, minWidth: '250px' }}>
-          <Input
-            id="searchQuery"
-            name="searchQuery"
-            type="text"
-            placeholder="Search by title, address, or city..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            icon={Search}
-            style={{ fontSize: '0.875rem' }}
-          />
-        </div>
-        <div style={{ width: '200px' }}>
-          <Select
-            id="agentFilter"
-            name="agentFilter"
-            value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value as string)}
-            icon={User}
-            options={[
-              { value: 'all', label: 'All Agents' },
-              ...(Array.isArray(agents) ? agents : []).map(a => ({ 
-                value: a.id, 
-                label: `${a.firstName} ${a.lastName}` 
-              }))
-            ]}
-            style={{ fontSize: '0.875rem' }}
-          />
-        </div>
-        <Button variant="outline" leftIcon={<Filter size={18} />} style={{ padding: '0.625rem 1rem' }}>
-          Filters
-        </Button>
+      {/* Search & Filter Bar */}
+      <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '250px' }}>
+            <Input
+              id="searchQuery"
+              name="searchQuery"
+              type="text"
+              placeholder="Search by title, address, or city..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              icon={Search}
+              style={{ fontSize: '0.875rem' }}
+            />
+          </div>
+          <div style={{ width: '200px' }}>
+            <Select
+              id="agentFilter"
+              name="agentFilter"
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value as string)}
+              icon={User}
+              options={[
+                { value: 'all', label: 'All Agents' },
+                ...(Array.isArray(agents) ? agents : []).map(a => ({ 
+                  value: a.id, 
+                  label: `${a.firstName} ${a.lastName}` 
+                }))
+              ]}
+              style={{ fontSize: '0.875rem' }}
+            />
+          </div>
+          <Button 
+            variant={showFilters ? 'primary' : 'outline'} 
+            leftIcon={<Filter size={18} />} 
+            style={{ padding: '0.625rem 1rem', position: 'relative' }}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            Filters
+            {activeFilterCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '-6px', right: '-6px',
+                width: '20px', height: '20px', borderRadius: '50%',
+                backgroundColor: 'var(--color-primary)', color: 'white',
+                fontSize: '0.6875rem', fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
 
-        {/* View Switcher - Only on Desktop */}
-        <div className="view-toggle hidden-mobile" style={{ marginLeft: 'auto' }}>
-          <div 
-            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-            title="Grid View"
-          >
-            <LayoutGrid size={18} />
-          </div>
-          <div 
-            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-            title="List View"
-          >
-            <List size={18} />
+          {/* View Switcher - Only on Desktop */}
+          <div className="view-toggle hidden-mobile" style={{ marginLeft: 'auto' }}>
+            <div 
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid View"
+            >
+              <LayoutGrid size={18} />
+            </div>
+            <div 
+              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <List size={18} />
+            </div>
           </div>
         </div>
+
+        {/* Collapsible Filter Panel */}
+        {showFilters && (
+          <div style={{ 
+            marginTop: '1rem', paddingTop: '1rem', 
+            borderTop: '1px solid var(--color-border)',
+            display: 'flex', flexDirection: 'column', gap: '1rem'
+          }}>
+            <div className="grid grid-2 grid-3" style={{ gap: '0.75rem' }}>
+              <Select
+                id="filterStatus" name="filterStatus" label="Status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'AVAILABLE', label: 'Available' },
+                  { value: 'RESERVED', label: 'Reserved' },
+                  { value: 'SOLD', label: 'Sold' },
+                  { value: 'RENTED', label: 'Rented' },
+                  { value: 'OFF_MARKET', label: 'Off Market' },
+                ]}
+                style={{ fontSize: '0.8125rem' }}
+              />
+              <Select
+                id="filterType" name="filterType" label="Property Type"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                options={[
+                  { value: '', label: 'All Types' },
+                  { value: 'APARTMENT', label: 'Apartment' },
+                  { value: 'HOUSE', label: 'House' },
+                  { value: 'VILLA', label: 'Villa' },
+                  { value: 'OFFICE', label: 'Office' },
+                  { value: 'SHOP', label: 'Shop' },
+                  { value: 'LAND', label: 'Land' },
+                  { value: 'WAREHOUSE', label: 'Warehouse' },
+                  { value: 'BUILDING', label: 'Building' },
+                ]}
+                style={{ fontSize: '0.8125rem' }}
+              />
+              <Select
+                id="filterListingType" name="filterListingType" label="Listing Type"
+                value={filterListingType}
+                onChange={(e) => setFilterListingType(e.target.value)}
+                options={[
+                  { value: '', label: 'All Listings' },
+                  { value: 'SALE', label: 'For Sale' },
+                  { value: 'RENT', label: 'For Rent' },
+                  { value: 'LEASE', label: 'For Lease' },
+                ]}
+                style={{ fontSize: '0.8125rem' }}
+              />
+              <Input
+                id="filterMinPrice" name="filterMinPrice" label="Min Price"
+                type="number" placeholder="0"
+                value={filterMinPrice}
+                onChange={(e) => setFilterMinPrice(e.target.value)}
+                style={{ fontSize: '0.8125rem' }}
+              />
+              <Input
+                id="filterMaxPrice" name="filterMaxPrice" label="Max Price"
+                type="number" placeholder="Any"
+                value={filterMaxPrice}
+                onChange={(e) => setFilterMaxPrice(e.target.value)}
+                style={{ fontSize: '0.8125rem' }}
+              />
+              <Select
+                id="filterBedrooms" name="filterBedrooms" label="Bedrooms"
+                value={filterBedrooms}
+                onChange={(e) => setFilterBedrooms(e.target.value)}
+                options={[
+                  { value: '', label: 'Any' },
+                  { value: '1', label: '1+' },
+                  { value: '2', label: '2+' },
+                  { value: '3', label: '3+' },
+                  { value: '4', label: '4+' },
+                  { value: '5', label: '5+' },
+                ]}
+                style={{ fontSize: '0.8125rem' }}
+              />
+            </div>
+            {activeFilterCount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={clearFilters}
+                  style={{
+                    border: 'none', background: 'none', cursor: 'pointer',
+                    color: 'var(--color-primary)', fontSize: '0.8125rem', fontWeight: 600,
+                    padding: '0.25rem 0.5rem'
+                  }}
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (

@@ -21,7 +21,6 @@ import { Input, Select, Textarea } from './Input';
 import ContactSelector from './ContactSelector';
 import PropertySelector from './PropertySelector';
 import DateSelector from './DateSelector';
-import CommissionInput from './CommissionInput';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 import { useNavigation } from '../contexts/NavigationContext';
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ChevronLeft, 
-  Building2, 
-  Calendar, 
+import {
+  ChevronLeft,
+  Building2,
+  Calendar,
   Clock,
   Check,
   Loader2,
@@ -31,16 +31,16 @@ interface OfferDetailsViewProps {
 const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) => {
   const { navigationState, navigate } = useNavigation();
   const offerId = navigationState.prefillData?.offerId;
-  
+
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'details' | 'counter'>('details');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  
+
   const [orgConfig, setOrgConfig] = useState<CommissionConfig | null>(null);
   const [agentConfig, setAgentConfig] = useState<any>(null);
 
@@ -141,7 +141,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 
   if (view === 'counter') {
     return (
-      <CounterOfferForm 
+      <CounterOfferForm
         originalOffer={offer}
         onSave={handleCounterSave}
         onCancel={() => setView('details')}
@@ -155,11 +155,11 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   const calculateCommission = () => {
     const price = Number(offer.price) || 0;
     const type = (offer as any).type || 'SALE';
-    
+
     if (type === 'RENT') {
-      const buyerMonths = agentConfig?.rentBuyerMonths ?? orgConfig?.rentBuyerMonths ?? 0;
-      const sellerMonths = agentConfig?.rentSellerMonths ?? orgConfig?.rentSellerMonths ?? 0;
-      const agentShare = agentConfig?.rentAgentShare ?? orgConfig?.rentAgentMinShare ?? 0;
+      const buyerMonths = orgConfig?.rentBuyerValue ?? 0;
+      const sellerMonths = orgConfig?.rentSellerValue ?? 0;
+      const agentShare = agentConfig?.rentAgentValue ?? orgConfig?.rentAgentValue ?? 0;
 
       const buyerComm = price * buyerMonths;
       const sellerComm = price * sellerMonths;
@@ -167,9 +167,9 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 
       return { buyer: buyerComm, seller: sellerComm, total: buyerComm + sellerComm, agent: agentComm };
     } else {
-      const buyerPercent = agentConfig?.saleBuyerPercent ?? orgConfig?.saleBuyerPercent ?? 0;
-      const sellerPercent = agentConfig?.saleSellerPercent ?? orgConfig?.saleSellerPercent ?? 0;
-      const agentPercent = agentConfig?.saleAgentPercent ?? orgConfig?.saleAgentMinPercent ?? 0;
+      const buyerPercent = orgConfig?.saleBuyerValue ?? 0;
+      const sellerPercent = orgConfig?.saleSellerValue ?? 0;
+      const agentPercent = agentConfig?.saleAgentValue ?? orgConfig?.saleAgentValue ?? 0;
 
       const buyerComm = (price * buyerPercent) / 100;
       const sellerComm = (price * sellerPercent) / 100;
@@ -182,31 +182,31 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
   const commission = calculateCommission();
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: isMobile ? '1.5rem' : '2.5rem', 
-        maxWidth: '1200px', 
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isMobile ? '1.5rem' : '2.5rem',
+        maxWidth: '1200px',
         margin: '0 auto',
         paddingBottom: isMobile ? '2rem' : 0
       }}
     >
       {/* Dynamic Header */}
-      <header style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: isMobile ? 'flex-start' : 'center', 
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'flex-start' : 'center',
         flexDirection: isMobile ? 'column' : 'row',
-        gap: '1.5rem' 
+        gap: '1.5rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button 
+          <button
             onClick={() => navigate('offers')}
-            style={{ 
-              padding: '0.625rem', borderRadius: '50%', background: 'var(--color-surface)', 
+            style={{
+              padding: '0.625rem', borderRadius: '50%', background: 'var(--color-surface)',
               border: '1px solid var(--color-border)', cursor: 'pointer', color: 'var(--color-text)',
               boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', flexShrink: 0
             }}
@@ -216,7 +216,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.5rem' : '1.75rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Offer Details</h1>
-              <span style={{ 
+              <span style={{
                 padding: '0.2rem 0.625rem', borderRadius: '2rem', fontSize: '0.65rem', fontWeight: 700,
                 backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary)', textTransform: 'uppercase',
                 letterSpacing: '0.05em', border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
@@ -225,7 +225,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               </span>
             </div>
             <div style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <Building2 size={14} /> 
+              <Building2 size={14} />
               <span style={{ fontWeight: 500 }}>{offer.negotiation.property.title}</span>
             </div>
           </div>
@@ -233,24 +233,24 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 
         {canTakeAction && (
           <div style={{ display: 'flex', gap: '0.75rem', width: isMobile ? '100%' : 'auto' }}>
-            <Button 
-              variant="danger" 
-              onClick={() => setIsRejectModalOpen(true)} 
+            <Button
+              variant="danger"
+              onClick={() => setIsRejectModalOpen(true)}
               fullWidth={isMobile}
             >
               Reject
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setView('counter')} 
+            <Button
+              variant="outline"
+              onClick={() => setView('counter')}
               leftIcon={<Plus size={18} />}
               fullWidth={isMobile}
             >
               Counter
             </Button>
-            <Button 
-              variant="primary" 
-              onClick={() => setIsAcceptModalOpen(true)} 
+            <Button
+              variant="primary"
+              onClick={() => setIsAcceptModalOpen(true)}
               leftIcon={<Check size={18} />}
               fullWidth={isMobile}
             >
@@ -260,35 +260,35 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
         )}
       </header>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(12, 1fr)', 
-        gap: '2rem', 
-        alignItems: 'start' 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(12, 1fr)',
+        gap: '2rem',
+        alignItems: 'start'
       }}>
         {/* Main Information Panel */}
         <div style={{ gridColumn: isMobile ? 'auto' : 'span 8', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
+
           {/* Key Metrics Row */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', 
-            gap: isMobile ? '1rem' : '1.5rem' 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? '1rem' : '1.5rem'
           }}>
-            <MetricCard 
-              label="Offer Price" 
-              value={`$${Number(offer.price).toLocaleString()}`} 
+            <MetricCard
+              label="Offer Price"
+              value={`$${Number(offer.price).toLocaleString()}`}
               icon={DollarSign}
               highlight
             />
-            <MetricCard 
-              label="Security Deposit" 
-              value={`$${Number(offer.deposit || 0).toLocaleString()}`} 
+            <MetricCard
+              label="Security Deposit"
+              value={`$${Number(offer.deposit || 0).toLocaleString()}`}
               icon={HandCoins}
             />
-            <MetricCard 
-              label="Financing" 
-              value={offer.financingType.replace('_', ' ')} 
+            <MetricCard
+              label="Financing"
+              value={offer.financingType.replace('_', ' ')}
               icon={FileText}
             />
           </div>
@@ -310,13 +310,13 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               </div>
             )}
 
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
-              gap: '1.5rem', 
-              marginTop: '0.5rem', 
-              paddingTop: '1.5rem', 
-              borderTop: '1px solid var(--color-border)' 
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: '1.5rem',
+              marginTop: '0.5rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid var(--color-border)'
             }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <div style={{ padding: '0.625rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', flexShrink: 0 }}>
@@ -358,7 +358,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               <HandCoins size={18} />
               Commission Breakdown
             </h3>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Buyer Side</span>
@@ -373,12 +373,12 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
                 <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>Total Agency</span>
                 <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>${commission.total.toLocaleString()}</span>
               </div>
-              
-              <div style={{ 
+
+              <div style={{
                 marginTop: '0.5rem',
-                padding: '0.75rem', 
-                borderRadius: '0.5rem', 
-                backgroundColor: 'var(--color-surface)', 
+                padding: '0.75rem',
+                borderRadius: '0.5rem',
+                backgroundColor: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -393,7 +393,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
                 <span style={{ fontSize: '1rem', fontWeight: 700 }}>${commission.agent.toLocaleString()}</span>
               </div>
             </div>
-            
+
             <p style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', textAlign: 'center', fontStyle: 'italic' }}>
               * Calculated based on current {(offer as any).type || 'SALE'} rates
             </p>
@@ -403,21 +403,21 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               <User size={18} color="var(--color-primary)" />
               Participants
             </h3>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <ParticipantItem 
-                label="Buyer" 
+              <ParticipantItem
+                label="Buyer"
                 name={`${offer.negotiation.contact.firstName} ${offer.negotiation.contact.lastName}`}
                 sub={offer.negotiation.contact.email || offer.negotiation.contact.phone || ''}
               />
-              <ParticipantItem 
-                label="Property Owner" 
+              <ParticipantItem
+                label="Property Owner"
                 name={offer.negotiation.property.sellerProfile?.contact?.firstName ? `${offer.negotiation.property.sellerProfile.contact.firstName} ${offer.negotiation.property.sellerProfile.contact.lastName}` : 'Direct Listing'}
                 sub={offer.negotiation.property.address}
               />
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
-              <ParticipantItem 
-                label="Managed By" 
+              <ParticipantItem
+                label="Managed By"
                 name={`${offer.createdBy.firstName} ${offer.createdBy.lastName}`}
                 sub={offer.createdBy.email}
                 avatar={offer.createdBy.avatar}
@@ -431,7 +431,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
               <div>
                 <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Agent Context</h4>
                 <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                  Currently <strong>{offer.status.toLowerCase().replace('_', ' ')}</strong>. 
+                  Currently <strong>{offer.status.toLowerCase().replace('_', ' ')}</strong>.
                   {isAgencyOffer ? " Submitted by agency on client behalf." : " Submitted directly by buyer."}
                 </p>
               </div>
@@ -440,18 +440,18 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
         </div>
       </div>
 
-      <ConfirmModal 
-        isOpen={isAcceptModalOpen} 
-        onClose={() => setIsAcceptModalOpen(false)} 
+      <ConfirmModal
+        isOpen={isAcceptModalOpen}
+        onClose={() => setIsAcceptModalOpen(false)}
         onConfirm={handleAccept}
         title="Accept Offer"
         message="Are you sure you want to accept this offer? This will mark the negotiation as accepted and create a new Deal."
         isLoading={isActionLoading}
       />
 
-      <ConfirmModal 
-        isOpen={isRejectModalOpen} 
-        onClose={() => setIsRejectModalOpen(false)} 
+      <ConfirmModal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
         onConfirm={handleReject}
         title="Reject Offer"
         message="Are you sure you want to reject this offer? This action cannot be undone."
@@ -463,10 +463,10 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
 };
 
 const MetricCard: React.FC<{ label: string, value: string, icon: any, highlight?: boolean }> = ({ label, value, icon: Icon, highlight }) => (
-  <div className="card" style={{ 
-    padding: '1.25rem', 
-    display: 'flex', 
-    flexDirection: 'column', 
+  <div className="card" style={{
+    padding: '1.25rem',
+    display: 'flex',
+    flexDirection: 'column',
     gap: '0.5rem',
     backgroundColor: highlight ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
     border: highlight ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
@@ -476,9 +476,9 @@ const MetricCard: React.FC<{ label: string, value: string, icon: any, highlight?
       <p style={labelStyle}>{label}</p>
       <Icon size={14} color={highlight ? 'var(--color-primary)' : 'var(--color-text-muted)'} />
     </div>
-    <p style={{ 
-      fontSize: '1.25rem', 
-      fontWeight: 800, 
+    <p style={{
+      fontSize: '1.25rem',
+      fontWeight: 800,
       color: highlight ? 'var(--color-primary)' : 'var(--color-text)',
       letterSpacing: '-0.01em'
     }}>{value}</p>
@@ -487,9 +487,9 @@ const MetricCard: React.FC<{ label: string, value: string, icon: any, highlight?
 
 const ParticipantItem: React.FC<{ label: string, name: string, sub: string, avatar?: string }> = ({ label, name, sub, avatar }) => (
   <div style={{ display: 'flex', gap: '0.875rem', alignItems: 'center' }}>
-    <div style={{ 
-      width: '2.5rem', height: '2.75rem', borderRadius: '50%', 
-      backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+    <div style={{
+      width: '2.5rem', height: '2.75rem', borderRadius: '50%',
+      backgroundColor: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontWeight: 700, color: 'var(--color-primary)', flexShrink: 0,
       border: '1px solid var(--color-border)',
       backgroundImage: avatar ? `url("${getImageUrl(avatar)}")` : 'none',

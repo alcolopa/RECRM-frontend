@@ -61,4 +61,9 @@ export const payoutsService = {
     api.post(`/payouts/mark-all-paid/${agentId}`, {}, {
       params: { organizationId: orgId }
     }),
+
+  markSelectedPaid: (dealIds: string[], orgId: string) =>
+    api.post('/payouts/mark-selected-paid', { dealIds }, {
+      params: { organizationId: orgId }
+    }),
 };

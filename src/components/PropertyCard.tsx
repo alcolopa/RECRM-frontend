@@ -36,7 +36,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'AVAILABLE': return 'var(--color-success)';
-      case 'UNDER_CONTRACT': return 'var(--color-warning)';
+      case 'RESERVED': return 'var(--color-warning)';
       case 'SOLD': return 'var(--color-error)';
       case 'RENTED': return 'var(--color-primary)';
       default: return 'var(--color-text-muted)';

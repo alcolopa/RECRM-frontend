@@ -13,8 +13,7 @@ import {
   User as UserIcon,
   Settings,
   X,
-  Banknote,
-  TrendingUp
+  Banknote
 } from 'lucide-react';
 import TopBar from './TopBar';
 import TutorialGuide, { type TutorialStep } from './TutorialGuide';

@@ -23,28 +23,124 @@ export interface PropertyFeature {
   feature: Feature;
 }
 
+// --- Enum-like types ---
+export type PropertyListingType = 'SALE' | 'RENT' | 'LEASE';
+export type PropertyCondition = 'NEW' | 'GOOD' | 'NEEDS_RENOVATION' | 'UNDER_CONSTRUCTION';
+export type OwnershipType = 'FREEHOLD' | 'LEASEHOLD';
+export type ZoningType = 'RESIDENTIAL' | 'COMMERCIAL' | 'MIXED';
+export type RentalPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+export type PaymentFrequency = 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type MaintenanceResponsibility = 'OWNER' | 'TENANT' | 'SHARED';
+export type PropertySource = 'MANUAL' | 'WEBSITE' | 'WHATSAPP' | 'REFERRAL';
+export type PropertyPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type PropertyType = 'APARTMENT' | 'HOUSE' | 'VILLA' | 'OFFICE' | 'SHOP' | 'LAND' | 'WAREHOUSE' | 'BUILDING';
+export type PropertyStatus = 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'RENTED' | 'OFF_MARKET';
+
 export interface Property {
   id: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // --- 1. Core Info ---
   title: string;
   description?: string;
+  type: PropertyType;
+  listingType?: PropertyListingType;
+  status: PropertyStatus;
+  referenceCode?: string;
+  createdById?: string;
+
+  // --- 2. Location ---
   address: string;
+  country?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
-  country?: string;
   governorate?: string;
-  price?: number;
-  status: 'AVAILABLE' | 'UNDER_CONTRACT' | 'SOLD' | 'RENTED' | 'OFF_MARKET';
-  type: 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CONDO' | 'TOWNHOUSE' | 'LAND' | 'COMMERCIAL' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL';
+  district?: string;
+  street?: string;
+  buildingName?: string;
+  floor?: string;
+  unitNumber?: string;
+  zipCode?: string;
+  latitude?: number;
+  longitude?: number;
+
+  // --- 3. Property Specifications ---
+  sizeSqm?: number;
+  landSizeSqm?: number;
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
   lotSize?: number;
+  livingRooms?: number;
+  kitchens?: number;
+  parkingSpaces?: number;
+  floorNumber?: number;
+  totalFloors?: number;
   yearBuilt?: number;
+  condition?: PropertyCondition;
+  furnished?: boolean;
+
+  // --- 4. Pricing & Financials ---
+  price?: number;
+  currency?: string;
+  negotiable?: boolean;
+
+  // Sale pricing
+  pricePerSqm?: number;
+  commissionBuyerPercent?: number;
+  commissionSellerPercent?: number;
+  paymentTerms?: Record<string, any>;
+
+  // Rent pricing
+  rentalPeriod?: RentalPeriod;
+  rentAmount?: number;
+  paymentFrequency?: PaymentFrequency;
+  advancePaymentMonths?: number;
+  securityDeposit?: number;
+  minLeaseDurationMonths?: number;
+  maxLeaseDurationMonths?: number;
+  utilitiesIncluded?: boolean;
+  availableFrom?: string;
+  renewalTerms?: string;
+
+  // Lease pricing
+  leaseTermYears?: number;
+  rentEscalation?: string;
+  fitOutPeriod?: string;
+  serviceCharges?: number;
+  insuranceRequired?: boolean;
+  maintenanceResponsibility?: MaintenanceResponsibility;
+
+  // --- 5. Legal & Ownership ---
+  ownerName?: string;
+  ownerContactId?: string;
+  ownershipType?: OwnershipType;
+  titleDeedAvailable?: boolean;
+  zoningType?: ZoningType;
+  legalNotes?: string;
+
+  // --- 6. Features ---
   features: string[];
   featureIds?: string[];
+
+  // --- 7. CRM Fields ---
+  assignedUserId?: string;
+  sellerProfileId?: string;
+  source?: PropertySource;
+  listingDate?: string;
+  expiryDate?: string;
+  priority?: PropertyPriority;
+  propertyTags?: string[];
+
+  // --- 8. Activity Tracking ---
+  viewsCount?: number;
+  inquiriesCount?: number;
+  lastViewedAt?: string;
+
+  // --- Relations ---
   propertyImages: PropertyImage[];
-  organizationId: string;
   organization?: {
     id: string;
     name: string;
@@ -52,16 +148,26 @@ export interface Property {
     accentColor?: string;
     defaultTheme?: 'LIGHT' | 'DARK';
   };
-  assignedUserId?: string;
   assignedUser?: UserProfile;
-  sellerProfileId?: string;
+  createdBy?: UserProfile;
+  ownerContact?: Contact;
   sellerProfile?: SellerProfile & { contact: Contact };
-  createdAt: string;
-  updatedAt: string;
+}
+
+export interface PropertyFilters {
+  assignedUserId?: string;
+  status?: string;
+  listingType?: string;
+  type?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  bedrooms?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export const propertyService = {
-  getAll: (orgId: string, page = 1, limit = 20, filters?: { assignedUserId?: string, status?: string, sortBy?: string, sortOrder?: 'asc' | 'desc' }) => 
+  getAll: (orgId: string, page = 1, limit = 20, filters?: PropertyFilters) => 
     api.get<PaginatedResponse<Property>>('/properties', { 
       params: { 
         organizationId: orgId,
