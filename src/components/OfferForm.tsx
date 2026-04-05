@@ -19,6 +19,7 @@ import { userService } from '../api/users';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
 import ContactSelector from './ContactSelector';
+import LeadSelector from './LeadSelector';
 import PropertySelector from './PropertySelector';
 import DateSelector from './DateSelector';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
@@ -31,6 +32,7 @@ interface OfferFormProps {
   user: any;
   initialProperty?: Property;
   initialContactId?: string;
+  initialLeadId?: string;
 }
 
 const OfferForm: React.FC<OfferFormProps> = ({ 
@@ -39,7 +41,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
   organizationId,
   user,
   initialProperty,
-  initialContactId
+  initialContactId,
+  initialLeadId
 }) => {
   const { navigationState, navigate, clearNavigationState } = useNavigation();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(initialProperty || null);
@@ -54,7 +57,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const [formData, setFormData] = useState({
     propertyId: initialProperty?.id || '',
     contactId: initialContactId || '',
-    price: '',
+    leadId: initialLeadId || '',
+    price: initialProperty?.price ? String(initialProperty.price) : '',
     deposit: '',
     financingType: FinancingType.CASH,
     closingDate: null as string | null,
@@ -62,7 +66,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
     notes: '',
     offerer: OffererType.BUYER,
     status: OfferStatus.SUBMITTED,
-    type: 'SALE' as DealType,
+    type: (initialProperty?.listingType === 'RENT' ? 'RENT' : 'SALE') as DealType,
     buyerCommission: undefined as number | undefined,
     sellerCommission: undefined as number | undefined,
     agentCommission: undefined as number | undefined
@@ -72,7 +76,9 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const [orgConfig, setOrgConfig] = useState<CommissionConfig | null>(null);
   const [agentConfig, setAgentConfig] = useState<any>(null);
 
+  const [clientType, setClientType] = useState<'CONTACT' | 'LEAD'>(initialLeadId ? 'LEAD' : 'CONTACT');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -93,6 +99,23 @@ const OfferForm: React.FC<OfferFormProps> = ({
       setSelectedContact(null);
     }
   }, [formData.contactId, organizationId]);
+
+  useEffect(() => {
+    if (formData.leadId) {
+      const fetchLead = async () => {
+        try {
+          const { leadService } = await import('../api/leads');
+          const response = await leadService.getById(formData.leadId, organizationId);
+          setSelectedLead(response.data);
+        } catch (err) {
+          console.error('Failed to fetch lead details', err);
+        }
+      };
+      fetchLead();
+    } else {
+      setSelectedLead(null);
+    }
+  }, [formData.leadId, organizationId]);
 
   useEffect(() => {
     if (formData.propertyId) {
@@ -134,7 +157,13 @@ const OfferForm: React.FC<OfferFormProps> = ({
     }
     
     if (navigationState.prefillData?.contactId) {
-      setFormData(prev => ({ ...prev, contactId: navigationState.prefillData.contactId }));
+      setFormData(prev => ({ ...prev, contactId: navigationState.prefillData!.contactId! }));
+      setClientType('CONTACT');
+    }
+
+    if (navigationState.prefillData?.leadId) {
+      setFormData(prev => ({ ...prev, leadId: navigationState.prefillData!.leadId! }));
+      setClientType('LEAD');
     }
     
     if (navigationState.prefillData?.propertyId) {
@@ -149,7 +178,10 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.propertyId) newErrors.propertyId = 'Please select a property';
-    if (!formData.contactId) newErrors.contactId = 'Please select a contact';
+    if (!formData.contactId && !formData.leadId) {
+      if (clientType === 'CONTACT') newErrors.contactId = 'Please select a contact';
+      if (clientType === 'LEAD') newErrors.leadId = 'Please select a lead';
+    }
     
     if (!formData.price) {
       newErrors.price = 'Price is required';
@@ -291,11 +323,11 @@ const OfferForm: React.FC<OfferFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      await offersService.create({
-        ...formData,
-        price: Number(formData.price),
-        deposit: formData.deposit ? Number(formData.deposit) : undefined,
-      }, organizationId);
+      const submitData = { ...formData, price: Number(formData.price), deposit: formData.deposit ? Number(formData.deposit) : undefined };
+      if (clientType === 'CONTACT') submitData.leadId = '';
+      if (clientType === 'LEAD') submitData.contactId = '';
+      
+      await offersService.create(submitData, organizationId);
       onSuccess();
     } catch (err: any) {
       console.error('Failed to create offer', err);
@@ -314,17 +346,32 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const handleContactSelect = (contact: Contact | null) => {
     if (contact) {
       setSelectedContact(contact);
-      setFormData(prev => ({ ...prev, contactId: contact.id }));
+      setFormData(prev => ({ ...prev, contactId: contact.id, leadId: '' }));
     } else {
       setSelectedContact(null);
       setFormData(prev => ({ ...prev, contactId: '' }));
     }
   };
 
+  const handleLeadSelect = (lead: any | null) => {
+    if (lead) {
+      setSelectedLead(lead);
+      setFormData(prev => ({ ...prev, leadId: lead.id, contactId: '' }));
+    } else {
+      setSelectedLead(null);
+      setFormData(prev => ({ ...prev, leadId: '' }));
+    }
+  };
+
   const handlePropertySelect = (_propertyId: string, property?: Property) => {
     if (property) {
       setSelectedProperty(property);
-      setFormData(prev => ({ ...prev, propertyId: property.id }));
+      setFormData(prev => ({ 
+        ...prev, 
+        propertyId: property.id,
+        price: property.price ? String(property.price) : prev.price,
+        type: (property.listingType === 'RENT' ? 'RENT' : 'SALE') as DealType
+      }));
     } else {
       setSelectedProperty(null);
       setFormData(prev => ({ ...prev, propertyId: '' }));
@@ -418,21 +465,39 @@ const OfferForm: React.FC<OfferFormProps> = ({
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
                 <User size={14} /> Buyer
               </h3>
-              {selectedContact && (
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                  {selectedContact.email || selectedContact.phone}
-                </span>
-              )}
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {(clientType === 'CONTACT' ? selectedContact : selectedLead) && (
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+                    {(clientType === 'CONTACT' ? selectedContact?.email || selectedContact?.phone : selectedLead?.email || selectedLead?.phone) || 'No contact info'}
+                  </span>
+                )}
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <button type="button" onClick={() => setClientType('CONTACT')} style={{ fontSize: '0.65rem', fontWeight: 600, padding: '0.125rem 0.5rem', borderRadius: '1rem', backgroundColor: clientType === 'CONTACT' ? 'var(--color-primary)' : 'transparent', color: clientType === 'CONTACT' ? 'white' : 'var(--color-text-muted)', border: `1px solid ${clientType === 'CONTACT' ? 'var(--color-primary)' : 'var(--color-border)'}`, cursor: 'pointer', transition: 'all 0.2s' }}>Contact</button>
+                  <button type="button" onClick={() => setClientType('LEAD')} style={{ fontSize: '0.65rem', fontWeight: 600, padding: '0.125rem 0.5rem', borderRadius: '1rem', backgroundColor: clientType === 'LEAD' ? 'var(--color-primary)' : 'transparent', color: clientType === 'LEAD' ? 'white' : 'var(--color-text-muted)', border: `1px solid ${clientType === 'LEAD' ? 'var(--color-primary)' : 'var(--color-border)'}`, cursor: 'pointer', transition: 'all 0.2s' }}>Lead</button>
+                </div>
+              </div>
             </div>
-            <ContactSelector 
-              organizationId={organizationId} 
-              onSelect={handleContactSelect} 
-              onNewContactRequested={handleNewContactRequested}
-              selectedContactId={formData.contactId}
-              error={errors.contactId}
-              label=""
-              disabled={isSubmitting}
-            />
+            {clientType === 'CONTACT' ? (
+              <ContactSelector 
+                organizationId={organizationId} 
+                onSelect={handleContactSelect} 
+                onNewContactRequested={handleNewContactRequested}
+                selectedContactId={formData.contactId}
+                error={errors.contactId}
+                label=""
+                disabled={isSubmitting}
+              />
+            ) : (
+              <LeadSelector 
+                organizationId={organizationId} 
+                onSelect={handleLeadSelect} 
+                selectedLeadId={formData.leadId}
+                error={errors.leadId}
+                label=""
+                disabled={isSubmitting}
+              />
+            )}
           </div>
         </div>
 

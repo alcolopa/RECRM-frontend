@@ -128,13 +128,14 @@ const TopBar: React.FC<TopBarProps> = ({ user, onLogout, onMenuClick }) => {
       backgroundColor: 'var(--color-surface)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        <button 
-          onClick={onMenuClick}
-          className="visible-mobile"
-          style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer', padding: '0.5rem' }}
-        >
-          <Menu size={24} />
-        </button>
+        {isMobile && (
+          <button 
+            onClick={onMenuClick}
+            style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer', padding: '0.5rem' }}
+          >
+            <Menu size={24} />
+          </button>
+        )}
 
         {/* Search Container */}
         <div ref={searchRef} style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '200px' : '450px' }}>

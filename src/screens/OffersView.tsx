@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { type Offer, offersService, OfferStatus } from '../api/offers';
 import { type UserProfile, userService } from '../api/users';
+import { type Property } from '../api/properties';
 import { Input, Select } from '../components/Input';
 import Button from '../components/Button';
 import OfferCard from '../components/OfferCard';
@@ -49,8 +50,9 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   const [sortBy, setSortBy] = useState<string>('updatedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  const [prefillProperty, setPrefillProperty] = useState<any>(null);
-  const [prefillContactId, setPrefillContactId] = useState<string | undefined>(undefined);
+  const [prefillProperty, setPrefillProperty] = useState<Property | null>(null);
+  const [prefillContactId, setPrefillContactId] = useState<string | undefined>();
+  const [prefillLeadId, setPrefillLeadId] = useState<string | undefined>();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const activeStatuses = [OfferStatus.SUBMITTED, OfferStatus.UNDER_REVIEW, OfferStatus.COUNTERED];
@@ -133,23 +135,31 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
   }, [organizationId]);
 
   useEffect(() => {
-    if (navigationState.prefillData?.propertyId) {
-      const fetchProperty = async () => {
-        try {
-          const { propertyService } = await import('../api/properties');
-          const response = await propertyService.getOne(navigationState.prefillData.propertyId, organizationId);
-          setPrefillProperty(response.data);
-          setView('form');
-          clearNavigationState();
-        } catch (err) {
-          console.error('Failed to fetch prefill property', err);
+    if (navigationState.prefillData) {
+      const { propertyId, contactId, leadId } = navigationState.prefillData;
+      
+      const processPrefill = async () => {
+        if (contactId) {
+          setPrefillContactId(contactId);
+        } else if (leadId) {
+          setPrefillLeadId(leadId);
         }
+        
+        if (propertyId) {
+          try {
+            const { propertyService } = await import('../api/properties');
+            const response = await propertyService.getOne(propertyId, organizationId);
+            setPrefillProperty(response.data);
+          } catch (err) {
+            console.error('Failed to fetch prefill property', err);
+          }
+        }
+        
+        setView('form');
+        clearNavigationState();
       };
-      fetchProperty();
-    } else if (navigationState.prefillData?.contactId) {
-      setPrefillContactId(navigationState.prefillData.contactId);
-      setView('form');
-      clearNavigationState();
+      
+      processPrefill();
     }
   }, [navigationState]);
 
@@ -188,17 +198,20 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
           setView('list');
           setPrefillProperty(null);
           setPrefillContactId(undefined);
+          setPrefillLeadId(undefined);
         }}
         onSuccess={() => {
           setView('list');
           setPrefillProperty(null);
           setPrefillContactId(undefined);
+          setPrefillLeadId(undefined);
           fetchOffers();
         }}
         organizationId={organizationId}
         user={user}
-        initialProperty={prefillProperty}
+        initialProperty={prefillProperty || undefined}
         initialContactId={prefillContactId}
+        initialLeadId={prefillLeadId}
       />
     );
   }

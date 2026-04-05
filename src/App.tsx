@@ -35,6 +35,7 @@ const ResetPasswordForm = lazy(() => import('./components/ResetPasswordForm'));
 const InviteAcceptView = lazy(() => import('./screens/InviteAcceptView'));
 const Layout = lazy(() => import('./components/Layout'));
 const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 
 const LoadingFallback = () => (
   <div style={{ 
@@ -112,7 +113,7 @@ const AppContent = () => {
   const { setTheme, setAccentColor, resetToDefault } = useTheme();
   const { user, setUser, refreshProfile, normalizeUserData, isLoading: isUserLoading } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [view, setViewState] = useState<'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'invite' | 'dashboard' | 'share'>('landing');
+  const [view, setViewState] = useState<'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'invite' | 'dashboard' | 'share' | 'admin'>('landing');
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [sharedPropertyId, setSharedPropertyId] = useState<string | null>(null);
   const [sharedProperty, setSharedProperty] = useState<any>(null);
@@ -135,6 +136,7 @@ const AppContent = () => {
       else if (path === '/forgot-password') setViewState('forgot-password');
       else if (path === '/reset-password') setViewState('reset-password');
       else if (path === '/dashboard') setViewState('dashboard');
+      else if (path.startsWith('/admin')) setViewState('admin');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -193,18 +195,25 @@ const AppContent = () => {
       if (!token) resetToDefault();
     }
 
-    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details', 'tasks', 'calendar', 'payments'];
+    const dashboardTabs = ['dashboard', 'properties', 'contacts', 'deals', 'leads', 'profile', 'organization', 'offers', 'offer-details', 'tasks', 'calendar', 'payments', 'subscription'];
     const isDashboardPath = dashboardTabs.some(tab => path === `/${tab}`);
 
     if (token && user) {
       setIsAuthenticated(true);
-      if (isDashboardPath || path === '/') {
+      if (path.startsWith('/admin')) {
+        if (user.globalRole === 'SUPERADMIN') {
+          setViewState('admin');
+        } else {
+          window.history.replaceState({}, '', '/');
+          setViewState('dashboard');
+        }
+      } else if (isDashboardPath || path === '/') {
         setViewState('dashboard');
       }
     } else if (path === '/') {
       setViewState('landing');
       resetToDefault();
-    } else if (isDashboardPath) {
+    } else if (isDashboardPath || path.startsWith('/admin')) {
       window.history.replaceState({}, '', '/');
       setViewState('login');
       resetToDefault();
@@ -314,10 +323,10 @@ const AppContent = () => {
     );
   }
 
-  if (isAuthenticated && view === 'dashboard') {
-    const activeMembership = user?.memberships?.find((m: any) => m.organizationId === user.organizationId) || user?.memberships?.[0];
-    const activeOrgId = activeMembership?.organizationId || user?.organizationId;
-    const activeRole = activeMembership?.role || user?.role;
+  if (isAuthenticated && user && view === 'dashboard') {
+    const activeMembership = user.memberships?.find((m: any) => m.organizationId === user.organizationId) || user.memberships?.[0];
+    const activeOrgId = activeMembership?.organizationId || user.organizationId;
+    const activeRole = activeMembership?.role || user.role;
 
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -325,6 +334,20 @@ const AppContent = () => {
           <Layout 
             onLogout={handleLogout} 
             user={{ ...user, organizationId: activeOrgId, role: activeRole } as any} 
+            onUserUpdate={handleUserUpdate} 
+          />
+        </UnitProvider>
+      </Suspense>
+    );
+  }
+
+  if (isAuthenticated && user && view === 'admin') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <UnitProvider user={user}>
+          <AdminLayout 
+            onLogout={handleLogout} 
+            user={user} 
             onUserUpdate={handleUserUpdate} 
           />
         </UnitProvider>

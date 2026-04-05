@@ -145,8 +145,11 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
       }
     } else if (navigationState.context === 'creating-property') {
       setView('form');
+    } else if (navigationState.context === 'view-property' && navigationState.prefillData?.property) {
+      setSelectedProperty(navigationState.prefillData.property);
+      setView('details');
     }
-  }, [navigationState.context, navigationState.draftData]);
+  }, [navigationState]);
 
   const handleSave = async (data: Partial<Property>) => {
     // Strip metadata and relationship fields that backend doesn't accept in Create/Update DTOs

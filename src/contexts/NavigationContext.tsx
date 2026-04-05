@@ -12,7 +12,8 @@ export type NavigationTab =
   | 'offer-details' 
   | 'tasks' 
   | 'calendar'
-  | 'payments';
+  | 'payments'
+  | 'subscription';
 
 interface NavigationState {
   returnTo?: NavigationTab;
@@ -38,7 +39,7 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
     const validTabs: NavigationTab[] = [
       'dashboard', 'properties', 'contacts', 'deals', 'leads', 
       'profile', 'organization', 'offers', 'offer-details', 
-      'tasks', 'calendar', 'payments'
+      'tasks', 'calendar', 'payments', 'subscription'
     ];
     return (validTabs.find(t => t === path) || 'dashboard') as NavigationTab;
   };

@@ -91,6 +91,7 @@ export interface UserProfile {
   dashboardConfig?: any;
   memberships: Membership[];
   ownedOrganizations: any[];
+  globalRole: 'USER' | 'SUPERADMIN';
   // Legacy fields for easier transition
   role?: string;
   organizationId?: string;

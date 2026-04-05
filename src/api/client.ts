@@ -33,11 +33,14 @@ api.interceptors.response.use((response) => {
     
     // 2. If the response is from a list-returning endpoint (like /users, /properties/features, etc.)
     // but the data is null/undefined or not an array, ensure it's an array if appropriate.
-    // For userService.getAll which calls /users
+    // Use exact path matching to avoid false positives on admin endpoints.
     const listEndpoints = ['/users', '/properties/features', '/dashboard/stats', '/dashboard/recent-leads', '/dashboard/upcoming-tasks', '/dashboard/recent-activities', '/invitations', '/roles'];
     const url = response.config.url || '';
     
-    if (listEndpoints.some(endpoint => url.includes(endpoint))) {
+    // Skip admin endpoints entirely — they manage their own response shapes
+    const isAdminEndpoint = url.startsWith('/admin');
+    
+    if (!isAdminEndpoint && listEndpoints.some(endpoint => url === endpoint || url.startsWith(endpoint + '?') || url.startsWith(endpoint + '/'))) {
       if (!Array.isArray(response.data) && !Object.prototype.hasOwnProperty.call(response.data, 'items')) {
         // If it was supposed to be a direct array but isn't
         response.data = [];

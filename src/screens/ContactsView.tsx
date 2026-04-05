@@ -99,8 +99,11 @@ const ContactsView: React.FC<ContactsViewProps> = ({ organizationId, user }) => 
       } else {
         setFilterType(ContactType.BUYER);
       }
+    } else if (navigationState.context === 'view-contact' && navigationState.prefillData?.contact) {
+      setViewingContact(navigationState.prefillData.contact);
+      setView('details');
     }
-  }, [navigationState.context]);
+  }, [navigationState]);
 
   const handleSave = async (data: Partial<Contact>) => {
     try {

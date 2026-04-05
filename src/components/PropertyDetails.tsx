@@ -28,6 +28,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { getImageUrl } from '../utils/url';
 import { usePermissions } from '../utils/permissions';
 import { type UserProfile, Permission } from '../api/users';
+import MatchedClients from './MatchedClients';
 
 interface PropertyDetailsProps {
   property: Property;
@@ -380,11 +381,17 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                     {property.sellerProfile.contact.firstName} {property.sellerProfile.contact.lastName}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                      <Mail size={16} /> {property.sellerProfile.contact.email || 'No email provided'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '100%' }}>
+                      <Mail size={16} style={{ flexShrink: 0 }} /> 
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {property.sellerProfile.contact.email || 'No email provided'}
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                      <Phone size={16} /> {property.sellerProfile.contact.phone || 'No phone provided'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '100%' }}>
+                      <Phone size={16} style={{ flexShrink: 0 }} /> 
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {property.sellerProfile.contact.phone || 'No phone provided'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -447,12 +454,18 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                     {property.assignedUser.firstName} {property.assignedUser.lastName}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                      <Mail size={16} /> {property.assignedUser.email}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '100%' }}>
+                      <Mail size={16} style={{ flexShrink: 0 }} /> 
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {property.assignedUser.email}
+                      </span>
                     </div>
                     {property.assignedUser.phone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                        <Phone size={16} /> {property.assignedUser.phone}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', maxWidth: '100%' }}>
+                        <Phone size={16} style={{ flexShrink: 0 }} /> 
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {property.assignedUser.phone}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -533,6 +546,11 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
               </div>
             )}
           </div>
+        )}
+
+        {/* AI Matching Clients (Internal only) */}
+        {!isPublic && (
+          <MatchedClients organizationId={property.organizationId} propertyId={property.id} />
         )}
 
         {/* Action Buttons */}

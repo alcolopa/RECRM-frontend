@@ -58,7 +58,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       className="card" 
-      style={{ padding: '1.25rem', position: 'relative', cursor: 'pointer' }}
+      style={{ padding: '1.25rem', position: 'relative', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }}
       onClick={(e) => {
         // Prevent clicking if the options menu was clicked
         if (optionsRef.current && optionsRef.current.contains(e.target as Node)) return;
@@ -204,16 +204,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onEdit, onDelete, on
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: 'auto' }}>
         <div style={infoRowStyle}>
-          <Mail size={16} color="var(--color-text-muted)" />
+          <Mail size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.email || 'No email provided'}
           </span>
         </div>
         <div style={infoRowStyle}>
-          <Phone size={16} color="var(--color-text-muted)" />
-          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>
+          <Phone size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.phone}
           </span>
         </div>
@@ -253,7 +253,9 @@ const optionButtonStyle: React.CSSProperties = {
 const infoRowStyle: React.CSSProperties = {
   display: 'flex', 
   alignItems: 'center', 
-  gap: '0.75rem'
+  gap: '0.75rem',
+  maxWidth: '100%',
+  overflow: 'hidden'
 };
 
 export default ContactCard;

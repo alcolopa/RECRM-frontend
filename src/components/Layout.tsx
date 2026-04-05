@@ -13,7 +13,8 @@ import {
   User as UserIcon,
   Settings,
   X,
-  Banknote
+  Banknote,
+  CreditCard
 } from 'lucide-react';
 import TopBar from './TopBar';
 import TutorialGuide, { type TutorialStep } from './TutorialGuide';
@@ -28,6 +29,7 @@ const ContactsView = lazy(() => import('../screens/ContactsView'));
 const LeadsView = lazy(() => import('../screens/LeadsView'));
 const ProfileView = lazy(() => import('../screens/ProfileView'));
 const OrganizationSettings = lazy(() => import('../screens/OrganizationSettings'));
+const SubscriptionPage = lazy(() => import('../screens/SubscriptionPage'));
 const OffersView = lazy(() => import('../screens/OffersView'));
 const OfferDetailsView = lazy(() => import('../screens/OfferDetailsView'));
 const TasksView = lazy(() => import('../screens/TasksView'));
@@ -60,7 +62,11 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const bottomItems = [
     { id: 'profile', label: 'Profile', icon: UserIcon },
     { id: 'organization', label: 'Organization Settings', icon: Settings },
-  ];
+    { id: 'subscription', label: 'Subscription', icon: CreditCard },
+  ].filter(item => {
+    if (item.id === 'subscription') return user.role === 'OWNER';
+    return true;
+  });
 
   const activeMembership = user.memberships?.find((m: any) => m.organizationId === user.organizationId) || user.memberships?.[0];
   const activeOrg = activeMembership?.organization;
@@ -95,6 +101,8 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         return <ProfileView user={userWithContext as any} onUserUpdate={onUserUpdate} />;
       case 'organization':
         return <OrganizationSettings user={userWithContext as any} onUserUpdate={onUserUpdate} />;
+      case 'subscription':
+        return <SubscriptionPage user={userWithContext as any} />;
       case 'tasks':
         return <TasksView organizationId={activeOrgId} user={userWithContext as any} />;
       case 'calendar':

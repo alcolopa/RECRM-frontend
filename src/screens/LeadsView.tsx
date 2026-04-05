@@ -11,6 +11,7 @@ import LeadForm from '../components/LeadForm';
 import LeadConvertView from '../components/LeadConvertView';
 import ConfirmModal from '../components/ConfirmModal';
 import { usePermissions } from '../utils/permissions';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface LeadsViewProps {
   organizationId: string;
@@ -19,6 +20,7 @@ interface LeadsViewProps {
 
 const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
   const permissions = usePermissions(user);
+  const { navigationState } = useNavigation();
   const [view, setView] = useState<'list' | 'details' | 'form' | 'convert'>('list');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +57,14 @@ const LeadsView: React.FC<LeadsViewProps> = ({ organizationId, user }) => {
   useEffect(() => {
     fetchLeads();
   }, [organizationId]);
+
+  useEffect(() => {
+    // Handle prefill from navigation state
+    if (navigationState.context === 'view-lead' && navigationState.prefillData?.lead) {
+      setViewingLead(navigationState.prefillData.lead);
+      setView('details');
+    }
+  }, [navigationState]);
 
   const handleSave = async (data: Partial<Lead>) => {
     try {

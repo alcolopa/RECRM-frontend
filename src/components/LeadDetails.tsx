@@ -17,6 +17,7 @@ import { type Lead, LeadStatus } from '../api/leads';
 import Button from './Button';
 import { usePermissions } from '../utils/permissions';
 import { type UserProfile, Permission } from '../api/users';
+import MatchedProperties from './MatchedProperties';
 
 interface LeadDetailsProps {
   lead: Lead;
@@ -245,6 +246,10 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, user, onBack, onEdit, o
           </div>
         </div>
       </div>
+
+      {/* AI Matching Engine section */}
+      <MatchedProperties organizationId={lead.organizationId} type="lead" id={lead.id} />
+      
     </div>
   );
 };

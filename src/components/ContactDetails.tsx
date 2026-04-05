@@ -20,6 +20,7 @@ import Button from './Button';
 import { useNavigation } from '../contexts/NavigationContext';
 import { usePermissions } from '../utils/permissions';
 import { type UserProfile, Permission } from '../api/users';
+import MatchedProperties from './MatchedProperties';
 
 interface ContactDetailsProps {
   contact: Contact;
@@ -463,6 +464,9 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ contact, user, onBack, 
           </div>
         )}
       </div>
+
+      {/* AI Matching Engine section */}
+      <MatchedProperties organizationId={contact.organizationId} type="contact" id={contact.id} />
       
     </div>
   );

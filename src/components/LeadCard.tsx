@@ -62,7 +62,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="card" 
-      style={{ padding: '1.25rem', position: 'relative', cursor: 'pointer' }}
+      style={{ padding: '1.25rem', position: 'relative', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }}
       onClick={(e) => {
         if (optionsRef.current && optionsRef.current.contains(e.target as Node)) return;
         onView(lead);
@@ -185,14 +185,14 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div style={infoRowStyle}>
-          <Mail size={16} color="var(--color-text-muted)" />
+          <Mail size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {lead.email || 'No email provided'}
           </span>
         </div>
         <div style={infoRowStyle}>
-          <Phone size={16} color="var(--color-text-muted)" />
-          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>
+          <Phone size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {lead.phone || 'No phone provided'}
           </span>
         </div>
@@ -232,18 +232,20 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
 
       {!lead.convertedAt ? (
         permissions.can(Permission.LEADS_EDIT) && (
-          <Button 
-            variant="primary" 
-            fullWidth
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onConvert(lead);
-            }}
-            leftIcon={<TrendingUp size={16} />}
-          >
-            Convert to Contact
-          </Button>
+          <div style={{ marginTop: 'auto' }}>
+            <Button 
+              variant="primary" 
+              fullWidth
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onConvert(lead);
+              }}
+              leftIcon={<TrendingUp size={16} />}
+            >
+              Convert to Contact
+            </Button>
+          </div>
         )
       ) : (
         <div style={{ 
@@ -257,7 +259,8 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onView, onC
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.5rem'
+          gap: '0.5rem',
+          marginTop: 'auto'
         }}>
           <UserCheck size={16} />
           Converted to Contact
@@ -286,7 +289,9 @@ const optionButtonStyle: React.CSSProperties = {
 const infoRowStyle: React.CSSProperties = {
   display: 'flex', 
   alignItems: 'center', 
-  gap: '0.75rem'
+  gap: '0.75rem',
+  maxWidth: '100%',
+  overflow: 'hidden'
 };
 
 export default LeadCard;
