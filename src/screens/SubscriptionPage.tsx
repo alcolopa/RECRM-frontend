@@ -22,9 +22,10 @@ import { Input } from '../components/Input';
 
 interface SubscriptionPageProps {
   user: UserProfile;
+  hideHeader?: boolean;
 }
 
-const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
+const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user, hideHeader = false }) => {
   const { subscription, loading: subLoading, updateSeats, changePlan } = useSubscription(user.organizationId || null);
   const { plans, loading: plansLoading } = usePlans();
   
@@ -55,6 +56,10 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
   };
 
   const handleUpdateSeats = async () => {
+    if (currentPlan && newSeats > currentPlan.maxSeats) {
+      setActionError(`${currentPlan.name} plan only allows up to ${currentPlan.maxSeats} seats.`);
+      return;
+    }
     setIsProcessing(true);
     setActionError(null);
     try {
@@ -118,15 +123,17 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
   };
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem', maxWidth: '1200px' }}>
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
-          Subscription & Billing
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '1.125rem' }}>
-          Manage your organization's plan, seats, and billing information.
-        </p>
-      </header>
+    <div className="container" style={{ padding: hideHeader ? '0' : '2rem 1rem', maxWidth: '1200px' }}>
+      {!hideHeader && (
+        <header style={{ marginBottom: '3rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
+            Subscription & Billing
+          </h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '1.125rem' }}>
+            Manage your organization's plan, seats, and billing information.
+          </p>
+        </header>
+      )}
 
       {successMessage && (
         <motion.div 
@@ -186,20 +193,24 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
               </div>
             </div>
             
-            {subscription?.status === 'TRIAL' && (
+            {(subscription?.status === 'TRIAL' || (subscription?.status === 'ACTIVE' && subscription?.currentPeriodEnd)) && (
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.5rem', 
                 fontSize: '0.875rem', 
-                color: 'var(--color-warning)',
-                backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                color: subscription.status === 'TRIAL' ? 'var(--color-warning)' : 'var(--color-text-muted)',
+                backgroundColor: subscription.status === 'TRIAL' ? 'rgba(217, 119, 6, 0.1)' : 'var(--color-bg-hover)',
                 padding: '0.5rem 1rem',
                 borderRadius: '0.5rem',
                 width: 'fit-content'
               }}>
                 <Calendar size={16} />
-                Trial ends in <strong>{getTrialDaysLeft()} days</strong>
+                {subscription.status === 'TRIAL' ? (
+                  <span>Trial ends in <strong>{getTrialDaysLeft()} days</strong></span>
+                ) : (
+                  <span>Renews on <strong>{new Date(subscription.currentPeriodEnd!).toLocaleDateString()}</strong></span>
+                )}
               </div>
             )}
           </div>
@@ -240,11 +251,7 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
           Available Plans
         </h2>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '2rem' 
-        }}>
+        <div className="plans-carousel-mobile">
           {plans.map((plan) => (
             <motion.div 
               key={plan.id}
@@ -285,9 +292,16 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '1rem 0' }} />
 
               <div style={{ flex: 1, marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--color-text)', fontWeight: 700, fontSize: '0.875rem' }}>
-                  <Users size={16} className="text-primary" />
-                  Up to {plan.maxSeats} seats
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '1rem', color: 'var(--color-text)', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
+                    <Users size={16} className="text-primary" />
+                    Up to {plan.maxSeats} seats
+                  </div>
+                  {plan.name !== 'Starter' && (
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', marginLeft: '1.5rem' }}>
+                      ${plan.pricePerSeat}/seat per month
+                    </div>
+                  )}
                 </div>
                 <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {Array.isArray(plan.features) && plan.features.map((feature, i) => (
@@ -331,24 +345,42 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <p style={{ color: 'var(--color-text-muted)' }}>
-            Each additional seat allows you to invite more team members. You can increase or decrease seats at any time.
+            Each seat allows you to invite one team member. {subscription?.plan?.name === 'Starter' ? 'Seats are free on the Starter plan.' : `On the ${subscription?.plan?.name} plan, seats are $${subscription?.plan?.pricePerSeat}/month each.`}
           </p>
           
           <div style={{ backgroundColor: 'var(--color-bg)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <span style={{ fontWeight: 600 }}>Current Usage</span>
-              <span style={{ fontWeight: 700 }}>{subscription?.usedSeats} seats</span>
+              <span style={{ fontWeight: 700 }}>{subscription?.usedSeats} / {subscription?.seats} seats used</span>
             </div>
             <Input 
-              label="Total Seats"
+              label="New Total Seats"
               type="number"
               value={newSeats}
               onChange={(e) => setNewSeats(parseInt(e.target.value))}
               min={subscription?.usedSeats}
               max={currentPlan?.maxSeats}
-              helperText={`Plan maximum: ${currentPlan?.maxSeats} seats`}
+              helperText={currentPlan?.name === 'Starter' ? `Maximum allowed on Starter: ${currentPlan?.maxSeats}` : `Up to ${currentPlan?.maxSeats} seats available`}
             />
           </div>
+
+          {currentPlan && currentPlan.name !== 'Starter' && (
+            <div style={{ padding: '1rem', backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(var(--color-primary-rgb), 0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                <span>Plan Base Price</span>
+                <span style={{ fontWeight: 600 }}>${currentPlan.priceMonthly}/mo</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.875rem', fontSize: '0.875rem' }}>
+                <span>Seats ({newSeats} × ${currentPlan.pricePerSeat})</span>
+                <span style={{ fontWeight: 600 }}>${newSeats * currentPlan.pricePerSeat}/mo</span>
+              </div>
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.5rem 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 700 }}>
+                <span>Total Monthly</span>
+                <span className="text-primary">${currentPlan.priceMonthly + (newSeats * currentPlan.pricePerSeat)}/mo</span>
+              </div>
+            </div>
+          )}
 
           {actionError && (
             <div style={{ color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
@@ -358,7 +390,9 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ user }) => {
 
           <div style={{ display: 'flex', gap: '1rem' }}>
             <Button variant="outline" onClick={() => setIsSeatsModalOpen(false)} fullWidth>Cancel</Button>
-            <Button onClick={handleUpdateSeats} isLoading={isProcessing} fullWidth>Update Seats</Button>
+            <Button onClick={handleUpdateSeats} isLoading={isProcessing} fullWidth>
+              {newSeats > (subscription?.seats || 0) ? 'Purchase Seats' : 'Update Seats'}
+            </Button>
           </div>
         </div>
       </Modal>

@@ -5,6 +5,7 @@ export interface Plan {
   name: string;
   priceMonthly: number;
   priceYearly?: number;
+  pricePerSeat: number;
   maxSeats: number;
   features: string[];
 }

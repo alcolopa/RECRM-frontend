@@ -52,6 +52,19 @@ export const Permission = {
 
   // Dashboard
   DASHBOARD_VIEW: 'DASHBOARD_VIEW',
+
+  // Payouts
+  PAYOUTS_VIEW: 'PAYOUTS_VIEW',
+  PAYOUTS_MANAGE: 'PAYOUTS_MANAGE',
+
+  // --- Unified Access Control (VIEW_ALL) ---
+  LEADS_VIEW_ALL: 'LEADS_VIEW_ALL',
+  CONTACTS_VIEW_ALL: 'CONTACTS_VIEW_ALL',
+  PROPERTIES_VIEW_ALL: 'PROPERTIES_VIEW_ALL',
+  DEALS_VIEW_ALL: 'DEALS_VIEW_ALL',
+  OFFERS_VIEW_ALL: 'OFFERS_VIEW_ALL',
+  PAYOUTS_VIEW_ALL: 'PAYOUTS_VIEW_ALL',
+  DASHBOARD_VIEW_ALL: 'DASHBOARD_VIEW_ALL',
 } as const;
 
 export type Permission = keyof typeof Permission;

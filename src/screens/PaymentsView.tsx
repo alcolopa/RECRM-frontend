@@ -23,6 +23,9 @@ import DateSelector from '../components/DateSelector';
 import ConfirmModal from '../components/ConfirmModal';
 import { payoutsService } from '../api/payouts';
 import type { AdminPayoutStats, PersonalPayoutStats, AgentPayoutStats } from '../api/payouts';
+import AgentPaymentsView from '../components/AgentPaymentsView';
+import { usePermissions } from '../hooks/usePermissions';
+import { Permission } from '../api/users';
 
 interface PaymentsViewProps {
   organizationId: string;
@@ -31,8 +34,9 @@ interface PaymentsViewProps {
 
 type RangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
 
-const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user }) => {
-  const isAdmin = user.role === 'OWNER' || user.role === 'ADMIN';
+const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user: _user }) => {
+  const { hasPermission, isPrivileged } = usePermissions();
+  const isAdmin = isPrivileged || hasPermission(Permission.PAYOUTS_VIEW_ALL);
   const [adminStats, setAdminStats] = useState<AdminPayoutStats | null>(null);
   const [agentStats, setAgentStats] = useState<PersonalPayoutStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -695,90 +699,7 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user }) => 
 
       {/* Agent View */}
       {!isAdmin && agentStats && (
-        <>
-          <div className="grid grid-4">
-            <StatCard
-              title="My Sales"
-              value={formatCurrency(agentStats.totalSales)}
-              icon={Wallet}
-              color="var(--color-primary)"
-              trend={0}
-            />
-            <StatCard
-              title="Total Earned"
-              value={formatCurrency(agentStats.totalEarned)}
-              icon={Layers}
-              color="#A78BFA"
-            />
-            <StatCard
-              title="Pending Payout"
-              value={formatCurrency(agentStats.pendingPayout)}
-              icon={Clock}
-              color="var(--color-warning)"
-            />
-            <StatCard
-              title="Total Paid"
-              value={formatCurrency(agentStats.totalPaid)}
-              icon={CheckCircle2}
-              color="var(--color-success)"
-            />
-          </div>
-
-          <div className="card" style={{
-            padding: '2rem',
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '16px',
-            transform: 'none',
-            boxShadow: 'var(--shadow)'
-          }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '2rem' }}>Sales History & Commissions</h3>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Deal Title</th>
-                    <th>Deal Value</th>
-                    <th>My Commission</th>
-                    <th>Date Closed</th>
-                    <th style={{ textAlign: 'right' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agentStats.deals.map((deal) => (
-                    <tr key={deal.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--color-text)' }}>{deal.title}</td>
-                      <td>{formatCurrency(deal.value)}</td>
-                      <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{formatCurrency(deal.agentCommission)}</td>
-                      <td style={{ color: 'var(--color-text-muted)' }}>{new Date(deal.createdAt).toLocaleDateString()}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
-                          padding: '0.25rem 0.75rem', borderRadius: '999px',
-                          fontSize: '0.75rem', fontWeight: 700,
-                          backgroundColor: deal.isPaid ? 'rgba(22, 163, 74, 0.1)' : 'rgba(234, 179, 8, 0.1)',
-                          color: deal.isPaid ? 'var(--color-success)' : 'var(--color-warning)'
-                        }}>
-                          {deal.isPaid ? `Paid` : 'Pending'}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {agentStats.deals.length === 0 && (
-                    <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '5rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                          <Search size={40} color="var(--color-text-muted)" opacity={0.2} />
-                          <p style={{ color: 'var(--color-text-muted)' }}>You haven't closed any deals in this period yet.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+        <AgentPaymentsView stats={agentStats} formatCurrency={formatCurrency} />
       )}
 
       <ConfirmModal

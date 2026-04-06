@@ -4,7 +4,7 @@ import { Percent, DollarSign, X } from 'lucide-react';
 
 interface CommissionInputProps {
   label: string;
-  value: number | string;
+  value: number | string | null | undefined;
   type: CommissionType;
   onChange: (value: number, type: CommissionType) => void;
   error?: string;
@@ -24,13 +24,22 @@ const CommissionInput: React.FC<CommissionInputProps> = ({
   placeholder,
 }) => {
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value === '' ? 0 : parseFloat(e.target.value);
-    onChange(newVal, type);
+    const rawValue = e.target.value;
+    if (rawValue === '') {
+      onChange(null as any, type);
+      return;
+    }
+    const val = parseFloat(rawValue);
+    if (!isNaN(val)) {
+      onChange(val, type);
+    }
   };
 
   const handleTypeChange = (newType: CommissionType) => {
     onChange(Number(value) || 0, newType);
   };
+
+  const displayValue = value === 0 || value === '0' ? '0' : (value || '');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
@@ -59,8 +68,9 @@ const CommissionInput: React.FC<CommissionInputProps> = ({
           <input
             type="number"
             step="0.01"
-            value={value}
+            value={displayValue}
             onChange={handleValueChange}
+            onFocus={(e) => e.target.select()}
             disabled={disabled}
             placeholder={placeholder}
             style={{

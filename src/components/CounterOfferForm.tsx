@@ -66,6 +66,8 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
     const newErrors: Record<string, string> = {};
     if (formData.price <= 0) newErrors.price = 'Price must be greater than 0';
     if (formData.deposit < 0) newErrors.deposit = 'Deposit cannot be negative';
+    if (!formData.financingType) newErrors.financingType = 'Financing type is required';
+    if (!formData.offerer) newErrors.offerer = 'Offerer is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -168,6 +170,8 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
                 { value: 'PRIVATE_FINANCING', label: 'Private Financing' },
                 { value: 'OTHER', label: 'Other' }
               ]}
+              required
+              error={errors.financingType}
             />
             <Select
               id="offerer"
@@ -179,6 +183,8 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
                 { value: 'AGENCY', label: 'Agency (on behalf of seller)' },
                 { value: 'BUYER', label: 'Buyer (counter-counter)' }
               ]}
+              required
+              error={errors.offerer}
             />
           </div>
 

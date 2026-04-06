@@ -13,6 +13,7 @@ interface LeadSelectorProps {
   error?: string;
   onNewLeadRequested?: () => void;
   disabled?: boolean;
+  required?: boolean;
 }
 
 const LeadSelector: React.FC<LeadSelectorProps> = ({
@@ -23,7 +24,8 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
   placeholder = 'Select a lead...',
   error,
   onNewLeadRequested,
-  disabled = false
+  disabled = false,
+  required = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -100,7 +102,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
           letterSpacing: '0.025em',
           display: 'block'
         }}>
-          {label}
+          {label}{required && '*'}
         </label>
       )}
       

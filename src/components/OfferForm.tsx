@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property } from '../api/properties';
-import { type Contact } from '../api/contacts';
+import { type Contact, ContactType } from '../api/contacts';
 import { offersService, FinancingType, OfferStatus, OffererType, type DealType } from '../api/offers';
 import { organizationService, type CommissionConfig } from '../api/organization';
 import { userService } from '../api/users';
@@ -179,8 +179,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
     const newErrors: Record<string, string> = {};
     if (!formData.propertyId) newErrors.propertyId = 'Please select a property';
     if (!formData.contactId && !formData.leadId) {
-      if (clientType === 'CONTACT') newErrors.contactId = 'Please select a contact';
-      if (clientType === 'LEAD') newErrors.leadId = 'Please select a lead';
+      if (clientType === 'CONTACT') newErrors.contactId = 'Contact is required';
+      if (clientType === 'LEAD') newErrors.leadId = 'Lead is required';
     }
     
     if (!formData.price) {
@@ -192,11 +192,12 @@ const OfferForm: React.FC<OfferFormProps> = ({
       }
     }
 
-    if (formData.deposit) {
-      const depositNum = Number(formData.deposit);
-      if (isNaN(depositNum) || depositNum < 0) {
-        newErrors.deposit = 'Deposit cannot be negative';
-      }
+    if (!formData.financingType) {
+      newErrors.financingType = 'Financing type is required';
+    }
+
+    if (!formData.offerer) {
+      newErrors.offerer = 'Offerer is required';
     }
 
     const today = new Date();
@@ -273,8 +274,8 @@ const OfferForm: React.FC<OfferFormProps> = ({
     const sellerComm = calcValue(price, seller);
     const totalComm = buyerComm + sellerComm;
     
-    // Agent share is typically a percentage of the total commission
-    const agentComm = agent.type === 'FIXED' ? agent.val : calcValue(totalComm, agent);
+    // Agent share is calculated against the transaction price (matching backend Resolver)
+    const agentComm = agent.type === 'FIXED' ? agent.val : calcValue(price, agent);
 
     return {
       buyer: buyerComm,
@@ -323,9 +324,13 @@ const OfferForm: React.FC<OfferFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const submitData = { ...formData, price: Number(formData.price), deposit: formData.deposit ? Number(formData.deposit) : undefined };
-      if (clientType === 'CONTACT') submitData.leadId = '';
-      if (clientType === 'LEAD') submitData.contactId = '';
+      const submitData = { 
+        ...formData, 
+        price: Number(formData.price), 
+        deposit: formData.deposit ? Number(formData.deposit) : undefined,
+        leadId: clientType === 'LEAD' && formData.leadId ? formData.leadId : undefined,
+        contactId: clientType === 'CONTACT' && formData.contactId ? formData.contactId : undefined
+      };
       
       await offersService.create(submitData, organizationId);
       onSuccess();
@@ -441,7 +446,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
-                <Building2 size={14} /> Property
+                <Building2 size={14} /> Property*
               </h3>
               {selectedProperty && (
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text)', backgroundColor: 'var(--color-bg)', padding: '0.125rem 0.5rem', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
@@ -456,6 +461,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
               onNewPropertyRequested={handleNewPropertyRequested}
               error={errors.propertyId}
               disabled={!!initialProperty}
+              required
               label=""
             />
           </div>
@@ -463,7 +469,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.375rem', height: '1.75rem' }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em', margin: 0 }}>
-                <User size={14} /> Buyer
+                <User size={14} /> Buyer*
               </h3>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -484,9 +490,11 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 onSelect={handleContactSelect} 
                 onNewContactRequested={handleNewContactRequested}
                 selectedContactId={formData.contactId}
+                restrictType={ContactType.BUYER}
                 error={errors.contactId}
                 label=""
                 disabled={isSubmitting}
+                required
               />
             ) : (
               <LeadSelector 
@@ -496,6 +504,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 error={errors.leadId}
                 label=""
                 disabled={isSubmitting}
+                required
               />
             )}
           </div>
@@ -606,6 +615,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 { value: 'OTHER', label: 'Other' },
               ]}
               error={errors.financingType}
+              required
             />
             <DateSelector
               id="closingDate"

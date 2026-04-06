@@ -15,6 +15,7 @@ interface ContactSelectorProps {
   restrictType?: ContactType;
   onNewContactRequested?: () => void;
   disabled?: boolean;
+  required?: boolean;
 }
 
 const ContactSelector: React.FC<ContactSelectorProps> = ({
@@ -26,7 +27,8 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
   error,
   restrictType,
   onNewContactRequested,
-  disabled = false
+  disabled = false,
+  required = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -45,7 +47,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
         setContacts(fetchedContacts);
 
         if (selectedContactId) {
-          const contact = fetchedContacts.find((c: Contact) => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId);
+          const contact = fetchedContacts.find((c: Contact) => c.id === selectedContactId || c.sellerProfile?.id === selectedContactId || c.buyerProfile?.id === selectedContactId);
           if (contact) setSelectedContact(contact);
         } else {
           setSelectedContact(null);
@@ -128,7 +130,7 @@ const ContactSelector: React.FC<ContactSelectorProps> = ({
           letterSpacing: '0.025em',
           display: 'block'
         }}>
-          {label}
+          {label}{required && '*'}
         </label>
       )}
       

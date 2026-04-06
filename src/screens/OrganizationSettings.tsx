@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Building,
   Mail,
@@ -20,9 +20,13 @@ import {
   Check,
   ChevronLeft,
   Sun,
-  Moon
+  Moon,
+  CreditCard,
+  Target
 } from 'lucide-react';
+import SubscriptionPage from './SubscriptionPage';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSubscription } from '../hooks/useSubscription';
 import { organizationService, type Organization } from '../api/organization';
 import { type UserProfile } from '../api/users';
 import { Input, Select } from '../components/Input';
@@ -41,9 +45,10 @@ import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 interface OrganizationSettingsProps {
   user: UserProfile;
   onUserUpdate?: (updatedUser: any) => void;
+  initialTab?: 'general' | 'team' | 'roles' | 'commission' | 'subscription';
 }
 
-const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUserUpdate }) => {
+const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUserUpdate, initialTab }) => {
   const [org, setOrg] = useState<Organization | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -75,7 +80,25 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
   const [hasChanges, setHasChanges] = useState(false);
   const { setAccentColor } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'team' | 'roles' | 'commission'>('general');
+  const initialColorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (org?.accentColor) {
+      initialColorRef.current = org.accentColor;
+    }
+  }, [org?.accentColor]);
+
+  // Revert previewed accent color if navigating away without saving
+  useEffect(() => {
+    return () => {
+      if (initialColorRef.current) {
+        setAccentColor(initialColorRef.current);
+      }
+    };
+  }, [setAccentColor]);
+
+  const [activeTab, setActiveTab] = useState<'general' | 'team' | 'roles' | 'commission' | 'subscription'>(initialTab || 'general');
+  const { subscription, fetchSubscription } = useSubscription(user.organizationId || null);
   const [roles, setRoles] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -207,6 +230,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
       setInviteEmail('');
       setInviteSuccess(true);
       fetchInvitations();
+      fetchSubscription(); // Refresh seat usage
       setTimeout(() => setInviteSuccess(false), 3000);
     } catch (err: any) {
       setInviteError(getErrorMessage(err, 'Failed to send invitation.'));
@@ -377,6 +401,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
         }
       }
 
+      setOrg(updatedOrg);
       setSuccess(true);
       setHasChanges(false);
       setTimeout(() => setSuccess(false), 3000);
@@ -428,7 +453,8 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
             { id: 'team', label: 'Team', icon: Users },
             ...(isOwner ? [
               { id: 'roles', label: 'Roles & Permissions', icon: Shield },
-              { id: 'commission', label: 'Commission', icon: HandCoins }
+              { id: 'commission', label: 'Commission', icon: HandCoins },
+              { id: 'subscription', label: 'Subscription', icon: CreditCard }
             ] : [])
           ]}
         />
@@ -538,6 +564,7 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                     onChange={(hex) => {
                       if (!isOwner) return;
                       setFormData(prev => ({ ...prev, accentColor: hex }));
+                      setAccentColor(hex); // Real-time preview
                       setHasChanges(true);
                     }}
                     disabled={!isOwner}
@@ -732,12 +759,31 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
                     {(Array.isArray(org?.memberships) ? org.memberships : []).length} Active Members
                   </span>
+                  {subscription && (
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) ? '#EF4444' : 'var(--color-text-muted)',
+                      backgroundColor: ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) ? 'rgba(239, 68, 68, 0.1)' : 'var(--color-bg-hover)',
+                      padding: '0.5rem 0.8rem',
+                      borderRadius: '2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexShrink: 0,
+                      border: ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid var(--color-border)'
+                    }}>
+                      <Target size={14} />
+                      { (Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0) } / { subscription.seats } Seats Occupied
+                    </span>
+                  )}
                   {isOwner && (
                     <Button
                       onClick={() => {
                         const inviteSection = document.getElementById('invite-section');
                         if (inviteSection) inviteSection.scrollIntoView({ behavior: 'smooth' });
                       }}
+                      disabled={subscription ? ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) : false}
                       leftIcon={<UserPlus size={18} />}
                       style={{ flex: isMobileOrTablet ? 1 : 'none' }}
                     >
@@ -878,6 +924,34 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                   <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Send an email invitation to join your organization.</p>
                 </div>
 
+                {subscription && ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) && (
+                  <div style={{ 
+                    padding: '1rem 1.25rem', 
+                    backgroundColor: 'rgba(239, 68, 68, 0.05)', 
+                    borderRadius: '0.75rem', 
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#B91C1C', fontSize: '0.875rem', fontWeight: 600 }}>
+                      <AlertCircle size={20} />
+                      <span>All purchased seats are currently occupied.</span>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setActiveTab('subscription')}
+                      style={{ borderColor: 'rgba(239, 68, 68, 0.3)', color: '#B91C1C' }}
+                    >
+                      Purchase More Seats
+                    </Button>
+                  </div>
+                )}
+
                 <form onSubmit={handleInvite} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexDirection: isMobileOrTablet ? 'column' : 'row', alignItems: isMobileOrTablet ? 'stretch' : 'flex-end' }}>
                   <div style={{ flex: 1 }}>
                     <Input
@@ -900,9 +974,9 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                       placeholder="Select a role"
                     />
                   </div>
-                  <Button
+                    <Button
                     type="submit"
-                    disabled={isInviting || !inviteEmail.trim() || !inviteCustomRoleId}
+                    disabled={isInviting || !inviteEmail.trim() || !inviteCustomRoleId || (subscription ? ((Array.isArray(org?.memberships) ? org.memberships.length : 0) + (Array.isArray(invitations) ? invitations.length : 0)) >= (subscription.seats || 0) : false)}
                     isLoading={isInviting}
                     leftIcon={<UserPlus size={18} />}
                     style={{ height: '2.75rem', padding: '0 1.5rem' }}
@@ -1074,16 +1148,18 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 <div className="grid grid-2" style={{ gap: '1.5rem', marginBottom: '2rem' }}>
                   <CommissionInput
                     label="Buyer Side"
-                    value={commissionConfig?.saleBuyerValue ?? 0}
+                    value={commissionConfig?.saleBuyerValue}
                     type={commissionConfig?.saleBuyerType ?? 'PERCENTAGE'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleBuyerValue: val, saleBuyerType: type })}
+                    placeholder="2.00"
                     helperText="Default commission from the buyer's side for Sale deals."
                   />
                   <CommissionInput
                     label="Seller Side"
-                    value={commissionConfig?.saleSellerValue ?? 0}
+                    value={commissionConfig?.saleSellerValue}
                     type={commissionConfig?.saleSellerType ?? 'PERCENTAGE'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleSellerValue: val, saleSellerType: type })}
+                    placeholder="2.00"
                     helperText="Default commission from the seller's side for Sale deals."
                   />
                 </div>
@@ -1098,9 +1174,10 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 <div style={{ maxWidth: '400px' }}>
                   <CommissionInput
                     label="Agent Baseline Split"
-                    value={commissionConfig?.saleAgentValue ?? 0}
+                    value={commissionConfig?.saleAgentValue}
                     type={commissionConfig?.saleAgentType ?? 'PERCENTAGE'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, saleAgentValue: val, saleAgentType: type })}
+                    placeholder="1.00"
                     helperText="Default portion of the deal commission given to the agent."
                   />
                 </div>
@@ -1120,16 +1197,18 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 <div className="grid grid-2" style={{ gap: '1.5rem', marginBottom: '2rem' }}>
                   <CommissionInput
                     label="Buyer Side"
-                    value={commissionConfig?.rentBuyerValue ?? 0}
+                    value={commissionConfig?.rentBuyerValue}
                     type={commissionConfig?.rentBuyerType ?? 'MULTIPLIER'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentBuyerValue: val, rentBuyerType: type })}
+                    placeholder="1.00"
                     helperText="Default commission from the buyer's side for Rent deals (e.g. 1 month)."
                   />
                   <CommissionInput
                     label="Seller Side"
-                    value={commissionConfig?.rentSellerValue ?? 0}
+                    value={commissionConfig?.rentSellerValue}
                     type={commissionConfig?.rentSellerType ?? 'MULTIPLIER'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentSellerValue: val, rentSellerType: type })}
+                    placeholder="1.00"
                     helperText="Default commission from the seller's side for Rent deals."
                   />
                 </div>
@@ -1144,9 +1223,10 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
                 <div style={{ maxWidth: '400px' }}>
                   <CommissionInput
                     label="Agent Baseline Split"
-                    value={commissionConfig?.rentAgentValue ?? 0}
+                    value={commissionConfig?.rentAgentValue}
                     type={commissionConfig?.rentAgentType ?? 'PERCENTAGE'}
                     onChange={(val, type) => setCommissionConfig({ ...commissionConfig, rentAgentValue: val, rentAgentType: type })}
+                    placeholder="0.50"
                     helperText="Default portion of the deal commission given to the agent."
                   />
                 </div>
@@ -1201,6 +1281,10 @@ const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ user, onUse
             </form>
           )
         )}
+
+        {activeTab === 'subscription' && isOwner && (
+          <SubscriptionPage user={user} hideHeader={true} />
+        )}
       </div>
 
       <AgentCommissionModal
@@ -1228,15 +1312,17 @@ const RolesManagement: React.FC<{ roles: any[], organizationId: string, onUpdate
   });
 
   const permissionGroups = [
-    { name: 'Leads', permissions: ['LEADS_VIEW', 'LEADS_CREATE', 'LEADS_EDIT', 'LEADS_DELETE', 'LEADS_EXPORT'] },
-    { name: 'Contacts', permissions: ['CONTACTS_VIEW', 'CONTACTS_CREATE', 'CONTACTS_EDIT', 'CONTACTS_DELETE', 'CONTACTS_EXPORT'] },
-    { name: 'Properties', permissions: ['PROPERTIES_VIEW', 'PROPERTIES_CREATE', 'PROPERTIES_EDIT', 'PROPERTIES_DELETE'] },
-    { name: 'Deals', permissions: ['DEALS_VIEW', 'DEALS_CREATE', 'DEALS_EDIT', 'DEALS_DELETE'] },
+    { name: 'Leads', permissions: ['LEADS_VIEW', 'LEADS_VIEW_ALL', 'LEADS_CREATE', 'LEADS_EDIT', 'LEADS_DELETE', 'LEADS_EXPORT'] },
+    { name: 'Contacts', permissions: ['CONTACTS_VIEW', 'CONTACTS_VIEW_ALL', 'CONTACTS_CREATE', 'CONTACTS_EDIT', 'CONTACTS_DELETE', 'CONTACTS_EXPORT'] },
+    { name: 'Properties', permissions: ['PROPERTIES_VIEW', 'PROPERTIES_VIEW_ALL', 'PROPERTIES_CREATE', 'PROPERTIES_EDIT', 'PROPERTIES_DELETE'] },
+    { name: 'Deals', permissions: ['DEALS_VIEW', 'DEALS_VIEW_ALL', 'DEALS_CREATE', 'DEALS_EDIT', 'DEALS_DELETE'] },
+    { name: 'Offers', permissions: ['OFFERS_VIEW_ALL'] },
     { name: 'Tasks', permissions: ['TASKS_VIEW', 'TASKS_VIEW_ALL', 'TASKS_CREATE', 'TASKS_ASSIGN_ANY', 'TASKS_EDIT', 'TASKS_DELETE'] },
     { name: 'Calendar', permissions: ['CALENDAR_VIEW', 'CALENDAR_VIEW_ALL', 'CALENDAR_EDIT'] },
     { name: 'Team', permissions: ['TEAM_VIEW', 'TEAM_INVITE', 'TEAM_EDIT_ROLES', 'TEAM_REMOVE_MEMBER'] },
     { name: 'Organization', permissions: ['ORG_SETTINGS_EDIT', 'ORG_BILLING_VIEW'] },
-    { name: 'Dashboard', permissions: ['DASHBOARD_VIEW'] }
+    { name: 'Dashboard', permissions: ['DASHBOARD_VIEW', 'DASHBOARD_VIEW_ALL'] },
+    { name: 'Payouts', permissions: ['PAYOUTS_VIEW', 'PAYOUTS_VIEW_ALL', 'PAYOUTS_MANAGE'] }
   ];
 
   const handleEditRole = (role: any) => {

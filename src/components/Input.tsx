@@ -29,7 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 display: 'block'
               }}
             >
-              {label}
+              {label}{props.required && '*'}
             </label>
           )}
           {error && (
@@ -131,7 +131,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                 display: 'block'
               }}
             >
-              {label}
+              {label}{props.required && '*'}
             </label>
           )}
           {error && (

@@ -635,3 +635,37 @@ aside:hover .sidebar-collapse-btn {
 }
 
 
+/* Plans Carousel Mobile Utility */
+.plans-carousel-mobile {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .plans-carousel-mobile {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    gap: 1.5rem !important;
+    padding: 1.5rem 2rem 2.5rem !important;
+    margin: 0 -1.5rem !important;
+    width: calc(100% + 3rem) !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 2rem;
+  }
+  
+  .plans-carousel-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .plans-carousel-mobile > * {
+    flex: 0 0 82% !important;
+    min-width: 280px !important;
+    scroll-snap-align: center !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+}
+

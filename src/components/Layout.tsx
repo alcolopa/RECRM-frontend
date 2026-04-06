@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect, type FC } from 'react';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -13,12 +13,14 @@ import {
   User as UserIcon,
   Settings,
   X,
-  Banknote,
-  CreditCard
+  Banknote
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import TopBar from './TopBar';
+import SubscriptionLockOverlay from './SubscriptionLockOverlay';
 import TutorialGuide, { type TutorialStep } from './TutorialGuide';
-import { useNavigation } from '../contexts/NavigationContext';
+import { useNavigation, type NavigationTab } from '../contexts/NavigationContext';
+import { useSubscription } from '../hooks/useSubscription';
 import { type UserProfile } from '../api/users';
 import { getImageUrl } from '../utils/url';
 
@@ -29,7 +31,6 @@ const ContactsView = lazy(() => import('../screens/ContactsView'));
 const LeadsView = lazy(() => import('../screens/LeadsView'));
 const ProfileView = lazy(() => import('../screens/ProfileView'));
 const OrganizationSettings = lazy(() => import('../screens/OrganizationSettings'));
-const SubscriptionPage = lazy(() => import('../screens/SubscriptionPage'));
 const OffersView = lazy(() => import('../screens/OffersView'));
 const OfferDetailsView = lazy(() => import('../screens/OfferDetailsView'));
 const TasksView = lazy(() => import('../screens/TasksView'));
@@ -42,7 +43,7 @@ interface LayoutProps {
   onUserUpdate: (user: any) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
+const Layout: FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const { activeTab, navigate } = useNavigation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,26 +63,53 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const bottomItems = [
     { id: 'profile', label: 'Profile', icon: UserIcon },
     { id: 'organization', label: 'Organization Settings', icon: Settings },
-    { id: 'subscription', label: 'Subscription', icon: CreditCard },
-  ].filter(item => {
-    if (item.id === 'subscription') return user.role === 'OWNER';
-    return true;
-  });
+  ];
 
   const activeMembership = user.memberships?.find((m: any) => m.organizationId === user.organizationId) || user.memberships?.[0];
   const activeOrg = activeMembership?.organization;
+  const activeOrgId = activeMembership?.organizationId || user.organizationId || '';
+  const activeRole = activeMembership?.role || user.role;
+  
+  const userWithContext = {
+    ...user,
+    organizationId: activeOrgId,
+    role: activeRole,
+    customRole: activeMembership?.customRole
+  };
+
+  // Dynamic Subscription Fetching
+  const { subscription: latestSubscription, loading: subLoading, fetchSubscription } = useSubscription(activeOrgId);
+
+  // Combine initial user data with latest backend data
+  const initialSubscription = (activeOrg as any)?.subscription;
+  const subscription = latestSubscription || initialSubscription;
+  const now = new Date();
+  
+  // We lock if we have definitive data (not loading) AND (no status found OR status is invalid)
+  let isSubscriptionLocked = false;
+
+  if (!subLoading) {
+    if (subscription) {
+      if (subscription.status === 'INACTIVE' || subscription.status === 'CANCELED') {
+        isSubscriptionLocked = true;
+      } else if (subscription.status === 'TRIAL' && now > new Date(subscription.trialEndDate)) {
+        isSubscriptionLocked = true;
+      } else if (subscription.status === 'ACTIVE' && subscription.currentPeriodEnd && now > new Date(subscription.currentPeriodEnd)) {
+        isSubscriptionLocked = true;
+      }
+    } else if (!initialSubscription) {
+      // If even initial data is missing, we lock to be safe, but only after first load
+      isSubscriptionLocked = true;
+    }
+  }
+
+  // Refresh status on every major navigation movement
+  useEffect(() => {
+    fetchSubscription();
+  }, [activeTab, fetchSubscription]);
+
 
   const renderContent = () => {
-    const activeOrgId = activeMembership?.organizationId || user.organizationId || '';
-    const activeRole = activeMembership?.role || user.role;
-    
-    const userWithContext = {
-      ...user,
-      organizationId: activeOrgId,
-      role: activeRole,
-      customRole: activeMembership?.customRole
-    };
-
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard organizationId={activeOrgId} user={user} />;
@@ -102,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
       case 'organization':
         return <OrganizationSettings user={userWithContext as any} onUserUpdate={onUserUpdate} />;
       case 'subscription':
-        return <SubscriptionPage user={userWithContext as any} />;
+        return <OrganizationSettings user={userWithContext as any} onUserUpdate={onUserUpdate} initialTab="subscription" />;
       case 'tasks':
         return <TasksView organizationId={activeOrgId} user={userWithContext as any} />;
       case 'calendar':
@@ -117,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
   const SidebarItem = ({ item }: { item: any }) => (
     <button
       onClick={() => {
-        navigate(item.id);
+        navigate(item.id as NavigationTab);
         setIsMobileMenuOpen(false);
       }}
       className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
@@ -295,91 +323,198 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, user, onUserUpdate }) => {
         />
       </div>
 
-      {/* Mobile Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <>
-            <div 
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                backdropFilter: 'blur(4px)',
-                zIndex: 1000
-              }}
-            />
-            <div style={{
+          <motion.div
+            initial={{ x: '-100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '-100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            style={{
               position: 'fixed',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: '280px',
+              inset: 0,
               backgroundColor: 'var(--color-surface)',
-              zIndex: 1001,
-              padding: '1.5rem',
+              zIndex: 2000,
+              padding: '2rem 1.5rem',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '3rem',
+              padding: '0 0.5rem'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ 
-                    width: '32px', 
-                    height: '32px', 
-                    borderRadius: '8px', 
-                    backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)', 
-                    backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    color: 'white' 
-                  }}>
-                    {!activeOrg?.logo && <Building2 size={20} />}
-                  </div>
-                  <span style={{ fontWeight: 800, fontSize: '1.125rem' }}>{activeOrg?.name || 'EstateHub'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  borderRadius: '12px', 
+                  backgroundColor: activeOrg?.logo ? 'transparent' : 'var(--color-primary)', 
+                  backgroundImage: activeOrg?.logo ? `url("${getImageUrl(activeOrg.logo)}")` : 'none',
+                  backgroundSize: 'contain',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: 'white',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  {!activeOrg?.logo && <Building2 size={24} />}
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)' }}>
-                  <X size={24} />
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em', color: 'var(--color-text)' }}>
+                    {activeOrg?.name || 'EstateHub'}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Professional CRM
+                  </span>
+                </div>
               </div>
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsMobileMenuOpen(false)} 
+                style={{ 
+                  background: 'var(--color-bg)', 
+                  border: '1px solid var(--color-border)', 
+                  color: 'var(--color-text)',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <X size={20} />
+              </motion.button>
+            </div>
 
-              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                {sidebarItems.map(item => <SidebarItem key={item.id} item={item} />)}
-                <div style={{ margin: '1rem 0', height: '1px', backgroundColor: 'var(--color-border)' }} />
-                {bottomItems.map(item => <SidebarItem key={item.id} item={item} />)}
-              </nav>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+              {sidebarItems.map(item => (
+                <motion.button
+                  key={item.id}
+                  whileHover={{ x: 4 }}
+                  onClick={() => {
+                    navigate(item.id as NavigationTab);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.25rem',
+                    padding: '1rem 1.25rem',
+                    width: '100%',
+                    border: 'none',
+                    background: activeTab === item.id ? 'rgba(var(--color-primary-rgb), 0.08)' : 'transparent',
+                    borderRadius: '1rem',
+                    color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left',
+                    position: 'relative'
+                  }}
+                >
+                  <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+                  <span style={{ fontWeight: activeTab === item.id ? 700 : 500, fontSize: '1.0625rem' }}>{item.label}</span>
+                  {activeTab === item.id && (
+                    <motion.div 
+                      layoutId="active-nav-indicator"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: '25%',
+                        bottom: '25%',
+                        width: '4px',
+                        backgroundColor: 'var(--color-primary)',
+                        borderRadius: '0 4px 4px 0'
+                      }} 
+                    />
+                  )}
+                </motion.button>
+              ))}
+              
+              <div style={{ margin: '1.5rem 0.5rem', height: '1px', backgroundColor: 'var(--color-border)', opacity: 0.5 }} />
+              
+              {bottomItems.map(item => (
+                <motion.button
+                  key={item.id}
+                  whileHover={{ x: 4 }}
+                  onClick={() => {
+                    navigate(item.id as NavigationTab);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.25rem',
+                    padding: '1rem 1.25rem',
+                    width: '100%',
+                    border: 'none',
+                    background: activeTab === item.id ? 'rgba(var(--color-primary-rgb), 0.08)' : 'transparent',
+                    borderRadius: '1rem',
+                    color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                >
+                  <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+                  <span style={{ fontWeight: activeTab === item.id ? 700 : 500, fontSize: '1.0625rem' }}>{item.label}</span>
+                </motion.button>
+              ))}
+            </nav>
 
+            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
               <button
                 onClick={onLogout}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1rem',
+                  gap: '1.25rem',
+                  padding: '1.125rem 1.25rem',
                   width: '100%',
                   border: 'none',
                   background: 'rgba(220, 38, 38, 0.05)',
-                  borderRadius: 'var(--radius)',
+                  borderRadius: '1rem',
                   color: 'var(--color-error)',
-                  fontWeight: 600,
-                  marginTop: 'auto'
+                  fontWeight: 700,
+                  fontSize: '1.0625rem',
+                  cursor: 'pointer'
                 }}
               >
-                <LogOut size={20} />
-                Logout
+                <LogOut size={22} />
+                Log Out
               </button>
+              <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+                EstateHub v1.0.0 Stable
+              </p>
             </div>
-          </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isSubscriptionLocked && (
+          <SubscriptionLockOverlay 
+            user={userWithContext as any} 
+            onPlanUpdated={() => {
+              onUserUpdate(user); 
+              window.location.reload(); 
+            }} 
+          />
         )}
       </AnimatePresence>
     </div>
   );
 };
-
-const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 const TUTORIAL_STEPS: Record<string, TutorialStep[]> = {
   dashboard: [

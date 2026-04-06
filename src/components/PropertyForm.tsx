@@ -14,13 +14,13 @@ import {
   AlertCircle,
   User,
   Sparkles,
-  Check,
   Scale,
   Tag,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Property, propertyService, type PropertyImage, type Feature } from '../api/properties';
-import { Input, Select, Textarea } from './Input';
+import { Input, Select, Textarea, Checkbox } from './Input';
+import DateSelector from './DateSelector';
 import Button from './Button';
 import ContactSelector from './ContactSelector';
 import UserSelector from './UserSelector';
@@ -550,7 +550,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
       listingDate: formData.listingDate || null,
       expiryDate: formData.expiryDate || null,
       featureIds: Array.from(selectedFeatureIds),
-      assignedUserId: formData.assignedUserId || null,
+      assignedUserId: toStr(formData.assignedUserId),
+      ownerContactId: toStr(formData.ownerContactId),
+      sellerProfileId: toStr(formData.sellerProfileId),
+      ownerName: toStr(formData.ownerName),
     };
 
     try {
@@ -685,7 +688,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Section: Basic Info */}
-        <div style={sectionStyle}>
+        <div style={sectionWhiteStyle}>
           <h3 style={sectionTitleStyle}><Info size={18} /> Basic Information</h3>
           <div className="grid grid-2" style={{ gap: '1rem' }}>
             <Input
@@ -724,13 +727,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           />
         </div>
 
-        {/* Section: Seller */}
-        <div style={sectionStyle}>
+        {/* Section: Seller & Agent */}
+        <div style={sectionGrayStyle}>
           <h3 style={sectionTitleStyle}><User size={18} /> Property Owner (Seller)</h3>
           <ContactSelector 
             organizationId={organizationId}
             selectedContactId={formData.sellerProfileId}
-            onSelect={(sellerProfileId) => handleFieldChange('sellerProfileId', sellerProfileId)}
+            onSelect={(contact) => {
+              handleFieldChange('sellerProfileId', contact?.sellerProfile?.id || null);
+              handleFieldChange('ownerContactId', contact?.id || null);
+            }}
             restrictType={ContactType.SELLER}
             onNewContactRequested={handleNewSellerRedirect}
             error={errors.sellerProfileId}
@@ -740,9 +746,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           </p>
         </div>
 
-        {/* Section: Agent */}
-        <div style={sectionStyle}>
-          <h3 style={sectionTitleStyle}><User size={18} /> Listing Agent</h3>
+          <div style={{ marginTop: '1.5rem' }}>
+            <h3 style={sectionTitleStyle}><User size={18} /> Listing Agent</h3>
           <UserSelector 
             organizationId={organizationId}
             selectedUserId={formData.assignedUserId}
@@ -755,7 +760,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         </div>
 
         {/* Section: Images */}
-        <div style={sectionStyle}>
+        <div style={sectionWhiteStyle}>
           <h3 style={sectionTitleStyle}><ImageIcon size={18} /> Property Images</h3>
 
           <div style={imageGridStyle}>
@@ -858,7 +863,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         </div>
 
         {/* Section: Details */}
-        <div style={sectionStyle}>
+        <div style={sectionGrayStyle}>
           <h3 style={sectionTitleStyle}><Building2 size={18} /> Property Details</h3>
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
             <Select
@@ -905,11 +910,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                 { value: 'OFF_MARKET', label: 'Off Market' },
               ]}
             />
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              backgroundColor: 'var(--color-surface)',
+              padding: '1.25rem',
+              borderRadius: '0.75rem',
+              gridColumn: '1 / -1',
+              border: '1px solid var(--color-border)'
+            }}>
+              <div style={{ flex: 1 }}><Input label="Bedrooms" id="bedrooms" name="bedrooms" type="number" placeholder="3" value={formData.bedrooms} onChange={handleChange} /></div>
+              <div style={{ flex: 1 }}><Input label="Bathrooms" id="bathrooms" name="bathrooms" type="number" step="0.5" placeholder="2.5" value={formData.bathrooms} onChange={handleChange} /></div>
+              <div style={{ flex: 1 }}><Input label={`Area (${displayAreaLabel})`} id="area" name="area" type="number" placeholder="2500" value={formData.area} onChange={handleChange} /></div>
+            </div>
+            
             <Input label="Reference Code" id="referenceCode" name="referenceCode" placeholder="REF-001" value={formData.referenceCode} onChange={handleChange} />
-            <Input label={`Area (${displayAreaLabel})`} id="area" name="area" type="number" placeholder="2500" value={formData.area} onChange={handleChange} />
             <Input label="Land Size (sqm)" id="landSizeSqm" name="landSizeSqm" type="number" placeholder="500" value={formData.landSizeSqm} onChange={handleChange} />
-            <Input label="Bedrooms" id="bedrooms" name="bedrooms" type="number" placeholder="3" value={formData.bedrooms} onChange={handleChange} />
-            <Input label="Bathrooms" id="bathrooms" name="bathrooms" type="number" step="0.5" placeholder="2.5" value={formData.bathrooms} onChange={handleChange} />
             <Input label="Living Rooms" id="livingRooms" name="livingRooms" type="number" placeholder="1" value={formData.livingRooms} onChange={handleChange} />
             <Input label="Kitchens" id="kitchens" name="kitchens" type="number" placeholder="1" value={formData.kitchens} onChange={handleChange} />
             <Input label="Parking Spaces" id="parkingSpaces" name="parkingSpaces" type="number" placeholder="2" value={formData.parkingSpaces} onChange={handleChange} />
@@ -924,26 +940,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
               { value: 'UNDER_CONSTRUCTION', label: 'Under Construction' },
             ]} />
           </div>
-          <div style={{ marginTop: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!formData.furnished} onChange={e => handleFieldChange('furnished', e.target.checked)} />
-              Furnished
-            </label>
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <Checkbox
+              label="Furnished"
+              checked={!!formData.furnished}
+              onChange={e => handleFieldChange('furnished', e.target.checked)}
+            />
           </div>
         </div>
 
         {/* Section: Pricing & Financials */}
-        <div style={sectionStyle}>
+        <div style={sectionWhiteStyle}>
           <h3 style={sectionTitleStyle}><DollarSign size={18} /> Pricing & Financials</h3>
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
             <Input label="Price" id="price" name="price" type="number" placeholder="450000" value={formData.price} onChange={handleChange} icon={DollarSign} error={errors.price} />
             <Input label="Currency" id="currency" name="currency" placeholder="USD" value={formData.currency} onChange={handleChange} />
           </div>
           <div style={{ marginTop: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!formData.negotiable} onChange={e => handleFieldChange('negotiable', e.target.checked)} />
-              Negotiable
-            </label>
+            <Checkbox
+              label="Negotiable"
+              checked={!!formData.negotiable}
+              onChange={e => handleFieldChange('negotiable', e.target.checked)}
+            />
           </div>
 
           {/* Sale-specific fields */}
@@ -974,13 +992,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                 <Input label="Security Deposit" id="securityDeposit" name="securityDeposit" type="number" value={formData.securityDeposit} onChange={handleChange} />
                 <Input label="Min Lease (months)" id="minLeaseDurationMonths" name="minLeaseDurationMonths" type="number" value={formData.minLeaseDurationMonths} onChange={handleChange} />
                 <Input label="Max Lease (months)" id="maxLeaseDurationMonths" name="maxLeaseDurationMonths" type="number" value={formData.maxLeaseDurationMonths} onChange={handleChange} />
-                <Input label="Available From" id="availableFrom" name="availableFrom" type="date" value={formData.availableFrom} onChange={handleChange} />
+                <DateSelector
+                  label="Available From"
+                  id="availableFrom"
+                  value={formData.availableFrom}
+                  onChange={val => handleFieldChange('availableFrom', val)}
+                />
               </div>
               <div style={{ marginTop: '0.75rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={!!formData.utilitiesIncluded} onChange={e => handleFieldChange('utilitiesIncluded', e.target.checked)} />
-                  Utilities Included
-                </label>
+                <Checkbox
+                  label="Utilities Included"
+                  checked={!!formData.utilitiesIncluded}
+                  onChange={e => handleFieldChange('utilitiesIncluded', e.target.checked)}
+                />
               </div>
               <Textarea label="Renewal Terms" id="renewalTerms" name="renewalTerms" rows={2} value={formData.renewalTerms} onChange={handleChange} style={{ resize: 'vertical', marginTop: '0.75rem' }} />
             </div>
@@ -1000,17 +1024,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                 ]} />
               </div>
               <div style={{ marginTop: '0.75rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={!!formData.insuranceRequired} onChange={e => handleFieldChange('insuranceRequired', e.target.checked)} />
-                  Insurance Required
-                </label>
+                <Checkbox
+                  label="Insurance Required"
+                  checked={!!formData.insuranceRequired}
+                  onChange={e => handleFieldChange('insuranceRequired', e.target.checked)}
+                />
               </div>
             </div>
           )}
         </div>
 
         {/* Section: Legal & Ownership */}
-        <div style={sectionStyle}>
+        <div style={sectionGrayStyle}>
           <h3 style={sectionTitleStyle}><Scale size={18} /> Legal & Ownership</h3>
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
             <Input label="Owner Name" id="ownerName" name="ownerName" placeholder="Full name" value={formData.ownerName} onChange={handleChange} />
@@ -1022,16 +1047,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             ]} />
           </div>
           <div style={{ marginTop: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!formData.titleDeedAvailable} onChange={e => handleFieldChange('titleDeedAvailable', e.target.checked)} />
-              Title Deed Available
-            </label>
+            <Checkbox
+              label="Title Deed Available"
+              checked={!!formData.titleDeedAvailable}
+              onChange={e => handleFieldChange('titleDeedAvailable', e.target.checked)}
+            />
           </div>
           <Textarea label="Legal Notes" id="legalNotes" name="legalNotes" rows={2} value={formData.legalNotes} onChange={handleChange} style={{ resize: 'vertical', marginTop: '0.5rem' }} />
         </div>
 
         {/* Section: CRM */}
-        <div style={sectionStyle}>
+        <div style={sectionWhiteStyle}>
           <h3 style={sectionTitleStyle}><Tag size={18} /> CRM Details</h3>
           <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
             <Select label="Source" id="source" name="source" value={formData.source} onChange={handleChange} options={[
@@ -1040,13 +1066,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
             <Select label="Priority" id="priority" name="priority" value={formData.priority} onChange={handleChange} options={[
               { value: '', label: 'Select...' }, { value: 'LOW', label: 'Low' }, { value: 'MEDIUM', label: 'Medium' }, { value: 'HIGH', label: 'High' },
             ]} />
-            <Input label="Listing Date" id="listingDate" name="listingDate" type="date" value={formData.listingDate} onChange={handleChange} />
-            <Input label="Expiry Date" id="expiryDate" name="expiryDate" type="date" value={formData.expiryDate} onChange={handleChange} />
+            <DateSelector
+              label="Listing Date"
+              id="listingDate"
+              value={formData.listingDate}
+              onChange={val => handleFieldChange('listingDate', val)}
+            />
+            <DateSelector
+              label="Expiry Date"
+              id="expiryDate"
+              value={formData.expiryDate}
+              onChange={val => handleFieldChange('expiryDate', val)}
+            />
           </div>
         </div>
 
         {/* Section: Location */}
-        <div style={sectionStyle}>
+        <div style={sectionGrayStyle}>
           <h3 style={sectionTitleStyle}><MapPin size={18} /> Location</h3>
           <Input
             label="Street Address*"
@@ -1107,7 +1143,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
         </div>
 
         {/* Section: Features */}
-        <div style={sectionStyle}>
+        <div style={sectionWhiteStyle}>
           <h3 style={sectionTitleStyle}><Sparkles size={18} /> Features & Amenities</h3>
           <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
             Select the features that apply to this property.
@@ -1136,7 +1172,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                   return (
                     <span
                       key={fId}
-                      style={selectedFeatureTagStyle}
+                      style={{
+                        ...selectedFeatureTagStyle,
+                        borderRadius: '0.375rem',
+                        padding: '0.125rem 0.5rem',
+                        border: 'none',
+                        background: 'var(--color-bg-hover)'
+                      }}
                       onClick={() => toggleFeature(fId)}
                     >
                       {feat.name}
@@ -1149,26 +1191,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           )}
 
           {/* Feature categories */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1.5rem' }}>
             {Object.entries(filteredGroupedFeatures).map(([category, features]) => (
               <div key={category}>
-                <div style={categoryLabelStyle}>{category}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ ...categoryLabelStyle, borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>{category}</div>
+                <div className="grid grid-2 grid-3" style={{ gap: '0.75rem' }}>
                   {features.map(feature => {
                     const isSelected = selectedFeatureIds.has(feature.id);
                     return (
-                      <button
+                      <Checkbox
                         key={feature.id}
-                        type="button"
-                        onClick={() => toggleFeature(feature.id)}
-                        style={{
-                          ...featureChipStyle,
-                          ...(isSelected ? featureChipSelectedStyle : {}),
-                        }}
-                      >
-                        {isSelected && <Check size={14} style={{ marginRight: '0.25rem' }} />}
-                        {feature.name}
-                      </button>
+                        label={feature.name}
+                        checked={isSelected}
+                        onChange={() => toggleFeature(feature.id)}
+                      />
                     );
                   })}
                 </div>
@@ -1226,11 +1262,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
 const sectionStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '1rem',
-  padding: '1rem',
+  gap: '1.5rem',
+  padding: '2rem',
+  marginBottom: '0', // We'll use padding for spacing
+};
+
+const sectionWhiteStyle: React.CSSProperties = {
+  ...sectionStyle,
+  background: 'var(--color-surface)',
+};
+
+const sectionGrayStyle: React.CSSProperties = {
+  ...sectionStyle,
   background: 'var(--color-bg)',
-  borderRadius: 'var(--radius)',
-  border: '1px solid var(--color-border)'
 };
 
 const sectionTitleStyle: React.CSSProperties = {
@@ -1322,28 +1366,6 @@ const errorContainerStyle: React.CSSProperties = {
 };
 
 // Feature chip styles
-const featureChipStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '0.375rem 0.75rem',
-  borderRadius: '2rem',
-  fontSize: '0.8125rem',
-  fontWeight: 500,
-  border: '1px solid var(--color-border)',
-  background: 'var(--color-surface)',
-  color: 'var(--color-text)',
-  cursor: 'pointer',
-  transition: 'all 0.15s ease',
-  outline: 'none',
-};
-
-const featureChipSelectedStyle: React.CSSProperties = {
-  background: 'rgba(5, 150, 105, 0.1)',
-  borderColor: 'var(--color-primary)',
-  color: 'var(--color-primary)',
-  fontWeight: 600,
-};
-
 const selectedFeatureTagStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',

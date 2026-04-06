@@ -13,6 +13,7 @@ interface PropertySelectorProps {
   error?: string;
   disabled?: boolean;
   onNewPropertyRequested?: () => void;
+  required?: boolean;
 }
 
 const PropertySelector: React.FC<PropertySelectorProps> = ({
@@ -22,7 +23,8 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   label = "Property",
   error: externalError,
   disabled = false,
-  onNewPropertyRequested
+  onNewPropertyRequested,
+  required = false
 }) => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -166,7 +168,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           letterSpacing: '0.025em',
           display: 'block'
         }}>
-          {label}
+          {label}{required && '*'}
         </label>
       )}
 

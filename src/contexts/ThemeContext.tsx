@@ -90,28 +90,28 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('accentColor', accentColor);
   }, [accentColor]);
 
-  const setTheme = (newTheme: Theme) => {
+  const setTheme = React.useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-  };
+  }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = React.useCallback(() => {
     setThemeState((prev) => {
       if (prev === 'light') return 'dark';
       if (prev === 'dark') return 'system';
       return 'light';
     });
-  };
+  }, []);
 
-  const setAccentColor = (accent: string) => {
+  const setAccentColor = React.useCallback((accent: string) => {
     setAccentColorState(accent);
-  };
+  }, []);
 
-  const resetToDefault = () => {
+  const resetToDefault = React.useCallback(() => {
     setThemeState('system');
     setAccentColorState(ACCENTS.EMERALD);
     localStorage.removeItem('theme');
     localStorage.removeItem('accentColor');
-  };
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, displayTheme, accentColor, setTheme, toggleTheme, setAccentColor, resetToDefault }}>
