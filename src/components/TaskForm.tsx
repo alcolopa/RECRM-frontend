@@ -220,6 +220,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               id="status"
               name="status"
               value={formData.status}
+              disabled={formData.assignedUserId !== user.id}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
               options={[
                 { value: 'TODO', label: 'To Do' },
@@ -227,9 +228,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 { value: 'COMPLETED', label: 'Completed' },
                 { value: 'CANCELLED', label: 'Cancelled' }
               ]}
+              helperText={formData.assignedUserId !== user.id ? "Only the assignee can change task status" : undefined}
               error={fieldErrors.status}
             />
-            {(permissions.can(Permission.TASKS_ASSIGN_ANY) || user.role === 'OWNER' || user.role === 'ADMIN') && (
+            {permissions.can(Permission.TASKS_ASSIGN_ANY) && (
               <UserSelector
                 label="Assign To"
                 organizationId={organizationId}

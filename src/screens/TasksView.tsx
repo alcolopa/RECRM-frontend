@@ -188,8 +188,17 @@ const TasksView: React.FC<TasksViewProps> = ({ organizationId, user }) => {
                 }}
               >
                 <button
+                  disabled={task.assignedUserId !== user.id}
                   onClick={() => handleToggleStatus(task)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.status === 'COMPLETED' ? 'var(--color-primary)' : 'var(--color-text-muted)', padding: 0 }}
+                  style={{ 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: task.assignedUserId === user.id ? 'pointer' : 'not-allowed', 
+                    color: task.status === 'COMPLETED' ? 'var(--color-primary)' : 'var(--color-text-muted)', 
+                    padding: 0,
+                    opacity: task.assignedUserId === user.id ? 1 : 0.5
+                  }}
+                  title={task.assignedUserId !== user.id ? "Only the assignee can change task status" : ""}
                 >
                   {task.status === 'COMPLETED' ? <CheckCircle2 size={24} /> : <Circle size={24} />}
                 </button>
