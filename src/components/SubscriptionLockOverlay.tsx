@@ -66,7 +66,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      padding: '2rem 1rem'
+      padding: '2rem 1.5rem'
     }}>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -81,7 +81,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           position: 'relative',
           overflow: 'hidden',
           border: '1px solid var(--color-border)',
-          margin: 'auto'
+          margin: 'auto' // Centers vertically if content is smaller than viewport
         }}
       >
         {/* Abstract Background Accents */}
@@ -124,7 +124,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           </div>
           
           <h2 style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '1rem', textAlign: 'center', letterSpacing: '-0.025em' }}>
-            Subscription Expired
+            Subscription Required
           </h2>
           
           <p style={{ 
@@ -143,7 +143,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           {isOwner ? (
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
               gap: '2rem',
               width: '100%',
               marginBottom: '1rem'
@@ -162,7 +162,8 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
                     display: 'flex',
                     flexDirection: 'column',
                     boxShadow: selectedPlanId === plan.id ? 'var(--shadow-lg)' : 'none',
-                    transform: selectedPlanId === plan.id ? 'translateY(-4px)' : 'none'
+                    transform: selectedPlanId === plan.id ? 'translateY(-4px)' : 'none',
+                    minHeight: '500px'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
@@ -213,7 +214,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
                       e.stopPropagation();
                       handleUpgrade(plan.id);
                     }}
-                    style={{ borderRadius: '1.25rem', height: '3.5rem' }}
+                    style={{ borderRadius: '1.25rem', height: '3.5rem', marginTop: 'auto' }}
                   >
                     {selectedPlanId === plan.id ? 'Confirm Plan' : 'Select Plan'}
                   </Button>
