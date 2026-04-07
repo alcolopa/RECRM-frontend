@@ -45,7 +45,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)'
       }}>
@@ -60,28 +60,27 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
       inset: 0,
       zIndex: 10000,
       overflowY: 'auto',
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      padding: '2rem 1.5rem'
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      display: 'grid',
+      placeItems: 'start center', // Aligns to top, centers horizontally
+      padding: '40px 20px'
     }}>
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         style={{
           backgroundColor: 'var(--color-surface)',
-          borderRadius: '2.5rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          borderRadius: '2rem',
+          boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.6)',
           maxWidth: '1100px',
           width: '100%',
-          padding: '4rem 2rem',
+          padding: '2.5rem 2rem',
           position: 'relative',
           overflow: 'hidden',
           border: '1px solid var(--color-border)',
-          margin: 'auto' // Centers vertically if content is smaller than viewport
+          marginBottom: '40px' // Extra space at bottom when scrolling
         }}
       >
         {/* Abstract Background Accents */}
@@ -91,7 +90,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           right: '-10%',
           width: '40%',
           height: '40%',
-          background: 'radial-gradient(circle, rgba(5, 150, 105, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(5, 150, 105, 0.1) 0%, transparent 70%)',
           borderRadius: '50%',
           filter: 'blur(60px)'
         }} />
@@ -101,39 +100,38 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           left: '-10%',
           width: '40%',
           height: '40%',
-          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
           borderRadius: '50%',
           filter: 'blur(60px)'
         }} />
 
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '60px',
+            height: '60px',
             backgroundColor: 'rgba(220, 38, 38, 0.1)',
-            borderRadius: '1.5rem',
+            borderRadius: '1.25rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'var(--color-error)',
-            marginBottom: '2rem',
-            border: '1px solid rgba(220, 38, 38, 0.2)',
-            boxShadow: '0 10px 15px -3px rgba(220, 38, 38, 0.1)'
+            marginBottom: '1.5rem',
+            border: '1px solid rgba(220, 38, 38, 0.2)'
           }}>
-            <ShieldAlert size={40} />
+            <ShieldAlert size={32} />
           </div>
           
-          <h2 style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '1rem', textAlign: 'center', letterSpacing: '-0.025em' }}>
+          <h2 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '0.75rem', textAlign: 'center', letterSpacing: '-0.025em' }}>
             Subscription Required
           </h2>
           
           <p style={{ 
             color: 'var(--color-text-muted)', 
-            fontSize: '1.25rem', 
-            maxWidth: '700px', 
+            fontSize: '1.125rem', 
+            maxWidth: '650px', 
             textAlign: 'center',
-            marginBottom: '4rem',
-            lineHeight: 1.6
+            marginBottom: '3rem',
+            lineHeight: 1.5
           }}>
             {isOwner 
               ? "Your organization's subscription has expired or is inactive. Choose a plan below to restore full access to EstateHub."
@@ -143,62 +141,57 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           {isOwner ? (
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-              gap: '2rem',
-              width: '100%',
-              marginBottom: '1rem'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gap: '1.5rem',
+              width: '100%'
             }}>
               {plans.map((plan: Plan) => (
                 <div 
                   key={plan.id}
                   onClick={() => setSelectedPlanId(plan.id)}
                   style={{
-                    padding: '2.5rem 2rem',
-                    borderRadius: '2rem',
+                    padding: '2rem 1.5rem',
+                    borderRadius: '1.5rem',
                     border: `2px solid ${selectedPlanId === plan.id ? 'var(--color-primary)' : 'var(--color-border)'}`,
                     backgroundColor: selectedPlanId === plan.id ? 'rgba(5, 150, 105, 0.05)' : 'var(--color-bg)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s ease',
                     cursor: 'pointer',
                     display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: selectedPlanId === plan.id ? 'var(--shadow-lg)' : 'none',
-                    transform: selectedPlanId === plan.id ? 'translateY(-4px)' : 'none',
-                    minHeight: '500px'
+                    flexDirection: 'column'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{plan.name}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{plan.name}</h3>
                     {plan.priceMonthly === 0 && (
                       <span style={{ 
-                        fontSize: '0.75rem', 
+                        fontSize: '0.7rem', 
                         fontWeight: 700, 
-                        padding: '0.25rem 0.75rem', 
+                        padding: '0.2rem 0.6rem', 
                         backgroundColor: 'rgba(5, 150, 105, 0.1)', 
                         color: 'var(--color-primary)',
-                        borderRadius: '2rem',
-                        textTransform: 'uppercase'
+                        borderRadius: '2rem'
                       }}>
-                        Free Tier
+                        FREE
                       </span>
                     )}
                   </div>
                   
-                  <div style={{ marginBottom: '2rem' }}>
-                    <span style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '-0.05em' }}>${plan.priceMonthly}</span>
-                    <span style={{ color: 'var(--color-text-muted)', fontSize: '1rem', marginLeft: '0.25rem' }}>/mo</span>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>${plan.priceMonthly}</span>
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>/mo</span>
                   </div>
 
-                  <div style={{ flexGrow: 1, marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {plan.features.map((feature, i) => (
+                  <div style={{ flexGrow: 1, marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {plan.features.slice(0, 6).map((feature, i) => (
                       <div key={i} style={{ 
                         display: 'flex', 
                         alignItems: 'flex-start', 
-                        gap: '0.75rem', 
-                        fontSize: '0.9375rem',
+                        gap: '0.625rem', 
+                        fontSize: '0.875rem',
                         color: 'var(--color-text-muted)',
-                        lineHeight: 1.4
+                        lineHeight: 1.3
                       }}>
-                        <CheckCircle2 size={18} style={{ color: 'var(--color-primary)', marginTop: '2px', flexShrink: 0 }} />
+                        <CheckCircle2 size={16} style={{ color: 'var(--color-primary)', marginTop: '2px', flexShrink: 0 }} />
                         <span>{feature}</span>
                       </div>
                     ))}
@@ -206,7 +199,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
 
                   <Button 
                     fullWidth 
-                    size="lg"
+                    size="md"
                     variant={selectedPlanId === plan.id ? 'primary' : 'outline'}
                     isLoading={isProcessing && selectedPlanId === plan.id}
                     disabled={isProcessing}
@@ -214,9 +207,9 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
                       e.stopPropagation();
                       handleUpgrade(plan.id);
                     }}
-                    style={{ borderRadius: '1.25rem', height: '3.5rem', marginTop: 'auto' }}
+                    style={{ borderRadius: '1rem' }}
                   >
-                    {selectedPlanId === plan.id ? 'Confirm Plan' : 'Select Plan'}
+                    {selectedPlanId === plan.id ? 'Confirm Upgrade' : 'Select Plan'}
                   </Button>
                 </div>
               ))}
@@ -231,13 +224,13 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
 
           {error && (
             <div style={{
-              marginTop: '2rem',
-              padding: '1rem',
+              marginTop: '1.5rem',
+              padding: '0.875rem',
               backgroundColor: 'rgba(220, 38, 38, 0.1)',
               color: 'var(--color-error)',
-              borderRadius: '1rem',
+              borderRadius: '0.75rem',
               textAlign: 'center',
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               border: '1px solid rgba(220, 38, 38, 0.2)',
               width: '100%'
             }}>
@@ -246,7 +239,7 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
           )}
 
           <div style={{ 
-            marginTop: '3rem', 
+            marginTop: '2.5rem', 
             display: 'flex', 
             alignItems: 'center', 
             gap: '0.5rem',
