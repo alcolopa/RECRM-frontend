@@ -116,7 +116,7 @@ const TutorialGuide: React.FC<TutorialGuideProps> = ({
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 9999,
+          zIndex: 9000,
           backgroundColor: 'rgba(0, 0, 0, 0.6)',
           backdropFilter: 'blur(4px)',
           display: 'flex',

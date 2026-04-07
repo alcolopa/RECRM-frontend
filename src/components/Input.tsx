@@ -195,6 +195,7 @@ interface SelectProps {
   label?: string;
   icon?: LucideIcon;
   error?: string;
+  helperText?: string;
   options: { value: string | number; label: string }[];
   value?: string | number;
   onChange?: (e: any) => void;
@@ -211,6 +212,7 @@ export const Select: React.FC<SelectProps> = ({
   label,
   icon,
   error,
+  helperText,
   options,
   value = '',
   onChange,
@@ -227,6 +229,7 @@ export const Select: React.FC<SelectProps> = ({
       label={label}
       icon={icon}
       error={error}
+      helperText={helperText}
       options={options}
       value={value}
       onChange={(val) => onChange?.({ target: { value: val, name, id } } as any)}

@@ -16,6 +16,7 @@ interface CustomSelectProps {
   placeholder?: string;
   icon?: LucideIcon;
   error?: string;
+  helperText?: string;
   searchable?: boolean;
   disabled?: boolean;
   id?: string;
@@ -32,6 +33,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   placeholder = 'Select an option...',
   icon: Icon,
   error,
+  helperText,
   searchable = false,
   disabled = false,
   id,
@@ -239,11 +241,15 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         )}
       </AnimatePresence>
 
-      {error && (
+      {error ? (
         <span style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.125rem' }}>
           {error}
         </span>
-      )}
+      ) : helperText ? (
+        <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '0.125rem' }}>
+          {helperText}
+        </span>
+      ) : null}
     </div>
   );
 };
