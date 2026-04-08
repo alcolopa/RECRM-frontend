@@ -634,7 +634,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '1.25rem' }}>
             <Select
               id="financingType"
               name="financingType"
@@ -650,20 +650,6 @@ const OfferForm: React.FC<OfferFormProps> = ({
               error={errors.financingType}
               required
             />
-            <DateSelector
-              id="closingDate"
-              label="Closing Date"
-              value={formData.closingDate}
-              onChange={(val) => handleFieldChange('closingDate', val)}
-              error={errors.closingDate}
-            />
-            <DateSelector
-              id="expirationDate"
-              label="Expiry Date"
-              value={formData.expirationDate}
-              onChange={(val) => handleFieldChange('expirationDate', val)}
-              error={errors.expirationDate}
-            />
             <Select
               id="offerer"
               name="offerer"
@@ -677,6 +663,20 @@ const OfferForm: React.FC<OfferFormProps> = ({
               ]}
               required
               error={errors.offerer}
+            />
+            <DateSelector
+              id="closingDate"
+              label="Closing Date"
+              value={formData.closingDate}
+              onChange={(val) => handleFieldChange('closingDate', val)}
+              error={errors.closingDate}
+            />
+            <DateSelector
+              id="expirationDate"
+              label="Expiry Date"
+              value={formData.expirationDate}
+              onChange={(val) => handleFieldChange('expirationDate', val)}
+              error={errors.expirationDate}
             />
           </div>
 

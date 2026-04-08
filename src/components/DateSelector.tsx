@@ -197,11 +197,20 @@ const DateSelector: React.FC<DateSelectorProps> = ({
           background: disabled ? 'var(--color-bg)' : 'var(--color-surface)',
           cursor: disabled ? 'not-allowed' : 'pointer',
           minHeight: '2.75rem',
+          minWidth: isMobile ? '100%' : '160px',
           boxShadow: error ? '0 0 0 1px var(--color-error), 0 0 0 4px rgba(220, 38, 38, 0.1)' : (isOpen ? '0 0 0 1px var(--color-primary), 0 0 0 4px rgba(var(--color-primary-rgb), 0.1)' : 'none')
         }}
       >
         <CalendarIcon size={18} color="var(--color-text-muted)" />
-        <div style={{ flex: 1, fontSize: '0.9375rem', color: value ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: value ? 500 : 400 }}>
+        <div style={{ 
+          flex: 1, 
+          fontSize: '0.9375rem', 
+          color: value ? 'var(--color-text)' : 'var(--color-text-muted)', 
+          fontWeight: value ? 500 : 400,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
           {value ? formatDate(value) : placeholder}
         </div>
         {value && !disabled && <X size={16} color="var(--color-text-muted)" onClick={(e) => { e.stopPropagation(); onChange(null); }} />}
