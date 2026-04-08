@@ -44,13 +44,26 @@ export const formatCurrency = (
   options: Intl.NumberFormatOptions = {}
 ): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
-  return new Intl.NumberFormat('en-US', {
+  
+  // Default values
+  const defaultOptions: Intl.NumberFormatOptions = {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-    ...options
-  }).format(num);
+  };
+
+  // Merge options
+  const finalOptions = { ...defaultOptions, ...options };
+
+  // Safety check: minimumFractionDigits cannot be greater than maximumFractionDigits
+  if (finalOptions.maximumFractionDigits !== undefined && 
+      finalOptions.minimumFractionDigits !== undefined &&
+      finalOptions.minimumFractionDigits > finalOptions.maximumFractionDigits) {
+    finalOptions.minimumFractionDigits = finalOptions.maximumFractionDigits;
+  }
+
+  return new Intl.NumberFormat('en-US', finalOptions).format(num);
 };
 
 /**
