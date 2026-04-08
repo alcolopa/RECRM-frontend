@@ -67,7 +67,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
     notes: '',
     offerer: OffererType.BUYER,
     status: OfferStatus.SUBMITTED,
-    type: (initialProperty?.listingType === 'RENT' ? 'RENT' : 'SALE') as DealType,
+    type: (initialProperty?.listingType === 'RENT' || initialProperty?.listingType === 'LEASE' ? 'RENT' : 'SALE') as DealType,
     buyerCommission: undefined as number | undefined,
     sellerCommission: undefined as number | undefined,
     agentCommission: undefined as number | undefined
@@ -372,11 +372,24 @@ const OfferForm: React.FC<OfferFormProps> = ({
   const handlePropertySelect = (_propertyId: string, property?: Property) => {
     if (property) {
       setSelectedProperty(property);
+      
+      let defaultType: DealType = 'SALE';
+      let defaultPrice = property.price ? String(property.price) : '';
+      
+      if (property.listingType === 'RENT' || property.listingType === 'LEASE') {
+        defaultType = 'RENT';
+        defaultPrice = property.rentAmount ? String(property.rentAmount) : '';
+      } else if (property.listingType === 'SALE_AND_RENT') {
+        // If it's both, we prefer SALE by default but could check what the user was already looking at
+        defaultType = 'SALE';
+        defaultPrice = property.price ? String(property.price) : '';
+      }
+      
       setFormData(prev => ({ 
         ...prev, 
         propertyId: property.id,
-        price: property.price ? String(property.price) : prev.price,
-        type: (property.listingType === 'RENT' ? 'RENT' : 'SALE') as DealType
+        price: defaultPrice || prev.price,
+        type: defaultType
       }));
     } else {
       setSelectedProperty(null);
@@ -538,40 +551,56 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 {showOverrides ? 'MANUAL ON' : 'AUTO CALC'}
               </button>
               <div style={{ height: '1rem', width: '1px', backgroundColor: 'var(--color-border)', marginRight: '0.5rem' }} />
-              <button
-                type="button"
-                onClick={() => handleFieldChange('type', 'SALE')}
-                style={{
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '1rem',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: formData.type === 'SALE' ? 'var(--color-primary)' : 'transparent',
-                  color: formData.type === 'SALE' ? 'white' : 'var(--color-text-muted)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                SALE
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFieldChange('type', 'RENT')}
-                style={{
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '1rem',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: formData.type === 'RENT' ? 'var(--color-primary)' : 'transparent',
-                  color: formData.type === 'RENT' ? 'white' : 'var(--color-text-muted)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                RENT
-              </button>
+              
+              {(!selectedProperty || selectedProperty.listingType === 'SALE' || selectedProperty.listingType === 'SALE_AND_RENT') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleFieldChange('type', 'SALE');
+                    if (selectedProperty?.listingType === 'SALE_AND_RENT' && selectedProperty.price) {
+                      handleFieldChange('price', String(selectedProperty.price));
+                    }
+                  }}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '1rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: formData.type === 'SALE' ? 'var(--color-primary)' : 'transparent',
+                    color: formData.type === 'SALE' ? 'white' : 'var(--color-text-muted)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  SALE
+                </button>
+              )}
+              
+              {(!selectedProperty || selectedProperty.listingType === 'RENT' || selectedProperty.listingType === 'LEASE' || selectedProperty.listingType === 'SALE_AND_RENT') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleFieldChange('type', 'RENT');
+                    if (selectedProperty?.listingType === 'SALE_AND_RENT' && selectedProperty.rentAmount) {
+                      handleFieldChange('price', String(selectedProperty.rentAmount));
+                    }
+                  }}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '1rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: formData.type === 'RENT' ? 'var(--color-primary)' : 'transparent',
+                    color: formData.type === 'RENT' ? 'white' : 'var(--color-text-muted)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {selectedProperty?.listingType === 'LEASE' ? 'LEASE' : 'RENT'}
+                </button>
+              )}
             </div>
           </div>
           

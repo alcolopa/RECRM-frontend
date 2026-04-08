@@ -24,7 +24,7 @@ export interface PropertyFeature {
 }
 
 // --- Enum-like types ---
-export type PropertyListingType = 'SALE' | 'RENT' | 'LEASE';
+export type PropertyListingType = 'SALE' | 'RENT' | 'LEASE' | 'SALE_AND_RENT';
 export type PropertyCondition = 'NEW' | 'GOOD' | 'NEEDS_RENOVATION' | 'UNDER_CONSTRUCTION';
 export type OwnershipType = 'FREEHOLD' | 'LEASEHOLD';
 export type ZoningType = 'RESIDENTIAL' | 'COMMERCIAL' | 'MIXED';

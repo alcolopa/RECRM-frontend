@@ -347,7 +347,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
             gap: isMobile ? '1rem' : '1.5rem'
           }}>
             <MetricCard
-              label="Offer Price"
+              label={offer.type === 'SALE' ? 'Offer Price' : 'Monthly Rent'}
               value={formatCurrency(offer.price)}
               icon={DollarSign}
               highlight

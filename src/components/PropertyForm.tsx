@@ -894,6 +894,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
                 { value: 'SALE', label: 'For Sale' },
                 { value: 'RENT', label: 'For Rent' },
                 { value: 'LEASE', label: 'For Lease' },
+                { value: 'SALE_AND_RENT', label: 'For Sale & Rent' },
               ]}
             />
             <Select
@@ -965,7 +966,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           </div>
 
           {/* Sale-specific fields */}
-          {(formData.listingType === 'SALE' || !formData.listingType) && (
+          {(formData.listingType === 'SALE' || formData.listingType === 'SALE_AND_RENT' || !formData.listingType) && (
             <div style={{ marginTop: '1rem' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>Sale Details</div>
               <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>
@@ -977,7 +978,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel,
           )}
 
           {/* Rent-specific fields */}
-          {(formData.listingType === 'RENT' || formData.listingType === 'LEASE') && (
+          {(formData.listingType === 'RENT' || formData.listingType === 'LEASE' || formData.listingType === 'SALE_AND_RENT') && (
             <div style={{ marginTop: '1rem' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>Rental Details</div>
               <div className="grid grid-2 grid-3" style={{ gap: '1rem' }}>

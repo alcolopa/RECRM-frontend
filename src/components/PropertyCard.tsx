@@ -25,9 +25,23 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete, onClick, canEdit = true, canDelete = true }) => {
   const { formatAreaDisplay } = useUnits();
-  const formatPrice = (price?: number) => {
-    if (!price) return 'Contact for price';
-    return formatCurrency(price, 'USD', { maximumFractionDigits: 0 });
+  
+  const formatDisplayPrice = () => {
+    if (property.listingType === 'SALE_AND_RENT') {
+      const sale = property.price ? formatCurrency(property.price, 'USD', { maximumFractionDigits: 0, notation: 'compact' }) : '?';
+      const rent = property.rentAmount ? formatCurrency(property.rentAmount, 'USD', { maximumFractionDigits: 0, notation: 'compact' }) : '?';
+      return `${sale} / ${rent} mo`;
+    }
+    
+    if (property.listingType === 'RENT' || property.listingType === 'LEASE') {
+      return property.rentAmount 
+        ? `${formatCurrency(property.rentAmount, 'USD', { maximumFractionDigits: 0 })} /mo` 
+        : 'Contact for rent';
+    }
+    
+    return property.price 
+      ? formatCurrency(property.price, 'USD', { maximumFractionDigits: 0 }) 
+      : 'Contact for price';
   };
 
   const getStatusColor = (status: string) => {
@@ -97,8 +111,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>{property.title}</h3>
-            <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '1.125rem' }}>
-              {formatPrice(property.price)}
+            <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: property.listingType === 'SALE_AND_RENT' ? '0.9rem' : '1.125rem', whiteSpace: 'nowrap' }}>
+              {formatDisplayPrice()}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>

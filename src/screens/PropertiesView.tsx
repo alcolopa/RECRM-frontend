@@ -402,6 +402,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
                   { value: 'SALE', label: 'For Sale' },
                   { value: 'RENT', label: 'For Rent' },
                   { value: 'LEASE', label: 'For Lease' },
+                  { value: 'SALE_AND_RENT', label: 'For Sale & Rent' },
                 ]}
                 style={{ fontSize: '0.8125rem' }}
               />
