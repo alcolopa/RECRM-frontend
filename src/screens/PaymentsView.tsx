@@ -27,6 +27,8 @@ import AgentPaymentsView from '../components/AgentPaymentsView';
 import { usePermissions } from '../hooks/usePermissions';
 import { Permission } from '../api/users';
 
+import { formatCurrency, safeAdd } from '../utils/currency';
+
 interface PaymentsViewProps {
   organizationId: string;
   user: any;
@@ -128,9 +130,10 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user: _user
 
   const selectedAmount = useMemo(() => {
     if (!expandedAgent) return 0;
-    return expandedAgent.deals
+    const commissions = expandedAgent.deals
       .filter(d => selectedDealIds.has(d.id))
-      .reduce((sum, d) => sum + (Number(d.agentCommission) || 0), 0);
+      .map(d => d.agentCommission);
+    return safeAdd(...commissions);
   }, [selectedDealIds, expandedAgent]);
 
   const selectedCount = selectedDealIds.size;
@@ -190,15 +193,6 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user: _user
   const handleAgentClick = (agentId: string) => {
     setExpandedAgentId(agentId);
     setSelectedDealIds(new Set());
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   const StatCard = ({ title, value, icon: Icon, color, trend, footerText }: any) => (
@@ -699,7 +693,7 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ organizationId, user: _user
 
       {/* Agent View */}
       {!isAdmin && agentStats && (
-        <AgentPaymentsView stats={agentStats} formatCurrency={formatCurrency} />
+        <AgentPaymentsView stats={agentStats} />
       )}
 
       <ConfirmModal

@@ -24,6 +24,7 @@ import OfferForm from '../components/OfferForm';
 import { useNavigation } from '../contexts/NavigationContext';
 import { usePermissions } from '../utils/permissions';
 import { Permission } from '../api/users';
+import { formatCurrency } from '../utils/currency';
 
 interface OffersViewProps {
   organizationId: string;
@@ -416,7 +417,7 @@ const OffersView: React.FC<OffersViewProps> = ({ organizationId, user }) => {
                         <div style={{ fontWeight: 500, fontSize: '0.8125rem' }}>{offer.negotiation?.property?.title}</div>
                       </td>
                       <td>{getStatusBadge(offer.status)}</td>
-                      <td style={{ fontWeight: 600 }}>${offer.price.toLocaleString()}</td>
+                      <td style={{ fontWeight: 600 }}>{formatCurrency(offer.price)}</td>
                       <td>
                         {offer.createdBy ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

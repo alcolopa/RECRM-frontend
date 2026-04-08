@@ -17,6 +17,7 @@ import Button from '../components/Button';
 import { type UserProfile } from '../api/users';
 import { useNavigation } from '../contexts/NavigationContext';
 import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
+import { formatCurrency } from '../utils/currency';
 
 // Direct imports for standard CSS
 import 'react-grid-layout/css/styles.css';
@@ -208,7 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({ organizationId, user }) => {
             <div key={stage.stage} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600 }}>
                 <span>{stage.stage} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({stage.count})</span></span>
-                <span>${stage.value.toLocaleString()}</span>
+                <span>{formatCurrency(stage.value, 'USD', { maximumFractionDigits: 0 })}</span>
               </div>
               <div style={{ height: '0.5rem', backgroundColor: 'var(--color-bg)', borderRadius: '1rem', overflow: 'hidden' }}>
                 <div style={{ 

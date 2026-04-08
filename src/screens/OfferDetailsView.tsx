@@ -26,6 +26,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import CounterOfferForm from '../components/CounterOfferForm';
 import NegotiationTimeline from '../components/NegotiationTimeline';
 import { getImageUrl } from '../utils/url';
+import { formatCurrency, safeAdd, safeMultiply } from '../utils/currency';
 
 interface OfferDetailsViewProps {
   organizationId: string;
@@ -177,21 +178,31 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
       const sellerMonths = orgConfig?.rentSellerValue ?? 0;
       const agentShare = agentConfig?.rentAgentValue ?? orgConfig?.rentAgentValue ?? 0;
 
-      const buyerComm = price * buyerMonths;
-      const sellerComm = price * sellerMonths;
-      const agentComm = price * agentShare;
+      const buyerComm = safeMultiply(price, buyerMonths);
+      const sellerComm = safeMultiply(price, sellerMonths);
+      const agentComm = safeMultiply(price, agentShare);
 
-      return { buyer: buyerComm, seller: sellerComm, total: buyerComm + sellerComm, agent: agentComm };
+      return { 
+        buyer: buyerComm, 
+        seller: sellerComm, 
+        total: safeAdd(buyerComm, sellerComm), 
+        agent: agentComm 
+      };
     } else {
       const buyerPercent = orgConfig?.saleBuyerValue ?? 0;
       const sellerPercent = orgConfig?.saleSellerValue ?? 0;
       const agentPercent = agentConfig?.saleAgentValue ?? orgConfig?.saleAgentValue ?? 0;
 
-      const buyerComm = (price * buyerPercent) / 100;
-      const sellerComm = (price * sellerPercent) / 100;
-      const agentComm = (price * agentPercent) / 100;
+      const buyerComm = safeMultiply(price, buyerPercent / 100);
+      const sellerComm = safeMultiply(price, sellerPercent / 100);
+      const agentComm = safeMultiply(price, agentPercent / 100);
 
-      return { buyer: buyerComm, seller: sellerComm, total: buyerComm + sellerComm, agent: agentComm };
+      return { 
+        buyer: buyerComm, 
+        seller: sellerComm, 
+        total: safeAdd(buyerComm, sellerComm), 
+        agent: agentComm 
+      };
     }
   };
 
@@ -337,13 +348,13 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
           }}>
             <MetricCard
               label="Offer Price"
-              value={`$${Number(offer.price).toLocaleString()}`}
+              value={formatCurrency(offer.price)}
               icon={DollarSign}
               highlight
             />
             <MetricCard
               label="Security Deposit"
-              value={`$${Number(offer.deposit || 0).toLocaleString()}`}
+              value={formatCurrency(offer.deposit || 0)}
               icon={HandCoins}
             />
             <MetricCard
@@ -422,16 +433,16 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Buyer Side</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>${commission.buyer.toLocaleString()}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{formatCurrency(commission.buyer)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Seller Side</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>${commission.seller.toLocaleString()}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{formatCurrency(commission.seller)}</span>
               </div>
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>Total Agency</span>
-                <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>${commission.total.toLocaleString()}</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>{formatCurrency(commission.total)}</span>
               </div>
 
               <div style={{
@@ -450,7 +461,7 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
                   </div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Agent Share</span>
                 </div>
-                <span style={{ fontSize: '1rem', fontWeight: 700 }}>${commission.agent.toLocaleString()}</span>
+                <span style={{ fontSize: '1rem', fontWeight: 700 }}>{formatCurrency(commission.agent)}</span>
               </div>
             </div>
 

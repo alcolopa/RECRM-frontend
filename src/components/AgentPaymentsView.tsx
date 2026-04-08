@@ -2,12 +2,13 @@ import React from 'react';
 import { Clock, CheckCircle2 } from 'lucide-react';
 import type { PersonalPayoutStats } from '../api/payouts';
 
+import { formatCurrency } from '../utils/currency';
+
 interface AgentPaymentsViewProps {
   stats: PersonalPayoutStats;
-  formatCurrency: (amount: number) => string;
 }
 
-const AgentPaymentsView: React.FC<AgentPaymentsViewProps> = ({ stats, formatCurrency }) => {
+const AgentPaymentsView: React.FC<AgentPaymentsViewProps> = ({ stats }) => {
   return (
     <div className="agent-payments-view" style={{ display: 'flex', flexDirection: 'column', gap: '4rem', paddingBottom: '3rem' }}>
       {/* Editorial Header - Large Metrics */}

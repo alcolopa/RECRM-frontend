@@ -24,6 +24,7 @@ import PropertySelector from './PropertySelector';
 import DateSelector from './DateSelector';
 import { mapBackendErrors, getErrorMessage } from '../utils/errors';
 import { useNavigation } from '../contexts/NavigationContext';
+import { formatCurrency, safeAdd, safeMultiply } from '../utils/currency';
 
 interface OfferFormProps {
   onCancel: () => void;
@@ -237,7 +238,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
       return {
         buyer,
         seller,
-        total: buyer + seller,
+        total: safeAdd(buyer, seller),
         agent
       };
     }
@@ -264,15 +265,15 @@ const OfferForm: React.FC<OfferFormProps> = ({
 
     const calcValue = (base: number, config: { val: number, type: string }) => {
       const val = Number(config.val) || 0;
-      if (config.type === 'PERCENTAGE') return (base * val) / 100;
+      if (config.type === 'PERCENTAGE') return safeMultiply(base, val / 100);
       if (config.type === 'FIXED') return val;
-      if (config.type === 'MULTIPLIER') return base * val;
+      if (config.type === 'MULTIPLIER') return safeMultiply(base, val);
       return 0;
     };
 
     const buyerComm = calcValue(price, buyer);
     const sellerComm = calcValue(price, seller);
-    const totalComm = buyerComm + sellerComm;
+    const totalComm = safeAdd(buyerComm, sellerComm);
     
     // Agent share is calculated against the transaction price (matching backend Resolver)
     const agentComm = agent.type === 'FIXED' ? agent.val : calcValue(price, agent);
@@ -450,7 +451,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
               </h3>
               {selectedProperty && (
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text)', backgroundColor: 'var(--color-bg)', padding: '0.125rem 0.5rem', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
-                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(selectedProperty.price))}
+                  {formatCurrency(selectedProperty.price, 'USD', { maximumFractionDigits: 0 })}
                 </span>
               )}
             </div>
@@ -725,15 +726,15 @@ const OfferForm: React.FC<OfferFormProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
               <div>
                 <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Buyer Side</div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>${commission.buyer.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{formatCurrency(commission.buyer)}</div>
               </div>
               <div>
                 <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Seller Side</div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>${commission.seller.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{formatCurrency(commission.seller)}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Agency Total</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>${commission.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>{formatCurrency(commission.total)}</div>
               </div>
             </div>
 
@@ -744,7 +745,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
                 </div>
                 <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Personal Share Projection</span>
               </div>
-              <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>${commission.agent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{formatCurrency(commission.agent)}</div>
             </div>
           </div>
 

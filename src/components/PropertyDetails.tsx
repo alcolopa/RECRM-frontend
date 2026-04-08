@@ -30,6 +30,8 @@ import { usePermissions } from '../utils/permissions';
 import { type UserProfile, Permission } from '../api/users';
 import MatchedClients from './MatchedClients';
 
+import { formatCurrency } from '../utils/currency';
+
 interface PropertyDetailsProps {
   property: Property;
   user?: UserProfile;
@@ -56,11 +58,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
 
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(price);
+    return formatCurrency(price, 'USD', { maximumFractionDigits: 0 });
   };
 
   const nextImage = () => {
@@ -519,7 +517,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(latestOffer.price))}
+                            {formatCurrency(Number(latestOffer.price), 'USD', { maximumFractionDigits: 0 })}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                             {neg.contact?.firstName} {neg.contact?.lastName} • {latestOffer.status.replace('_', ' ')}

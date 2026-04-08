@@ -12,6 +12,7 @@ import { type Offer, type OffererType } from '../api/offers';
 import Button from './Button';
 import { Input, Select, Textarea } from './Input';
 import DateSelector from './DateSelector';
+import { formatCurrency } from '../utils/currency';
 
 interface CounterOfferFormProps {
   originalOffer: Offer;
@@ -104,7 +105,7 @@ const CounterOfferForm: React.FC<CounterOfferFormProps> = ({
         </button>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>Counter Offer</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>Adjusting the terms based on the previous offer of ${Number(originalOffer.price).toLocaleString()}.</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>Adjusting the terms based on the previous offer of {formatCurrency(originalOffer.price)}.</p>
         </div>
       </header>
 

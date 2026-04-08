@@ -11,6 +11,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useNavigation } from '../contexts/NavigationContext';
 import { usePermissions } from '../utils/permissions';
 import { Permission } from '../api/users';
+import { formatCurrency } from '../utils/currency';
 
 interface PropertiesViewProps {
   organizationId: string;
@@ -544,7 +545,7 @@ const PropertiesView: React.FC<PropertiesViewProps> = ({ organizationId, user })
                         </span>
                       </td>
                       <td style={{ fontWeight: 600 }}>
-                        {property.price ? `$${property.price.toLocaleString()}` : 'Price on Request'}
+                        {property.price ? formatCurrency(property.price, 'USD', { maximumFractionDigits: 0 }) : 'Price on Request'}
                       </td>
                       <td>{property.city}, {property.country}</td>
                       <td>

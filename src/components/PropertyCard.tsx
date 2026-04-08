@@ -12,6 +12,7 @@ import { type Property } from '../api/properties';
 import Button from './Button';
 import { useUnits } from '../contexts/UnitContext';
 import { getImageUrl } from '../utils/url';
+import { formatCurrency } from '../utils/currency';
 
 interface PropertyCardProps {
   property: Property;
@@ -26,11 +27,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onDelete,
   const { formatAreaDisplay } = useUnits();
   const formatPrice = (price?: number) => {
     if (!price) return 'Contact for price';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(price);
+    return formatCurrency(price, 'USD', { maximumFractionDigits: 0 });
   };
 
   const getStatusColor = (status: string) => {
