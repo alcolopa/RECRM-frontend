@@ -19,6 +19,15 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
 
   const isOwner = user.role === 'OWNER';
 
+  // Lock background scroll when blocker is active
+  React.useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const handleUpgrade = async (planId: string) => {
     if (!isOwner) return;
     
@@ -144,15 +153,19 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
         </p>
 
         {isOwner ? (
-          <div style={{ 
-            display: 'flex',
-            gap: '1.5rem',
-            width: '100%',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            maxHeight: '50vh', // Limit height to prevent scroll
-            overflow: 'visible'
-          }}>
+          <div 
+            className="subscription-grid"
+            style={{ 
+              display: 'flex',
+              gap: '1.5rem',
+              width: '100%',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              maxHeight: '60vh',
+              overflow: 'visible',
+              padding: '1rem'
+            }}
+          >
             {plans.map((plan: Plan) => (
               <motion.div 
                 key={plan.id}
@@ -279,10 +292,28 @@ const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = ({ user,
       <style>{`
         @media (max-width: 768px) {
           .subscription-grid {
-            overflow-x: auto !important;
-            padding-bottom: 1rem !important;
+            flex-wrap: nowrap !important;
             justify-content: flex-start !important;
-            max-height: 60vh !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 2rem !important;
+            margin: 0 -2rem;
+            width: calc(100% + 4rem) !important;
+            max-height: none !important;
+          }
+          .subscription-grid > div {
+            scroll-snap-align: center !important;
+            min-width: 280px !important;
+            flex: 0 0 85% !important;
+          }
+          /* Hide scrollbar but keep functionality */
+          .subscription-grid::-webkit-scrollbar {
+            display: none;
+          }
+          .subscription-grid {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
           }
         }
       `}</style>
