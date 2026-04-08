@@ -275,8 +275,11 @@ const OfferForm: React.FC<OfferFormProps> = ({
     const sellerComm = calcValue(price, seller);
     const totalComm = safeAdd(buyerComm, sellerComm);
     
-    // Agent share is calculated against the transaction price (matching backend Resolver)
-    const agentComm = agent.type === 'FIXED' ? agent.val : calcValue(price, agent);
+    // Agent share is calculated against the total agency commission if PERCENTAGE
+    // For FIXED or MULTIPLIER (mostly for rentals), it still uses the price as base
+    const agentComm = agent.type === 'PERCENTAGE' 
+      ? calcValue(totalComm, agent)
+      : calcValue(price, agent);
 
     return {
       buyer: buyerComm,

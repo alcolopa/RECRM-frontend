@@ -173,36 +173,54 @@ const OfferDetailsView: React.FC<OfferDetailsViewProps> = ({ organizationId }) =
     const price = Number(offer.price) || 0;
     const type = (offer as any).type || 'SALE';
 
+    const calcValue = (base: number, val?: number, type?: string) => {
+      const v = Number(val) || 0;
+      if (type === 'PERCENTAGE') return safeMultiply(base, v / 100);
+      if (type === 'FIXED') return v;
+      if (type === 'MULTIPLIER') return safeMultiply(base, v);
+      return 0;
+    };
+
     if (type === 'RENT') {
-      const buyerMonths = orgConfig?.rentBuyerValue ?? 0;
-      const sellerMonths = orgConfig?.rentSellerValue ?? 0;
-      const agentShare = agentConfig?.rentAgentValue ?? orgConfig?.rentAgentValue ?? 0;
+      const buyerValue = orgConfig?.rentBuyerValue;
+      const buyerType = orgConfig?.rentBuyerType || 'MULTIPLIER';
+      
+      const sellerValue = orgConfig?.rentSellerValue;
+      const sellerType = orgConfig?.rentSellerType || 'MULTIPLIER';
+      
+      const agentValue = agentConfig?.rentAgentValue ?? orgConfig?.rentAgentValue;
+      const agentType = agentConfig?.rentAgentType ?? orgConfig?.rentAgentType ?? 'PERCENTAGE';
 
-      const buyerComm = safeMultiply(price, buyerMonths);
-      const sellerComm = safeMultiply(price, sellerMonths);
-      const agentComm = safeMultiply(price, agentShare);
+      const buyerComm = calcValue(price, buyerValue, buyerType);
+      const sellerComm = calcValue(price, sellerValue, sellerType);
+      const totalComm = safeAdd(buyerComm, sellerComm);
+      
+      // Agent share is based on total agency commission if PERCENTAGE
+      const agentComm = agentType === 'PERCENTAGE' 
+        ? calcValue(totalComm, agentValue, agentType)
+        : calcValue(price, agentValue, agentType);
 
-      return { 
-        buyer: buyerComm, 
-        seller: sellerComm, 
-        total: safeAdd(buyerComm, sellerComm), 
-        agent: agentComm 
-      };
+      return { buyer: buyerComm, seller: sellerComm, total: totalComm, agent: agentComm };
     } else {
-      const buyerPercent = orgConfig?.saleBuyerValue ?? 0;
-      const sellerPercent = orgConfig?.saleSellerValue ?? 0;
-      const agentPercent = agentConfig?.saleAgentValue ?? orgConfig?.saleAgentValue ?? 0;
+      const buyerValue = orgConfig?.saleBuyerValue;
+      const buyerType = orgConfig?.saleBuyerType || 'PERCENTAGE';
+      
+      const sellerValue = orgConfig?.saleSellerValue;
+      const sellerType = orgConfig?.saleSellerType || 'PERCENTAGE';
+      
+      const agentValue = agentConfig?.saleAgentValue ?? orgConfig?.saleAgentValue;
+      const agentType = agentConfig?.saleAgentType ?? orgConfig?.saleAgentType ?? 'PERCENTAGE';
 
-      const buyerComm = safeMultiply(price, buyerPercent / 100);
-      const sellerComm = safeMultiply(price, sellerPercent / 100);
-      const agentComm = safeMultiply(price, agentPercent / 100);
+      const buyerComm = calcValue(price, buyerValue, buyerType);
+      const sellerComm = calcValue(price, sellerValue, sellerType);
+      const totalComm = safeAdd(buyerComm, sellerComm);
+      
+      // Agent share is based on total agency commission if PERCENTAGE
+      const agentComm = agentType === 'PERCENTAGE' 
+        ? calcValue(totalComm, agentValue, agentType)
+        : calcValue(price, agentValue, agentType);
 
-      return { 
-        buyer: buyerComm, 
-        seller: sellerComm, 
-        total: safeAdd(buyerComm, sellerComm), 
-        agent: agentComm 
-      };
+      return { buyer: buyerComm, seller: sellerComm, total: totalComm, agent: agentComm };
     }
   };
 
